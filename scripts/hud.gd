@@ -1,14 +1,14 @@
 ## Updates the HUD's score and wave-progress displays in response to
 ## Main.gd/WaveManager signals (Tech Stack §5).
 ##
-## Level display is still placeholder wiring until Phase 6. Lives and
-## time are driven by GameManager signals.
+## Lives and time are driven by GameManager signals.
 class_name Hud
 extends CanvasLayer
 
 const LIFE_ICON: Texture2D = preload("res://assets/images/ui/life_icon.png")
 
 @onready var _score_label: Label = $ScoreLabel
+@onready var _level_label: Label = $LevelLabel
 @onready var _time_label: Label = $TimeLabel
 @onready var _wave_progress_label: Label = $WaveProgressLabel
 @onready var _lives_display: HBoxContainer = $LivesDisplay
@@ -28,6 +28,10 @@ func add_score(amount: int = 1) -> void:
 func update_score(score: int) -> void:
 	_score = score
 	_render_score()
+
+
+func update_level(level: int) -> void:
+	_level_label.text = "Level: %d" % level
 
 
 func update_lives(lives: int) -> void:

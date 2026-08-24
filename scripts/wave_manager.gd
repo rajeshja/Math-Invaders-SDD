@@ -31,9 +31,10 @@ signal wave_cleared(category: String)
 ## this as the lives/damage trigger; WaveManager does not move enemies.
 signal wrong_answer
 
-## Emitted when the category_sequence is exhausted after a wave clears -
-## the hook point for Phase 6's LevelManager. Not acted on further here.
+## Emitted once when the category_sequence is exhausted after a wave clears.
 signal level_cleared
+## Phase 6 name for the level-boundary hook.
+signal all_waves_complete
 
 ## -- Config --------------------------------------------------------------
 ## Inverted-triangle formation: rows of 4 - 3 - 2 - 1 enemies from top to
@@ -78,7 +79,17 @@ func _ready() -> void:
 ## Starts (or restarts) a wave for the given category: clears any leftover
 ## enemies, spawns a fresh formation of 10, generates a question per
 ## enemy up front, and emits the first question_ready (Phase 3 FR3.2).
-func start_wave(category: String) -> void:
+func set_category_sequence(sequence: Array[String]) -> void:
+	if sequence.is_empty():
+		push_error("WaveManager: category_sequence cannot be empty.")
+		return
+	category_sequence = sequence.duplicate()
+	_sequence_index = category_sequence.find(current_category)
+
+
+func start_wave(category: String, wave_difficulty: int = -1) -> void:
+	if wave_difficulty >= 1:
+		difficulty = wave_difficulty
 	current_category = category
 	_clear_container()
 	_pending_hit_enemies.clear()
@@ -100,12 +111,12 @@ func start_wave(category: String) -> void:
 
 ## Starts the first wave of the configured category_sequence. Convenience
 ## entry point for Main.gd's game-start call.
-func start_first_wave() -> void:
+func start_first_wave(wave_difficulty: int = -1) -> void:
 	_sequence_index = 0
 	if category_sequence.is_empty():
 		push_error("WaveManager: category_sequence is empty.")
 		return
-	start_wave(category_sequence[_sequence_index])
+	start_wave(category_sequence[_sequence_index], wave_difficulty)
 
 
 ## Returns the current active enemy: the frontmost/lowest-on-screen
@@ -191,9 +202,9 @@ func _on_wave_clear() -> void:
 	wave_cleared.emit(current_category)
 	_sequence_index += 1
 	if _sequence_index >= category_sequence.size():
-		# Sequence exhausted - hook point for Phase 6's LevelManager.
 		level_cleared.emit()
-		_sequence_index = 0
+		all_waves_complete.emit()
+		return
 	start_wave(category_sequence[_sequence_index])
 
 
