@@ -19,22 +19,21 @@ const QuestionAttemptTrackerScript = preload("res://scripts/question_attempt_tra
 @onready var _question_panel: QuestionPanel = $QuestionPanel
 @onready var _wave_banner: WaveBanner = $WaveBanner
 @onready var _game_over_overlay: GameOverOverlay = $GameOverOverlay
+@onready var _level_manager: LevelManager = $LevelManager
 
 var _current_question: Dictionary = {}
 var _accepting_input: bool = true
-var _current_level: int = 1
 var _attempt_tracker: RefCounted = QuestionAttemptTrackerScript.new()
 
 
 func _ready() -> void:
-	_attempt_tracker.configure(GameConfig.get_tries_per_question(_current_level))
 	GameManager.score_changed.connect(_hud.update_score)
 	GameManager.lives_changed.connect(_hud.update_lives)
 	GameManager.time_changed.connect(_hud.update_time)
 	GameManager.game_over.connect(_on_game_over)
+	_level_manager.level_changed.connect(_on_level_changed)
 	_hud.update_score(GameManager.score)
 	_hud.update_lives(GameManager.lives)
-	_start_level_timer()
 
 	_wave_manager.enemies_container = _enemies_container
 	_wave_manager.question_ready.connect(_on_question_ready)
@@ -48,18 +47,11 @@ func _ready() -> void:
 
 	_question_panel.answer_selected.connect(_on_answer_selected)
 
-	_wave_manager.start_first_wave()
+	_level_manager.start_level()
 
 
 func _process(delta: float) -> void:
 	GameManager.tick(delta)
-
-
-func _start_level_timer() -> void:
-	var wave_count: int = _wave_manager.category_sequence.size()
-	var limit: float = GameConfig.get_level_time_limit(_current_level, wave_count)
-	GameManager.start_level_timer(limit)
-	_hud.update_time(GameManager.time_remaining)
 
 
 func _on_question_ready(question: Dictionary) -> void:
@@ -69,6 +61,12 @@ func _on_question_ready(question: Dictionary) -> void:
 	_attempt_tracker.reset_question()
 	_accepting_input = true
 	_question_panel.set_question(question)
+
+
+func _on_level_changed(level: int) -> void:
+	_attempt_tracker.configure(_level_manager.effective_tries_per_question)
+	_hud.update_level(level)
+	_hud.update_time(GameManager.time_remaining)
 
 
 func _on_wave_cleared(_category: String) -> void:
