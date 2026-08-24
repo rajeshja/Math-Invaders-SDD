@@ -16,6 +16,11 @@ config/features=PackedStringArray("4.7", "Mobile")
 boot_splash/bg_color=Color(0.03137255, 0.0392157, 0.10980392, 1)
 config/icon="res://icon.svg"
 
+[autoload]
+
+GameConfig="*res://scripts/game_config.gd"
+GameManager="*res://scripts/game_manager.gd"
+
 [display]
 
 window/size/viewport_width=720
@@ -26,6 +31,13 @@ window/handheld/orientation="portrait"
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+
+[gameplay]
+
+starting_lives=3
+enemies_per_wave=10
+tries_per_question=1
+tries_per_question_by_level={}
 
 [rendering]
 

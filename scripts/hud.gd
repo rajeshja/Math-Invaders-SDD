@@ -8,8 +8,11 @@
 class_name Hud
 extends CanvasLayer
 
+const LIFE_ICON: Texture2D = preload("res://assets/images/ui/life_icon.png")
+
 @onready var _score_label: Label = $ScoreLabel
 @onready var _wave_progress_label: Label = $WaveProgressLabel
+@onready var _lives_display: HBoxContainer = $LivesDisplay
 
 var _score: int = 0
 
@@ -21,6 +24,23 @@ func _ready() -> void:
 func add_score(amount: int = 1) -> void:
 	_score += amount
 	_render_score()
+
+
+func update_score(score: int) -> void:
+	_score = score
+	_render_score()
+
+
+func update_lives(lives: int) -> void:
+	for child in _lives_display.get_children():
+		child.free()
+	for i in range(max(0, lives)):
+		var icon := TextureRect.new()
+		icon.texture = LIFE_ICON
+		icon.custom_minimum_size = Vector2(48, 48)
+		icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		_lives_display.add_child(icon)
 
 
 func _render_score() -> void:

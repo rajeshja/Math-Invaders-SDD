@@ -27,19 +27,21 @@ signal wave_progress_updated(category: String, remaining: int, total: int)
 ## wave's fresh set of 10 spawns.
 signal wave_cleared(category: String)
 
+## Emitted exactly once per incorrect answer. GameManager/Main consume
+## this as the lives/damage trigger; WaveManager does not move enemies.
+signal wrong_answer
+
 ## Emitted when the category_sequence is exhausted after a wave clears -
 ## the hook point for Phase 5's LevelManager. Not acted on further here.
 signal level_cleared
 
 ## -- Config --------------------------------------------------------------
-const ENEMIES_PER_WAVE: int = 10
 const FORMATION_COLUMNS: int = 5
 const FORMATION_ROWS: int = 2
 const FORMATION_TOP_Y: float = 160.0
 const FORMATION_ROW_SPACING: float = 130.0
 const FORMATION_LEFT_X: float = 90.0
 const FORMATION_COLUMN_SPACING: float = 135.0
-const WRONG_ANSWER_STEP_PX: float = 40.0
 
 ## Default Stage A sequence (Spec §2 Level 1 example / Phase 3 FR3.7).
 ## LevelManager (Phase 5) will be what mutates/extends this per level.
@@ -59,6 +61,7 @@ var difficulty: int = 1
 
 var current_category: String = ""
 var enemies_remaining: int = 0
+var enemies_per_wave: int = GameConfig.DEFAULT_ENEMIES_PER_WAVE
 var _sequence_index: int = -1
 var _active_enemy: Node = null
 
@@ -74,8 +77,9 @@ func _ready() -> void:
 func start_wave(category: String) -> void:
 	current_category = category
 	_clear_container()
+	enemies_per_wave = GameConfig.get_enemies_per_wave()
 
-	for i in range(ENEMIES_PER_WAVE):
+	for i in range(enemies_per_wave):
 		var enemy := enemy_scene.instantiate()
 		enemies_container.add_child(enemy)
 		enemy.position = _formation_position(i)
@@ -83,8 +87,8 @@ func start_wave(category: String) -> void:
 		if enemy.has_method("setup"):
 			enemy.setup(category, question)
 
-	enemies_remaining = ENEMIES_PER_WAVE
-	wave_progress_updated.emit(current_category, enemies_remaining, ENEMIES_PER_WAVE)
+	enemies_remaining = enemies_per_wave
+	wave_progress_updated.emit(current_category, enemies_remaining, enemies_per_wave)
 	_active_enemy = get_active_enemy()
 	_emit_active_question()
 
@@ -128,7 +132,7 @@ func on_correct_answer() -> void:
 			_active_enemy.queue_free()
 
 	enemies_remaining = max(0, enemies_remaining - 1)
-	wave_progress_updated.emit(current_category, enemies_remaining, ENEMIES_PER_WAVE)
+	wave_progress_updated.emit(current_category, enemies_remaining, enemies_per_wave)
 
 	if enemies_remaining == 0:
 		_active_enemy = null
@@ -138,15 +142,24 @@ func on_correct_answer() -> void:
 		_emit_active_question()
 
 
-## Wrong answer: the whole remaining formation advances downward together
-## by one movement step. The active enemy does not move independently
-## (Phase 3 FR3.11 / NFR3.4).
+## Wrong answer: emit the damage event and leave the active enemy and
+## formation stationary. Attempt counting/question replacement belongs to
+## the question-flow owner, not WaveManager.
 func on_wrong_answer() -> void:
-	for enemy in _remaining_enemies():
-		if enemy.has_method("move_down"):
-			enemy.move_down(WRONG_ANSWER_STEP_PX)
-		else:
-			enemy.position.y += WRONG_ANSWER_STEP_PX
+	wrong_answer.emit()
+
+
+## Retires the active enemy's current question and replaces it with a
+## freshly generated one for the same category, without moving or removing
+## any enemy. Used when an incorrect answer exhausts the configured attempt
+## count but lives remain.
+func regenerate_active_question() -> void:
+	if _active_enemy == null or not is_instance_valid(_active_enemy):
+		return
+	var question: Dictionary = question_generator.generate_question(current_category, difficulty)
+	if "linked_question" in _active_enemy:
+		_active_enemy.linked_question = question
+	question_ready.emit(question)
 
 
 ## -- Internal -------------------------------------------------------------

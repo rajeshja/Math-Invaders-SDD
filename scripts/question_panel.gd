@@ -6,9 +6,11 @@ class_name QuestionPanel
 extends CanvasLayer
 
 ## Emitted whenever any answer button is tapped, with the numeric value
-## shown on that button. The listener (Main.gd) compares it against the
-## active question's correct_answer.
-signal answer_selected(value: int)
+## shown on that button and the exact button tapped. The listener (Main.gd)
+## compares it against the active question's correct_answer.
+signal answer_selected(value: int, button: Button)
+
+const WRONG_FLASH_SECONDS := 0.18
 
 @onready var _question_label: Label = $Panel/QuestionLabel
 @onready var _answer_buttons: Array = [
@@ -41,6 +43,40 @@ func set_question(question: Dictionary) -> void:
 			button.disabled = true
 
 
+func set_answer_buttons_enabled(enabled: bool) -> void:
+	for button in _answer_buttons:
+		button.disabled = not enabled or not button.has_meta("value")
+
+
+func flash_wrong_answer(button: Button) -> void:
+	if button == null:
+		return
+
+	var original_styles := {
+		"normal": button.get_theme_stylebox("normal"),
+		"hover": button.get_theme_stylebox("hover"),
+		"pressed": button.get_theme_stylebox("pressed"),
+		"focus": button.get_theme_stylebox("focus"),
+	}
+	var flash_style := StyleBoxFlat.new()
+	flash_style.bg_color = Color(0.9, 0.1, 0.1, 1.0)
+	flash_style.border_color = Color(1.0, 0.75, 0.75, 1.0)
+	flash_style.set_border_width_all(4)
+	flash_style.corner_radius_top_left = 10
+	flash_style.corner_radius_top_right = 10
+	flash_style.corner_radius_bottom_left = 10
+	flash_style.corner_radius_bottom_right = 10
+
+	set_answer_buttons_enabled(false)
+	for style_name in original_styles.keys():
+		button.add_theme_stylebox_override(style_name, flash_style)
+
+	await get_tree().create_timer(WRONG_FLASH_SECONDS).timeout
+
+	for style_name in original_styles.keys():
+		button.add_theme_stylebox_override(style_name, original_styles[style_name])
+
+
 func _on_answer_button_pressed(button: Button) -> void:
 	var value: int = int(button.get_meta("value", 0))
-	answer_selected.emit(value)
+	answer_selected.emit(value, button)

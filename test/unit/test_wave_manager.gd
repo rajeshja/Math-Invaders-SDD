@@ -16,11 +16,7 @@ func before_each() -> void:
 
 	wave_manager.enemies_container = enemies_container
 	# Phase 3 NFR3.2: use a GUT double of the enemy scene rather than
-	# depending on the real enemy.tscn scene tree. partial_double (not a
-	# full double) so real per-instance logic like move_down()/position
-	# math still executes - only scene-tree-dependent bits (texture
-	# loading via @onready Sprite2D) are effectively inert since these
-	# doubles are never added under a Sprite2D-bearing tree in these tests.
+	# depending on the real enemy.tscn scene tree.
 	wave_manager.enemy_scene = partial_double(EnemyScene)
 
 
@@ -70,18 +66,41 @@ func test_sequence_does_not_skip_or_repeat_out_of_order() -> void:
 	assert_eq(seen_order, ["addition", "subtraction", "multiplication", "division"])
 
 
-func test_wrong_answer_moves_entire_remaining_formation_not_just_active() -> void:
+func test_wrong_answer_does_not_move_remove_or_retarget_formation() -> void:
 	wave_manager.start_wave("addition")
 	var before_positions := {}
 	for enemy in enemies_container.get_children():
-		before_positions[enemy] = enemy.position.y
+		before_positions[enemy] = enemy.position
+	var active_before = wave_manager.get_active_enemy()
+	var remaining_before: int = wave_manager.enemies_remaining
+	watch_signals(wave_manager)
 
 	wave_manager.on_wrong_answer()
 
-	var step = wave_manager.WRONG_ANSWER_STEP_PX
 	for enemy in enemies_container.get_children():
-		assert_almost_eq(enemy.position.y, before_positions[enemy] + step, 0.01,
-			"every remaining enemy should move down by the same configured step")
+		assert_eq(enemy.position, before_positions[enemy],
+			"wrong answers must leave every remaining enemy stationary")
+	assert_eq(wave_manager.enemies_remaining, remaining_before, "wrong answers must not remove enemies")
+	assert_eq(wave_manager.get_active_enemy(), active_before, "wrong answers must not retarget the active enemy")
+	assert_signal_emit_count(wave_manager, "wrong_answer", 1, "one wrong answer event should be emitted per incorrect answer")
+
+
+func test_regenerate_active_question_keeps_same_enemy_and_formation() -> void:
+	wave_manager.start_wave("addition")
+	var before_positions := {}
+	for enemy in enemies_container.get_children():
+		before_positions[enemy] = enemy.position
+	var active_before = wave_manager.get_active_enemy()
+	watch_signals(wave_manager)
+
+	wave_manager.regenerate_active_question()
+
+	for enemy in enemies_container.get_children():
+		assert_eq(enemy.position, before_positions[enemy],
+			"regenerating the active question must not move the formation")
+	assert_eq(wave_manager.get_active_enemy(), active_before, "regenerating the question should keep the same active enemy")
+	assert_eq(wave_manager.enemies_remaining, 10)
+	assert_signal_emit_count(wave_manager, "question_ready", 1)
 
 
 func test_active_enemy_is_lowest_on_screen_then_leftmost() -> void:

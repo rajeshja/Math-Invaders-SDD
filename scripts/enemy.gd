@@ -3,7 +3,7 @@
 ## tracked by WaveManager.gd (Tech Stack §5).
 ##
 ## Holds a reference to this enemy's own linked question and its own
-## category, and knows how to move itself and how to be destroyed. It does
+## category, and knows how to be destroyed. It does
 ## NOT decide which enemy is "active," track wave state, or generate
 ## questions - that's WaveManager's job.
 class_name Enemy
@@ -47,13 +47,6 @@ func _apply_category_texture() -> void:
 		return
 	if ResourceLoader.exists(path):
 		_sprite.texture = load(path)
-
-
-## Formation-level downward movement step, called by WaveManager once per
-## wrong answer for every remaining enemy (Phase 3 FR3.11 / NFR3.4). Not
-## a per-enemy independent movement - WaveManager applies this uniformly.
-func move_down(step_pixels: float) -> void:
-	position.y += step_pixels
 
 
 ## Destroys this enemy instance. Bullet-travel-then-destroy timing is
