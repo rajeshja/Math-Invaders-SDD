@@ -38,6 +38,8 @@ starting_lives=3
 enemies_per_wave=10
 tries_per_question=1
 tries_per_question_by_level={}
+seconds_per_wave=30.0
+level_time_limit_by_level={}
 
 [rendering]
 

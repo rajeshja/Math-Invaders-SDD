@@ -1,16 +1,15 @@
 ## Updates the HUD's score and wave-progress displays in response to
 ## Main.gd/WaveManager signals (Tech Stack §5).
 ##
-## Level/Health/Lives displays are placeholder nodes for now (their real
-## wiring lands in Phases 4-6) so the scene structure already matches
-## Tech Stack §2 without those systems needing to restructure the HUD
-## scene when they arrive.
+## Level display is still placeholder wiring until Phase 6. Lives and
+## time are driven by GameManager signals.
 class_name Hud
 extends CanvasLayer
 
 const LIFE_ICON: Texture2D = preload("res://assets/images/ui/life_icon.png")
 
 @onready var _score_label: Label = $ScoreLabel
+@onready var _time_label: Label = $TimeLabel
 @onready var _wave_progress_label: Label = $WaveProgressLabel
 @onready var _lives_display: HBoxContainer = $LivesDisplay
 
@@ -41,6 +40,11 @@ func update_lives(lives: int) -> void:
 		icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		_lives_display.add_child(icon)
+
+
+func update_time(seconds_remaining: float) -> void:
+	var display_seconds := int(ceil(max(0.0, seconds_remaining)))
+	_time_label.text = "Time: %d" % display_seconds
 
 
 func _render_score() -> void:

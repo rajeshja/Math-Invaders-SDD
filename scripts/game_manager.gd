@@ -9,6 +9,7 @@ extends Node
 
 signal score_changed(score: int)
 signal lives_changed(lives: int)
+signal time_changed(time_remaining: float)
 signal game_over
 
 enum GameState {
@@ -22,11 +23,14 @@ enum GameState {
 enum GameOverReason {
 	NONE,
 	LIVES_DEPLETED,
+	TIME_EXPIRED,
 }
 
 var score: int = 0
 var lives: int = 0
 var starting_lives: int = GameConfig.DEFAULT_STARTING_LIVES
+var level_time_limit: float = 0.0
+var time_remaining: float = 0.0
 var game_state: GameState = GameState.PLAYING
 var last_game_over_reason: GameOverReason = GameOverReason.NONE
 
@@ -39,10 +43,34 @@ func reset_session() -> void:
 	starting_lives = GameConfig.get_starting_lives()
 	score = 0
 	lives = starting_lives
+	time_remaining = level_time_limit
 	game_state = GameState.PLAYING
 	last_game_over_reason = GameOverReason.NONE
 	score_changed.emit(score)
 	lives_changed.emit(lives)
+	time_changed.emit(time_remaining)
+
+
+func start_level_timer(limit: float) -> void:
+	level_time_limit = max(0.0, limit)
+	time_remaining = level_time_limit
+	time_changed.emit(time_remaining)
+
+
+func tick(delta: float) -> void:
+	if game_state != GameState.PLAYING:
+		return
+	if time_remaining <= 0.0:
+		return
+	if delta <= 0.0:
+		return
+
+	time_remaining = max(0.0, time_remaining - delta)
+	time_changed.emit(time_remaining)
+	if time_remaining == 0.0:
+		last_game_over_reason = GameOverReason.TIME_EXPIRED
+		game_state = GameState.GAME_OVER
+		game_over.emit()
 
 
 func add_score(amount: int = 1) -> void:

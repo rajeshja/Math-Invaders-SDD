@@ -30,9 +30,11 @@ func _ready() -> void:
 	_attempt_tracker.configure(GameConfig.get_tries_per_question(_current_level))
 	GameManager.score_changed.connect(_hud.update_score)
 	GameManager.lives_changed.connect(_hud.update_lives)
+	GameManager.time_changed.connect(_hud.update_time)
 	GameManager.game_over.connect(_on_game_over)
 	_hud.update_score(GameManager.score)
 	_hud.update_lives(GameManager.lives)
+	_start_level_timer()
 
 	_wave_manager.enemies_container = _enemies_container
 	_wave_manager.question_ready.connect(_on_question_ready)
@@ -49,7 +51,20 @@ func _ready() -> void:
 	_wave_manager.start_first_wave()
 
 
+func _process(delta: float) -> void:
+	GameManager.tick(delta)
+
+
+func _start_level_timer() -> void:
+	var wave_count: int = _wave_manager.category_sequence.size()
+	var limit: float = GameConfig.get_level_time_limit(_current_level, wave_count)
+	GameManager.start_level_timer(limit)
+	_hud.update_time(GameManager.time_remaining)
+
+
 func _on_question_ready(question: Dictionary) -> void:
+	if GameManager.is_game_over():
+		return
 	_current_question = question
 	_attempt_tracker.reset_question()
 	_accepting_input = true
@@ -61,6 +76,8 @@ func _on_wave_cleared(_category: String) -> void:
 
 
 func _on_answer_selected(value: int, button: Button) -> void:
+	if not GameManager.is_playing():
+		return
 	if not _accepting_input:
 		return
 	if _current_question.is_empty():
@@ -148,5 +165,7 @@ func _game_over_reason_text() -> String:
 	match GameManager.last_game_over_reason:
 		GameManager.GameOverReason.LIVES_DEPLETED:
 			return "Out of lives!"
+		GameManager.GameOverReason.TIME_EXPIRED:
+			return "Time's up!"
 		_:
 			return ""

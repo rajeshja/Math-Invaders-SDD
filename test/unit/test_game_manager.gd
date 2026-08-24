@@ -123,3 +123,85 @@ func test_damage_is_only_consumed_while_playing() -> void:
 
 	assert_eq(manager.lives, 3)
 	assert_false(manager.is_game_over())
+
+
+func test_start_level_timer_sets_limit_and_time_and_emits_signal() -> void:
+	watch_signals(manager)
+
+	manager.start_level_timer(120.0)
+
+	assert_eq(manager.level_time_limit, 120.0)
+	assert_eq(manager.time_remaining, 120.0)
+	assert_signal_emit_count(manager, "time_changed", 1)
+
+
+func test_tick_reduces_time_only_by_supplied_delta_while_playing() -> void:
+	manager.start_level_timer(120.0)
+
+	manager.tick(1.25)
+
+	assert_eq(manager.time_remaining, 118.75)
+	assert_eq(manager.game_state, manager.GameState.PLAYING)
+
+
+func test_timer_expiry_enters_game_over_once_with_time_reason() -> void:
+	manager.start_level_timer(2.0)
+	watch_signals(manager)
+
+	manager.tick(1.0)
+	manager.tick(1.0)
+	manager.tick(1.0)
+
+	assert_eq(manager.time_remaining, 0.0)
+	assert_true(manager.is_game_over())
+	assert_eq(manager.last_game_over_reason, manager.GameOverReason.TIME_EXPIRED)
+	assert_signal_emit_count(manager, "game_over", 1)
+
+
+func test_ticks_after_timer_game_over_do_not_change_time_or_emit_again() -> void:
+	manager.start_level_timer(1.0)
+	watch_signals(manager)
+
+	manager.tick(1.5)
+	manager.tick(5.0)
+
+	assert_eq(manager.time_remaining, 0.0)
+	assert_signal_emit_count(manager, "game_over", 1)
+
+
+func test_tick_while_paused_does_not_reduce_time() -> void:
+	manager.start_level_timer(45.0)
+	manager.game_state = manager.GameState.PAUSED
+
+	manager.tick(10.0)
+
+	assert_eq(manager.time_remaining, 45.0)
+	assert_false(manager.is_game_over())
+
+
+func test_life_depletion_and_time_expiry_record_mutually_exclusive_reasons() -> void:
+	manager.start_level_timer(120.0)
+	manager.take_damage(3)
+
+	assert_eq(manager.last_game_over_reason, manager.GameOverReason.LIVES_DEPLETED)
+	manager.tick(120.0)
+	assert_eq(manager.last_game_over_reason, manager.GameOverReason.LIVES_DEPLETED)
+
+	manager.start_level_timer(2.0)
+	manager.reset_session()
+	manager.tick(2.0)
+
+	assert_eq(manager.last_game_over_reason, manager.GameOverReason.TIME_EXPIRED)
+
+
+func test_reset_session_restores_time_to_configured_limit_and_clears_reason() -> void:
+	manager.start_level_timer(90.0)
+	manager.tick(90.0)
+	assert_true(manager.is_game_over())
+
+	manager.reset_session()
+
+	assert_eq(manager.level_time_limit, 90.0)
+	assert_eq(manager.time_remaining, 90.0)
+	assert_eq(manager.game_state, manager.GameState.PLAYING)
+	assert_eq(manager.last_game_over_reason, manager.GameOverReason.NONE)
