@@ -6,7 +6,7 @@ This file records the migration required for the existing implementation through
 
 ## Latest Gameplay Contract
 
-The previous change request removed enemy descent and replaced it with lives. This revision adds configurable attempts per question and explicit wrong-answer feedback. A later revision adds the per-level time limit, enemy return fire on wrong answers, and a fixed 0.3-second bullet travel time (see "Level Timer Revision" below).
+The previous change request removed enemy descent and replaced it with lives. This revision adds configurable attempts per question and explicit wrong-answer feedback. A later revision adds the per-level time limit, enemy return fire on wrong answers, and a fixed 0.3-second bullet travel time (see "Level Timer Revision" below). The latest revision makes bullet flight purely presentational --- question changes resolve in parallel with the bullet launching --- replaces the 2×5 grid with a 4-3-2-1 inverted-triangle formation, and splits Phase 4 into two phases (see "Parallel Resolution & Triangle Formation Revision" below).
 
 ### Global settings
 
@@ -41,9 +41,11 @@ With `starting_lives = 3` and `tries_per_question = 1`:
 
 With `tries_per_question_by_level = { 3: 2 }`, Level 3 permits two attempts on each question before that question advances, but each wrong attempt still costs one life.
 
-## Level Timer Revision (Phase 4 Extension)
+## Level Timer Revision (now its own Phase 5)
 
-This revision extends Phase 4 and ripples into Phases 5, 6, 8, and 10.
+This revision was originally folded into Phase 4; after the phase split (see
+the final revision below) it is Phase 5 in its own right and ripples into
+Phases 6, 7, 9, and 11.
 
 ### Global settings
 
@@ -64,7 +66,7 @@ gameplay code.
 6. Answer resolution precedes expiry processing each frame, so clearing the final enemy as time hits zero still counts as a clear.
 7. The HUD shows a live countdown matching `GameManager.time_remaining`.
 8. `GameManager` owns `time_remaining`/`level_time_limit`/`last_game_over_reason` (`NONE`/`LIVES_DEPLETED`/`TIME_EXPIRED`) and is advanced via a deterministic `tick(delta)` so GUT tests need no scene tree or wall clock.
-9. Each new level resolves its own limit at the boundary (Phase 5); Play Again re-resolves for Level 1 (Phase 6).
+9. Each new level resolves its own limit at the boundary (Phase 6); Play Again re-resolves for Level 1 (Phase 7).
 
 ### Enemy return fire contract
 
@@ -83,11 +85,12 @@ distance-dependent player-bullet travel.
 
 ### Phase-by-phase impact
 
-- **Phase 4**: implements all three contracts above (timer, enemy return fire, 0.3 s travel) plus HUD countdown and Game Over reason display; extended `test_game_manager.gd`/`test_game_config.gd`.
-- **Phase 5**: each level start resolves its time limit via `GameConfig.get_level_time_limit(level, wave_count)` and calls `GameManager.start_level_timer()` exactly once; wave transitions never reset it; per-level overrides change only that level's budget.
-- **Phase 6**: Play Again restarts the Level 1 timer via the same resolution path; a timeout ending the prior session carries no penalty.
-- **Phase 8**: adds enemy-return-fire/player-hit sounds and a presentational low-time warning (pulsing red timer + optional tick during the final 10 seconds).
-- **Phase 10**: the level time budget becomes an explicit tuning dimension via `seconds_per_wave` and `level_time_limit_by_level`.
+- **Phase 4**: implements the enemy-return-fire and 0.3 s travel contracts plus Game Over reason display for life depletion; extended `test_game_manager.gd`/`test_game_config.gd`.
+- **Phase 5**: implements the timer contract itself (countdown HUD, deterministic tick, `TIME_EXPIRED`) plus the config resolution tests.
+- **Phase 6**: each level start resolves its time limit via `GameConfig.get_level_time_limit(level, wave_count)` and calls `GameManager.start_level_timer()` exactly once; wave transitions never reset it; per-level overrides change only that level's budget.
+- **Phase 7**: Play Again restarts the Level 1 timer via the same resolution path; a timeout ending the prior session carries no penalty.
+- **Phase 9**: adds enemy-return-fire/player-hit sounds and a presentational low-time warning (pulsing red timer + optional tick during the final 10 seconds).
+- **Phase 11**: the level time budget becomes an explicit tuning dimension via `seconds_per_wave` and `level_time_limit_by_level`.
 
 ## Required Code Changes for Existing Phase-3 Code
 
@@ -170,7 +173,7 @@ Clarified that Phase 1's temporary wrong-answer no-op is not the later gameplay 
 - Added integration of the effective attempt count into question flow.
 - Added tests proving wrong answers do not change enemy positions and that the default one-attempt path advances to a new question after red feedback.
 
-### Phase 4 — Lives & Game Over
+### Phase 4 — Lives, Wrong-Answer Feedback & Game Over
 
 - Kept the lives-only model; no health.
 - Made the wrong-answer event explicitly one-life-per-attempt.
@@ -178,30 +181,36 @@ Clarified that Phase 1's temporary wrong-answer no-op is not the later gameplay 
 - Defined Game Over precedence over loading the next question.
 - Added tests for zero lives, multi-attempt questions, and exactly-once life consumption.
 
-### Phase 5 — Level Progression
+### Phase 5 — Level Timer
+
+Split out of the old Phase 4 (which was too heavy as one playable increment).
+Owns the per-level time limit: configuration resolution, deterministic
+ticking, countdown HUD, and the `TIME_EXPIRED` game over path.
+
+### Phase 6 — Level Progression
 
 - Level completion still resets lives to `starting_lives`.
 - Added per-level question-attempt overrides.
 - The effective attempt count is resolved once per level and applied consistently to its questions.
 
-### Phase 6 — Score & High Score Persistence
+### Phase 7 — Score & High Score Persistence
 
 - Session restart also resets the question-attempt rule by restarting at Level 1.
 - High score behavior remains unchanged.
 
-### Phase 7 — New Question Categories
+### Phase 8 — New Question Categories
 
 New categories inherit the same attempt configuration and wrong-answer feedback. `WaveManager` must not special-case attempts by category.
 
-### Phase 8 — Effects, Animation & Audio Polish
+### Phase 9 — Effects, Animation & Audio Polish
 
 Red wrong-answer feedback is promoted to a required presentation behavior. The red flash is immediate and brief; optional screen-shake/secondary damage feedback must not replace it.
 
-### Phase 9 — Mobile Export & Touch
+### Phase 10 — Mobile Export & Touch
 
 Verified that the red feedback is visible and touch-safe on-device and that the same attempt configuration behaves identically on desktop and mobile.
 
-### Phase 10 — Playtesting & Balancing
+### Phase 11 — Playtesting & Balancing
 
 Added question-attempt count and red-feedback clarity to the balancing dimensions. Enemy descent speed is no longer a gameplay tuning dimension because descent is removed.
 
@@ -234,5 +243,60 @@ Added question-attempt count and red-feedback clarity to the balancing dimension
 - [ ] Add HUD countdown bound to `time_changed`.
 - [ ] Refactor all bullet travel to a shared fixed 0.3-second tween.
 - [ ] Add `enemy_bullet.png` + `enemy_bullet.tscn`; wire active-enemy return fire into the wrong-answer event path (presentational only).
-- [ ] Restart the timer at each level boundary (Phase 5) and on Play Again (Phase 6).
+- [ ] Restart the timer at each level boundary (Phase 6) and on Play Again (Phase 7).
 - [ ] Extend GUT coverage for timer tick/expiry/pause/reset, config resolution, and overrides.
+
+## Parallel Resolution & Triangle Formation Revision (Phase Split)
+
+Three changes to the requirements and the existing Phase-3-era code:
+
+### 1. Parallel answer resolution
+
+Bullet flight is strictly cosmetic in both directions; it must never take
+away from the time available to answer questions.
+
+- **Correct answer:** score, destruction of the active enemy, and loading
+  the next question all resolve in the same frame the player bullet
+  launches. Nothing subscribes gameplay logic to bullet arrival.
+- **Wrong answer:** red flash starts non-blocking; life loss, attempt
+  counting, and any Game Over resolve immediately. Only the next
+  question's *display* may wait out the ~0.18 s red-flash interval
+  (`QuestionPanel.wait_wrong_feedback()`); it never waits for the enemy
+  bullet's telegraph, launch, or arrival.
+- Normative home: Spec §10 "Parallel answer resolution"; Phase 4 FR4.13;
+  Phase 2 FR2.5 / Phase 3 FR3.4 updated accordingly.
+- Code: `Main.gd` resolves answers synchronously; `bullet.gd`'s `arrived`
+  signal is presentation-only.
+
+### 2. Inverted-triangle formation
+
+The 2×5 grid is replaced by an inverted triangle: rows of **4 - 3 - 2 - 1**
+enemies from top to bottom (summing to the default 10-enemy wave), each row
+centered on the screen's horizontal axis (`WaveManager.FORMATION_ROW_COUNTS`,
+`FORMATION_CENTER_X`). The single bottom tip is targeted first under the
+existing lowest-Y/lowest-X active-enemy rule. Indices beyond 10 (custom
+`enemies_per_wave`) overflow into a continuation of the last row.
+
+### 3. Phase 4 split
+
+The old Phase 4 (lives + level timer + game over) was too heavy for one
+playable increment and is now:
+
+- **Phase 4 — Lives, Wrong-Answer Feedback & Game Over**: playable
+  end-to-end with lives, enemy return fire, fixed 0.3 s bullet travel,
+  parallel resolution, and life-depletion Game Over.
+- **Phase 5 — Level Timer**: the per-level countdown layered onto that
+  working game, with its own `TIME_EXPIRED` game over path.
+
+All later phases shift by one: Level Progression → 6, Score & High Score → 7,
+New Categories → 8, Effects/Audio → 9, Mobile Export → 10, Playtesting &
+Balancing → 11, Stretch → 12.
+
+## Parallel Resolution & Triangle Checklist
+
+- [x] `Main.gd`: correct-answer path resolves score/destruction/next question at bullet launch (no gameplay await on travel).
+- [x] `Main.gd`: wrong-answer path consumes life/attempts immediately; awaits only `QuestionPanel.wait_wrong_feedback()`.
+- [x] `QuestionPanel.flash_wrong_answer` is fire-and-forget with self-restoring styleboxes.
+- [x] `WaveManager._formation_position` lays out 4-3-2-1 centered rows.
+- [x] GUT coverage: inverted-triangle formation test added to `test_wave_manager.gd`.
+- [ ] When Phase 4 lands: enemy return fire hooks the existing `wrong_answer` event non-blockingly; fixed 0.3 s tween replaces velocity-based `bullet.gd` movement.

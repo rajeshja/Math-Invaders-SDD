@@ -1,12 +1,12 @@
-# Phase 9 --- Mobile Export & Touch Optimization
+# Phase 10 --- Mobile Export & Touch Optimization
 
-**Goal:** package the fully-featured, fully-polished game (Phases 0--8)
+**Goal:** package the fully-featured, fully-polished game (Phases 0--9)
 into an installable Android and/or iOS build, and verify it holds up
 under real device scaling, touch input, and screen geometry --- a
 packaging/configuration pass, not a feature pass. The gameplay contract
 includes a configurable lives count and no wrong-answer enemy descent.
 
-**Source docs:** Build Plan §Phase 9, Spec §1 (target audience --- young
+**Source docs:** Build Plan §Phase 10, Spec §1 (target audience --- young
 children, informing touch-target care), §7 (44px+ minimum touch target
 note), §3 (720×1280 portrait base resolution), Tech Stack §1 (export
 targets: Android, iOS, HTML5 for quick testing).
@@ -17,44 +17,44 @@ targets: Android, iOS, HTML5 for quick testing).
 
 ### Functional Requirements
 
--   FR9.1 --- An Android export preset is configured in Godot (package
+-   FR10.1 --- An Android export preset is configured in Godot (package
     name, icon/splash, orientation locked portrait, min/target SDK per
     current Godot 4.x Android export requirements), producing an
     installable `.apk`/`.aab`.
--   FR9.2 --- An iOS export preset is configured (bundle identifier,
+-   FR10.2 --- An iOS export preset is configured (bundle identifier,
     orientation locked portrait, per Godot's iOS exporter requirements),
     producing a build installable via Xcode/TestFlight --- if a Mac and
     Apple developer account are available to the team; otherwise this is
     documented as a follow-up and Android is treated as the primary
     target for this phase.
--   FR9.3 --- All tappable UI --- answer buttons at minimum, and any
+-   FR10.3 --- All tappable UI --- answer buttons at minimum, and any
     other interactive elements (banners, restart/play-again controls)
     --- are verified to meet the 44px+ minimum touch target guidance
     from Spec §7, measured at **actual on-device scaling**, not just
     base-resolution editor pixel values.
--   FR9.4 --- Safe-area insets (notches, rounded corners, home
+-   FR10.4 --- Safe-area insets (notches, rounded corners, home
     indicator) are handled so the HUD (top) and question panel (bottom)
     are never obscured or clipped on notched portrait phones.
--   FR9.5 --- The exported build is tested on at least one real Android
+-   FR10.5 --- The exported build is tested on at least one real Android
     device or emulator (and an iOS device/simulator, if pursued),
     confirming touch input, scaling, and layout behave correctly outside
     the desktop editor.
 
 ### Non-Functional Requirements
 
--   NFR9.1 --- Touch target verification must account for the game's
+-   NFR10.1 --- Touch target verification must account for the game's
     scaling from the 720×1280 base resolution (Spec §3) to actual device
     resolutions --- a button that measures 44px+ at design resolution
     but shrinks below that threshold on a smaller physical device fails
     this requirement.
--   NFR9.2 --- Export configuration changes are packaging/config only
-    --- no gameplay, art, or audio logic from Phases 0--8 is altered in
+-   NFR10.2 --- Export configuration changes are packaging/config only
+    --- no gameplay, art, or audio logic from Phases 0--9 is altered in
     this phase.
 
 ### Out of Scope
 
 -   Any new gameplay features, art assets, or audio (all prior phases).
--   Playtesting-driven balance/tuning changes (Phase 10).
+-   Playtesting-driven balance/tuning changes (Phase 11).
 
 ------------------------------------------------------------------------
 
@@ -62,7 +62,7 @@ targets: Android, iOS, HTML5 for quick testing).
 
 1.  **Android export preset**: in Project Settings → Export, add an
     Android preset --- package name, app icon/splash (from the finalized
-    art per Phase 8), orientation locked to portrait, min/target SDK set
+    art per Phase 9), orientation locked to portrait, min/target SDK set
     per current Godot 4.x Android export documentation.
 2.  **iOS export preset** (if pursued in this pass): add an iOS preset
     --- bundle identifier, orientation locked portrait, following
@@ -87,11 +87,11 @@ targets: Android, iOS, HTML5 for quick testing).
     if pursued.
 7.  **No new GUT tests** --- this is a packaging/configuration phase,
     not new logic; verification is device-based and manual, matching the
-    Build Plan's Phase 9 milestone framing ("installable build running
+    Build Plan's Phase 10 milestone framing ("installable build running
     on Android and/or iOS device").
 8.  **Regression pass**: re-run the full existing GUT suite once after
     export-config changes to confirm the packaging work introduced no
-    unintended code changes affecting gameplay logic (NFR9.2).
+    unintended code changes affecting gameplay logic (NFR10.2).
 
 ------------------------------------------------------------------------
 

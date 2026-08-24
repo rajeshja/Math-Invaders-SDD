@@ -2,10 +2,11 @@
 ## position to a target position captured at spawn time, then emits
 ## `arrived` and frees itself.
 ##
-## The target is a plain Vector2 (not a live reference to the enemy node)
-## so the bullet's own movement never depends on the enemy still existing
-## - whoever listens to `arrived` decides what happens to the enemy
-## (Phase 2 FR2.5: enemy is destroyed only after bullet travel completes).
+## Purely presentational: whoever launched it resolves all gameplay (score,
+## enemy destruction, next question) at launch time - the flight itself is
+## feedback only and must never gate question advancement or input. The
+## target is a plain Vector2 (not a live reference to the enemy node) so
+## the bullet's own movement never depends on the enemy still existing.
 class_name Bullet
 extends Node2D
 

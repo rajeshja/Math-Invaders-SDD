@@ -138,7 +138,9 @@ same interface supports categories that aren't pure arithmetic.
     `["addition", "subtraction", "multiplication", "division"]`) and
     owns the full lifecycle of a wave:
     -   **Wave start:** instantiates all **10 `enemy.tscn` instances at
-        once**, arranged in a formation (e.g., a grid), and calls
+        once**, arranged in the inverted-triangle formation (rows of
+        4 - 3 - 2 - 1 enemies top to bottom, each row centered on the
+        screen's horizontal axis), and calls
         `QuestionGenerator.generate_question(current_category, current_difficulty)`
         once per enemy, linking each enemy to its own question up front
         (or generating the next question just-in-time for whichever
@@ -444,11 +446,14 @@ exactly which tests are added in each phase.
 
 The effective attempt count is resolved once for a level and supplied to the
 question-flow logic. The default is one attempt. For an incorrect answer,
-`QuestionPanel` flashes the tapped button red, the game consumes one life,
-the active enemy fires its bullet at the player (0.3-second travel), and
-then either retires the question (attempt limit reached) or permits the
-next attempt on the same question (limit > 1). With the default of one, the
-next question is loaded after the red feedback.
+`QuestionPanel` flashes the tapped button red, one life is consumed
+immediately, and the active enemy fires its bullet at the player
+(0.3-second travel) fully in parallel --- gameplay never waits on any
+bullet animation. The question then either retires at the configured
+attempt limit (the next question's display may wait out only the brief
+red-flash interval) or permits the next attempt on the same question
+(limit > 1). With the default of one, the next question is shown as soon
+as the flash ends.
 
 The feedback duration must not become a gameplay timer: it is a short visual
 acknowledgement only. If the final wrong attempt causes Game Over, no next

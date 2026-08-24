@@ -1,11 +1,11 @@
-# Phase 10 --- Playtesting & Balancing
+# Phase 11 --- Playtesting & Balancing
 
-**Goal:** run the finished, exported build (Phase 9) past players in the
+**Goal:** run the finished, exported build (Phase 10) past players in the
 target age group, and tune existing parameters --- difficulty pacing,
 distractor plausibility, wave feel, lives/mistake-budget feel --- based
 on what's observed, without restructuring the underlying architecture.
 
-**Source docs:** Build Plan §Phase 10, Spec §1 (target audience --- ages
+**Source docs:** Build Plan §Phase 11, Spec §1 (target audience --- ages
 6--12), §5 (educational content progression, distractor & difficulty
 rules), Tech Stack §3 (per-strategy difficulty scaling), §4
 (`WaveManager`/`LevelManager` tunables), §8 (full GUT suite as the
@@ -17,46 +17,45 @@ regression backstop).
 
 ### Functional Requirements
 
--   FR10.1 --- Structured playtesting sessions are conducted with
+-   FR11.1 --- Structured playtesting sessions are conducted with
     players in the target 6--12 age range, per Spec §1.
--   FR10.2 --- Observations are captured against five defined tuning
+-   FR11.2 --- Observations are captured against five defined tuning
     dimensions: question difficulty pacing per level, distractor
     plausibility, wave length feel, the configured
     lives/mistake-budget feel, and the level time-limit feel (whether
     the default waves × 30 s budget --- or any overrides --- produces
     appropriate pressure without frustrating young players).
--   FR10.3 --- Difficulty parameters (operand ranges per Spec §5's Stage
-    A/B tiers, and/or the level→difficulty formula from Phase 5) are
+-   FR11.3 --- Difficulty parameters (operand ranges per Spec §5's Stage
+    A/B tiers, and/or the level→difficulty formula from Phase 6) are
     adjusted based on playtesting findings, without changing any
     strategy's `generate(difficulty)` interface/contract.
--   FR10.4 --- Distractor-generation logic in one or more strategies is
+-   FR11.4 --- Distractor-generation logic in one or more strategies is
     revisited if playtesting surfaces confusing or implausible wrong
     answers, while preserving the "no duplicates, no nonsensical values"
     rule from Spec §5.
--   FR10.5 --- Bugs found during playtesting are triaged, fixed, and
+-   FR11.5 --- Bugs found during playtesting are triaged, fixed, and
     re-verified.
--   FR10.6 --- The full GUT suite is re-run after every round of
+-   FR11.6 --- The full GUT suite is re-run after every round of
     balancing changes, to catch regressions in difficulty scaling,
     distractor generation, or wave/level logic before the next
     playtesting round.
 
 ### Non-Functional Requirements
 
--   NFR10.1 --- Balancing changes stay within the existing architecture
+-   NFR11.1 --- Balancing changes stay within the existing architecture
     (tunable parameters/constants within strategies, `WaveManager`,
     `LevelManager`, and project settings) --- this is a tuning phase,
     not a redesign phase; no new classes, signals, or structural changes
     are introduced.
--   NFR10.2 --- Any balancing change that touches strategy, wave, or
-    level logic must have its corresponding existing GUT coverage (from
-    Phases 2, 3, 5, 7) re-validated as passing before the change is
+-   NFR11.2 --- Any balancing change that touches strategy, wave, or
+    level logic must have its corresponding existing GUT coverage (from Phases 2, 3, 6, 8) re-validated as passing before the change is
     considered done --- tuning changes are never shipped untested.
 
 ### Out of Scope
 
 -   New features, categories, or platform targets (all prior phases).
 -   Stretch content such as additional math concepts, profiles, or
-    non-math modules (Phase 11).
+    non-math modules (Phase 12).
 
 ------------------------------------------------------------------------
 
@@ -74,9 +73,9 @@ regression backstop).
 3.  **Translate findings into concrete, scoped changes**:
     -   **Difficulty pacing** → adjust operand ranges within a strategy,
         or adjust the level→difficulty formula in `LevelManager.gd`
-        (Phase 5).
+        (Phase 6).
     -   **Distractor plausibility** → adjust distractor-construction
-        logic within the relevant strategy file(s) (Phase 2/3/7),
+        logic within the relevant strategy file(s) (Phase 2/3/8),
         keeping Spec §5's no-duplicate/no-nonsense rule.
     -   **Wave length feel** → tune within the existing fixed "10
         enemies per wave" design (Spec §2); if playtesting suggests the
@@ -96,7 +95,7 @@ regression backstop).
         red wrong-answer feedback. Enemy descent is not a tuning dimension
         because wrong answers never move the formation.
 4.  **Re-run the full GUT suite** after each round of changes, before
-    the next playtesting round, per FR10.6/NFR10.2.
+    the next playtesting round, per FR11.6/NFR11.2.
 5.  **Triage and fix bugs** surfaced during sessions (crashes, HUD/state
     desyncs, incorrect or duplicate distractors, etc.), verifying each
     fix both manually and against the relevant existing GUT test file.

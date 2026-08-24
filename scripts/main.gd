@@ -58,49 +58,59 @@ func _on_answer_selected(value: int, button: Button) -> void:
 		return
 	if _current_question.is_empty():
 		return
+	_accepting_input = false
 
 	if value == _current_question.get("correct_answer", null):
-		_accepting_input = false
-		_question_panel.set_answer_buttons_enabled(false)
-		_fire_at_active_enemy()
+		_resolve_correct_answer()
 	else:
-		_accepting_input = false
-		await _question_panel.flash_wrong_answer(button)
-		_handle_wrong_answer_after_feedback()
+		_resolve_wrong_answer(button)
 
 
-func _handle_wrong_answer_after_feedback() -> void:
+## Correct answers resolve immediately: score, enemy destruction, and the
+## next question all happen in the same frame the player bullet LAUNCHES.
+## The bullet in flight is purely presentational - its travel time must
+## never delay the next question being ready to answer.
+func _resolve_correct_answer() -> void:
+	var target: Node2D = _wave_manager.get_active_enemy() as Node2D
+	if target != null:
+		_fire_player_bullet(target.global_position)
+	GameManager.add_score(1)
+	_wave_manager.on_correct_answer()
+
+
+func _fire_player_bullet(target_position: Vector2) -> void:
+	var bullet: Bullet = BULLET_SCENE.instantiate()
+	_bullets_container.add_child(bullet)
+	bullet.launch(_player.get_muzzle_position(), target_position)
+	_player.play_fire_feedback()
+
+
+## Wrong-answer logic resolves immediately (life loss, attempt counting,
+## Game Over precedence). Only the next question's DISPLAY waits out the
+## brief red-flash feedback interval; enemy return fire (introduced by the
+## Phase 4 lives system) will hook the same wrong_answer event and fly
+## fully in parallel - question changes never wait on bullet travel.
+func _resolve_wrong_answer(button: Button) -> void:
+	_question_panel.flash_wrong_answer(button)
 	_wave_manager.on_wrong_answer()
 	GameManager.lose_life()
 	var attempt_limit_reached: bool = _attempt_tracker.record_wrong_attempt()
 
 	if GameManager.is_game_over():
-		_accepting_input = false
 		_question_panel.set_answer_buttons_enabled(false)
 		return
 
 	if attempt_limit_reached:
+		await _question_panel.wait_wrong_feedback()
+		if GameManager.is_game_over():
+			return
 		_wave_manager.regenerate_active_question()
 	else:
+		await _question_panel.wait_wrong_feedback()
+		if GameManager.is_game_over():
+			return
 		_accepting_input = true
 		_question_panel.set_answer_buttons_enabled(true)
-
-
-func _fire_at_active_enemy() -> void:
-	var active_enemy: Node2D = _wave_manager.get_active_enemy()
-	if active_enemy == null:
-		return
-
-	var bullet: Bullet = BULLET_SCENE.instantiate()
-	_bullets_container.add_child(bullet)
-	bullet.arrived.connect(_on_bullet_arrived)
-	bullet.launch(_player.get_muzzle_position(), active_enemy.global_position)
-	_player.play_fire_feedback()
-
-
-func _on_bullet_arrived() -> void:
-	GameManager.add_score(1)
-	_wave_manager.on_correct_answer()
 
 
 func _on_game_over() -> void:

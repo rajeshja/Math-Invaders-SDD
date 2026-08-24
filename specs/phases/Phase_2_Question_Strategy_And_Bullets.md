@@ -38,9 +38,11 @@ rules, distractor rules), §7 (`player_bullet.png`, enemy sprite table).
     hardcoded default of `1` owned by the Phase 2 caller (`Main.gd` or
     equivalent).**
 -   FR2.5 --- On a correct answer, a real `player_bullet.png` sprite
-    instance visibly travels from the player position to the active
-    enemy's position before the enemy is destroyed (replacing Phase 1's
-    instant disappear).
+    instance visibly travels from the player position toward the active
+    enemy's position (replacing Phase 1's instant disappear). Per the
+    later parallel-resolution contract (Phase 4 FR4.13), gameplay ---
+    destruction, scoring, next question --- resolves at the moment the
+    bullet launches; the flight itself is purely presentational.
 -   FR2.6 --- On a wrong answer, the active enemy survives and remains
     in place. The tapped answer button flashes red. The wrong-answer event
     is emitted/handled as the gameplay damage trigger; it must not move the
@@ -126,9 +128,10 @@ rules, distractor rules), §7 (`player_bullet.png`, enemy sprite table).
     the returned `Dictionary`.
 6.  **Bullet visuals**: create `bullet.tscn`/`bullet.gd` using
     `player_bullet.png`; on correct answer, instance a bullet at the
-    player's position, tween/move it toward the active enemy's position,
-    and only on arrival (or after a short fixed travel time) destroy the
-    enemy and apply score --- replacing the instant Phase 1 removal.
+    player's position and move it toward the active enemy's position.
+    Destruction and score resolve immediately at launch --- the arrival
+    callback is presentation-only cleanup --- replacing the instant
+    Phase 1 removal without making the player wait out the flight.
 7.  **Wrong-answer event**: report one incorrect-answer event to the
     gameplay state layer, keep the active enemy stationary, and leave
     the same question or the next question according to the effective attempt limit. Do not add any downward movement.
@@ -180,9 +183,11 @@ signal (exact contract confirmed with the team, but the test asserts
   \#                      Scenario                Expected Result
   ----------------------- ----------------------- -------------------------------
   1                       Play an addition        Bullet sprite visibly travels
-                          question, answer        from player to enemy; enemy
-                          correctly               destroyed after travel; score
-                                                  +1
+                           question, answer        from player to enemy; enemy
+                           correctly               destroyed as the bullet fires;
+                                                   next question is ready while
+                                                   the bullet is still in flight;
+                                                   score +1
 
   2                       Play an addition        Enemy and formation remain
                           question, answer        stationary; the same question

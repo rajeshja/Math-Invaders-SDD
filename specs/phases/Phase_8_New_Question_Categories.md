@@ -1,4 +1,4 @@
-# Phase 7 --- New Question Categories (Stage C Content)
+# Phase 8 --- New Question Categories (Stage C Content)
 
 **Goal:** validate and exercise the Strategy Pattern's extensibility
 (Tech Stack §3) by adding a genuinely new, non-arithmetic category ---
@@ -10,7 +10,7 @@ the question-attempt behavior is inherited from the global/per-level
 configuration; the default is one attempt, so wrong answers advance to a new
 question after red feedback.
 
-**Source docs:** Build Plan §Phase 7, Spec §5 (Stage C --- new
+**Source docs:** Build Plan §Phase 8, Spec §5 (Stage C --- new
 concepts), §7 (`enemy_ship_prime.png` asset), Tech Stack §3
 (`prime_strategy.gd`, "Why this pattern"), §4 (`LevelManager.gd`
 threshold-based category rotation), §8 (prime strategy + LevelManager
@@ -22,60 +22,59 @@ testing extension).
 
 ### Functional Requirements
 
--   FR7.1 --- `prime_strategy.gd` is added under
+-   FR8.1 --- `prime_strategy.gd` is added under
     `scripts/questions/strategies/`, implementing the shared
     `question_strategy.gd` contract:
     `generate(difficulty: int) -> Dictionary` returning
     `{ question_text, correct_answer, choices }`.
--   FR7.2 --- `prime_strategy.gd` is registered in
+-   FR8.2 --- `prime_strategy.gd` is registered in
     `question_generator.gd`'s category map (e.g.,
     `{"prime": PrimeStrategy.new()}`) with **zero changes** to
     `addition_strategy.gd`, `subtraction_strategy.gd`,
     `multiplication_strategy.gd`, `division_strategy.gd`, or any of
     their existing call sites --- this is the explicit extensibility
     check called out in Tech Stack §3.
--   FR7.3 --- `enemy_ship_prime.png` is added under
+-   FR8.3 --- `enemy_ship_prime.png` is added under
     `assets/images/enemies/` and wired into `WaveManager`'s existing
     per-instance texture-swap mechanism (Tech Stack §7) alongside the
     four existing category sprites, with no change to how that mechanism
     works.
--   FR7.4 --- `LevelManager.gd` is updated to insert `"prime"` into the
+-   FR8.4 --- `LevelManager.gd` is updated to insert `"prime"` into the
     category sequence it hands to `WaveManager` once the player reaches
     a defined advanced-level threshold (e.g., a constant such as
     `ADVANCED_LEVEL_THRESHOLD`), documented in code.
--   FR7.5 --- Below the threshold level, the category sequence and wave
-    count are **unchanged** from Phase 5 (Addition → Subtraction →
+-   FR8.5 --- Below the threshold level, the category sequence and wave
+    count are **unchanged** from Phase 6 (Addition → Subtraction →
     Multiplication → Division, 4 waves). At or above the threshold, the
     sequence includes `"prime"` exactly once, in a clearly defined
     position (e.g., appended as a 5th wave), documented in code.
--   FR7.6 --- A "Prime Numbers" wave behaves identically to any other
+-   FR8.6 --- A "Prime Numbers" wave behaves identically to any other
     wave from `WaveManager`'s perspective (10-enemy formation, visible
     depletion, wave-complete transition) --- no special-casing of prime
     waves in `WaveManager` itself.
 
 ### Non-Functional Requirements
 
--   NFR7.1 --- Prime-strategy distractor generation avoids duplicates
+-   NFR8.1 --- Prime-strategy distractor generation avoids duplicates
     and nonsensical values, matching the standard set for existing
     strategies in Spec §5.
--   NFR7.2 --- Adding the new category must require **no edits** to any
+-   NFR8.2 --- Adding the new category must require **no edits** to any
     existing strategy file --- this is verified explicitly in testing
     (see below), not just asserted in the plan.
--   NFR7.3 --- `WaveManager` must continue to accept and iterate a
+-   NFR8.3 --- `WaveManager` must continue to accept and iterate a
     variable-length category sequence (4 or 5 entries) without
     structural changes --- it was already designed against a generic
-    `category_sequence: Array` in Phase 3/5.
--   NFR7.4 --- Prime waves use the same lives-only wrong-answer contract
+    `category_sequence: Array` in Phase 3/6.
+-   NFR8.4 --- Prime waves use the same lives-only wrong-answer contract
     as every other wave; there is no special descent or damage rule for
     Prime.
 
 ### Out of Scope
 
 -   Other Stage C concepts (factors/multiples, fractions/percentages)
-    --- flagged as later/stretch content per Spec §5 and Build Plan
-    Phase 11.
+    --- flagged as later/stretch content per Spec §5 and Build Plan Phase 12.
 -   Any change to Stage A/B difficulty scaling for the existing four
-    categories (Phase 5, unchanged).
+    categories (Phase 6, unchanged).
 
 ------------------------------------------------------------------------
 
@@ -110,12 +109,12 @@ testing extension).
     at the top of the script. In `start_level()`, extend the
     `category_sequence` array it already builds and passes to
     `WaveManager` (via the `set_category_sequence()` hand-off
-    established in Phase 5, FR5.5/FR5.6) as: base 4-category list, plus
+    established in Phase 6, FR6.5/FR6.6) as: base 4-category list, plus
     `"prime"` appended when `current_level >= ADVANCED_LEVEL_THRESHOLD`.
-5.  **No `WaveManager` changes required** beyond what Phase 5 already
+5.  **No `WaveManager` changes required** beyond what Phase 6 already
     built --- `WaveManager` already accepts an externally-provided
-    `category_sequence` and iterates whatever it's given (Phase 5,
-    NFR5.3); this phase confirms that generality holds for a 5-entry
+    `category_sequence` and iterates whatever it's given (Phase 6,
+    NFR6.3); this phase confirms that generality holds for a 5-entry
     sequence too, not just the original 4-entry one.
 6.  **Write GUT tests** for `prime_strategy.gd` and extend
     `test_level_manager.gd` (see Testing Plan).
@@ -144,7 +143,7 @@ dispatch test pattern as the existing four categories.
 stubbed) `WaveManager` equals exactly the original 4-category list, with
 `"prime"` absent. - At and above `ADVANCED_LEVEL_THRESHOLD`,
 `category_sequence` includes `"prime"` exactly once, at the documented
-position. - All of Phase 5's existing `test_level_manager.gd` cases
+position. - All of Phase 6's existing `test_level_manager.gd` cases
 (difficulty scaling, level-advance signal, category-sequence reset)
 continue to pass unmodified --- an explicit regression check that adding
 the new category didn't disturb prior behavior.

@@ -125,39 +125,63 @@ playable milestone.
     a clear sense of progress both on screen and in the HUD --- backed
     by passing strategy and `WaveManager` tests.
 
-### Phase 4 --- Lives, Level Timer, and Game Over
+### Phase 4 --- Lives, Wrong-Answer Feedback & Game Over
 
 -   Implement the lives-only damage model: every wrong answer consumes
     exactly one life; no health pool and no enemy-bottom damage trigger.
--   Wrong-answer feedback now includes the active enemy visibly firing
-    an `enemy_bullet.png` projectile at the player (purely presentational;
+-   Configure `gameplay/starting_lives` in Project Settings (default 3);
+    render repeated `life_icon.png` in the HUD.
+-   Wrong-answer feedback includes the active enemy visibly firing an
+    `enemy_bullet.png` projectile at the player (purely presentational;
     damage stays event-driven).
--   Fix bullet travel: all bullets --- player and enemy --- take exactly
-    **0.3 seconds** to reach their target in all cases (fixed-duration
-    tween, distance-independent), replacing the previous slow travel.
+-   **Parallel answer resolution:** all gameplay consequences of an
+    answer resolve immediately --- on a correct answer, score, enemy
+    destruction, and the next question happen in the same frame the
+    bullet *launches*; on a wrong answer, life loss/attempts/Game Over
+    resolve instantly and only the next question's display may wait out
+    the brief red-flash interval. No question ever waits on bullet
+    travel, so flight time never eats into answering time.
+-   Fixed bullet travel: all bullets --- player and enemy --- take
+    exactly **0.3 seconds** to reach their target in all cases
+    (fixed-duration tween, distance-independent), replacing any slow
+    travel.
+-   When lives reaches 0, enter Game Over immediately and disable
+    answer input ("Out of lives!"); `last_game_over_reason` records
+    why (`LIVES_DEPLETED`; `TIME_EXPIRED` joins in Phase 5).
+-   **Testing:** add/update `test_game_manager.gd` covering
+    one-life-per-wrong-answer, no damage on correct answers, game over
+    exactly at zero lives, configured starting lives, session reset,
+    reason recording --- plus `test_game_config.gd` coverage of
+    starting-lives fallbacks.
+-   **Milestone:** full round-trip play session (start → answer
+    correctly/incorrectly → see enemy return fire → run out of lives →
+    game over screen), with questions always answerable while bullets
+    are still mid-flight, and the lives/attempt state machine covered
+    by passing tests.
+
+### Phase 5 --- Level Timer
+
 -   Add the per-level time limit: configurable via
     `gameplay/seconds_per_wave` (default 30) with optional per-level
     overrides in `gameplay/level_time_limit_by_level`; the default limit
     is waves × seconds-per-wave (120 s for the four-wave Level 1).
-    Expiring fails the level via Game Over ("Time's up!"). HUD shows a
-    live countdown; the timer runs only while playing and never resets
-    between waves.
--   Configure `gameplay/starting_lives` in Project Settings (default 3);
-    render repeated `life_icon.png` in the HUD.
--   When lives reaches 0 or the timer reaches 0, enter Game Over
-    immediately and disable answer input; the Game Over screen shows the
-    reason (out of lives vs. time's up).
--   **Testing:** add/update `test_game_manager.gd` covering
-    one-life-per-wrong-answer, no damage on correct answers, game over
-    exactly at zero (lives or time), configured starting lives, timer
-    tick/expiry/pause/reset behavior, session reset --- plus
-    `test_game_config.gd` cases for the new time-limit settings.
--   **Milestone:** full round-trip play session (start → answer
-    correctly/incorrectly → see enemy return fire → beat the clock or
-    lose lives → game over screen), with the lives/attempt/timer state
-    machines covered by passing tests.
+-   Expiring fails the level via Game Over ("Time's up!", reason
+    `TIME_EXPIRED`). HUD shows a live countdown bound to
+    `GameManager.time_remaining`; the timer runs only while playing,
+    never resets between waves, and answers/bullets never add to or
+    pause it beyond real elapsed ticks.
+-   `GameManager` owns `time_remaining`/`level_time_limit` and advances
+    through a deterministic `tick(delta)` so GUT tests need no scene
+    tree or wall clock. Answer resolution precedes expiry processing
+    each frame.
+-   **Testing:** extend `test_game_manager.gd` with timer
+    tick/expiry/pause/reset cases and `test_game_config.gd` with the
+    new time-limit settings and override resolution.
+-   **Milestone:** beat-the-clock sessions --- clear every wave inside
+    the level budget or lose to "Time's up!" --- with the timer state
+    machine covered by passing tests.
 
-### Phase 5 --- Level Progression
+### Phase 6 --- Level Progression
 
 -   Implement `LevelManager.gd`: completing all waves in a level
     triggers the `level_complete_banner.png` transition and advances to
@@ -182,7 +206,7 @@ playable milestone.
     wave/category structure but increasing difficulty, with
     `LevelManager` behavior covered by passing tests.
 
-### Phase 6 --- Score & High Score Persistence
+### Phase 7 --- Score & High Score Persistence
 
 -   Score display refined (top of screen, styled with the HUD's chosen
     font/iconography).
@@ -197,7 +221,7 @@ playable milestone.
 -   **Milestone:** high scores persist across app restarts, with
     `HighScoreManager`'s save/compare logic covered by passing tests.
 
-### Phase 7 --- New Question Categories (Stage C Content)
+### Phase 8 --- New Question Categories (Stage C Content)
 
 -   Add `prime_strategy.gd` (and any other advanced-concept strategies)
     as new files under `scripts/questions/strategies/`, registered with
@@ -214,7 +238,7 @@ playable milestone.
     categories, each with its own correct art, and covered by the same
     strategy-level test pattern established in earlier phases.
 
-### Phase 8 --- Effects, Animation & Audio Polish
+### Phase 9 --- Effects, Animation & Audio Polish
 
 -   Add the `enemy_explosion_spritesheet.png` destruction animation on
     correct answers (replacing the simple "disappear" from earlier
@@ -233,7 +257,7 @@ playable milestone.
     earlier phases.
 -   **Milestone:** game looks and sounds like a finished mobile game.
 
-### Phase 9 --- Mobile Export & Touch Optimization
+### Phase 10 --- Mobile Export & Touch Optimization
 
 -   Configure Android/iOS export presets in Godot.
 -   Verify touch target sizes for answer buttons (44px+ minimum touch
@@ -242,7 +266,7 @@ playable milestone.
 -   **Milestone:** installable build running on Android and/or iOS
     device.
 
-### Phase 10 --- Playtesting & Balancing
+### Phase 11 --- Playtesting & Balancing
 
 -   Playtest with target age group; adjust question difficulty pacing
     per level, distractor plausibility, wave length feel, enemy
@@ -254,7 +278,7 @@ playable milestone.
 -   **Milestone:** balanced, kid-tested build ready for wider release,
     with the full GUT suite passing.
 
-### Phase 11 --- Stretch / Future Expansion
+### Phase 12 --- Stretch / Future Expansion
 
 -   Additional math concepts as new strategies (fractions, percentages,
     factors/multiples).
@@ -280,9 +304,9 @@ question indefinitely. Enemy/formation descent remains removed.
 
 ## Phase Change Note — Level Timer, Enemy Return Fire, and Fixed Bullet Travel Time
 
-Three related gameplay changes extend Phase 4 and ripple forward:
+Three related gameplay changes extend Phase 4/5 and ripple forward:
 
-1. **Per-level time limit.** New Project Settings
+1. **Per-level time limit (now its own Phase 5).** New Project Settings
    `gameplay/seconds_per_wave` (default `30`) and
    `gameplay/level_time_limit_by_level` (default `{}`). A level's
    effective limit is a valid per-level override, otherwise
@@ -292,16 +316,46 @@ Three related gameplay changes extend Phase 4 and ripple forward:
    `TIME_EXPIRED`. `GameManager` owns `time_remaining` and is ticked
    deterministically for testability; `GameConfig.gd` is the only
    access path.
-2. **Enemy return fire on wrong answers.** The active enemy plays a
+2. **Enemy return fire on wrong answers (Phase 4).** The active enemy plays a
    brief fire animation and shoots an `enemy_bullet.png` projectile at
    the player whenever an answer is wrong. It is purely presentational:
    one life is still consumed by the authoritative event path, and no
    collision-based damage may be introduced.
-3. **Fixed bullet travel time.** All bullets — player and enemy — take
+3. **Fixed bullet travel time (Phase 4).** All bullets — player and enemy — take
    exactly **0.3 seconds** from source to target in every case,
    implemented as a fixed-duration tween shared via `bullet.gd`
    (`TRAVEL_TIME`), replacing distance-dependent/slow travel.
 
-Phase 5 restarts the timer at each level boundary; Phase 8 adds
-enemy-fire/player-hit sounds and a low-time warning; Phase 10 treats
+Phase 6 restarts the timer at each level boundary; Phase 9 adds
+enemy-fire/player-hit sounds and a low-time warning; Phase 11 treats
 the time budget as a tuning dimension.
+
+
+## Phase Change Note — Parallel Answer Resolution, Triangle Formation, and the Phase 4 Split
+
+Three changes, applied to both the requirements and the existing code:
+
+1. **Parallel answer resolution.** Bullet flight is now strictly
+   cosmetic in both directions. On a correct answer, score, active-enemy
+   destruction, and loading the next question resolve in the same frame
+   the player bullet launches — the player can answer again while the
+   bullet is still mid-flight. On a wrong answer, life loss, attempt
+   counting, and any Game Over resolve immediately; only the next
+   question's display may wait out the ~0.18 s red-flash interval, and
+   it never waits for the enemy bullet's launch or arrival. This makes
+   bullet travel (0.3 s each way) cost zero answering time. Normative
+   home: Phase 4 FR4.13; Spec §10.
+2. **Inverted-triangle formation.** The 2×5 grid is replaced by an
+   inverted triangle of 4 + 3 + 2 + 1 = 10 enemies, each row centered on
+   the screen's horizontal axis. The single bottom tip is the frontmost
+   target under the existing active-enemy ordering rule (lowest Y,
+   then lowest X). Normative home: Phase 3 FR3.2 and Implementation
+   Plan step 3; Spec §3.
+3. **Phase 4 split.** The old Phase 4 (lives + level timer + game over)
+   was too heavy to land as one playable increment. It is now two
+   phases: **Phase 4 — Lives, Wrong-Answer Feedback & Game Over**
+   (playable end-to-end without time pressure) and **Phase 5 — Level
+   Timer** (the countdown layered onto that working game). All later
+   phases shift by one: Level Progression 5→6, Score & High Score 6→7,
+   New Categories 7→8, Effects/Audio 8→9, Mobile Export 9→10,
+   Playtesting & Balancing 10→11, Stretch 11→12.

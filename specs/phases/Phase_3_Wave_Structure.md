@@ -20,9 +20,11 @@ but never move the formation.
     wave per Tech Stack §4: wave start (spawn 10), active-enemy
     tracking, on-correct-answer removal, on-wave-clear transition.
 -   FR3.2 --- **Wave start** instantiates all **10 `enemy.tscn`
-    instances at once**, arranged in a formation (e.g., grid), each
-    using the real sprite for the wave's category --- not spawned one at
-    a time.
+    instances at once**, arranged in the **inverted-triangle formation**
+    (rows of 4 - 3 - 2 - 1 enemies from top to bottom, each row centered
+    on the screen's horizontal axis --- see Implementation Plan step 3),
+    each using the real sprite for the wave's category --- not spawned
+    one at a time.
 -   FR3.3 --- Exactly one enemy at a time is "active" (linked to the
     currently displayed question). The active enemy is the
     **lowest/frontmost remaining enemy by Y position**; ties are broken
@@ -31,9 +33,11 @@ but never move the formation.
     changes (including after an enemy is removed or the formation is
     reset).
 -   FR3.4 --- On a correct answer, the active enemy is destroyed/removed
-    (bullet-travel feedback from Phase 2 preserved), the visible
-    formation shrinks by one, and the question panel advances to the
-    next active enemy's question.
+    and the question panel advances to the next active enemy's question
+    **in the same frame the player bullet launches** --- the flight is
+    purely presentational feedback and never delays destruction,
+    scoring, or the next question. The visible formation shrinks by
+    one.
 -   FR3.5 --- `multiplication_strategy.gd` and `division_strategy.gd`
     are added under `scripts/questions/strategies/`, registered in
     `question_generator.gd`, with **no changes** to
@@ -127,9 +131,12 @@ but never move the formation.
         is exhausted --- hook point for Phase 5's `LevelManager`, not
         fully implemented yet), then calls `start_wave()` again with a
         **fresh** set of 10.
-3.  **Formation layout**: implement a simple grid/row arrangement
-    function (e.g., 2 rows × 5 columns) positioning the 10 enemy
-    instances within the play area bounds from Spec §3's layout.
+3.  **Formation layout**: implement the **inverted triangle** --- rows
+    of 4, 3, 2, 1 enemies from top to bottom (summing to the 10-enemy
+    wave), each row centered on the screen's horizontal axis and
+    stepping downward within the play area bounds from Spec §3's
+    layout. The single bottom "tip" enemy is the natural frontmost
+    target under the active-enemy ordering rule (FR3.3).
 4.  **Wire `Main.gd`/game bootstrap** to own a `WaveManager` instance
     and call `start_wave("addition")` at game start instead of Phase 2's
     manual dev-triggered category switch.
@@ -246,9 +253,11 @@ question-flow/UI layer as needed.
 
 A wrong answer never moves the formation. The answer button itself provides
 the immediate red-flash feedback. With one allowed attempt, the wrong answer
-retire-and-replace flow is: red flash → consume one life → load a new question
-for the same active enemy. If a level override allows multiple attempts, the
-same question remains active until the attempt count is exhausted.
+retire-and-replace flow is: red flash → consume one life (immediately) →
+load a new question for the same active enemy as soon as the brief flash
+interval ends --- never waiting on any bullet animation (see Phase 4's
+parallel-resolution contract). If a level override allows multiple attempts,
+the same question remains active until the attempt count is exhausted.
 
 The active-enemy ordering rules and 10-enemy formation lifecycle are otherwise
 unchanged.

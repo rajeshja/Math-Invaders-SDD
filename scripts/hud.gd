@@ -2,7 +2,7 @@
 ## Main.gd/WaveManager signals (Tech Stack §5).
 ##
 ## Level/Health/Lives displays are placeholder nodes for now (their real
-## wiring lands in Phase 4/5) so the scene structure already matches
+## wiring lands in Phases 4-6) so the scene structure already matches
 ## Tech Stack §2 without those systems needing to restructure the HUD
 ## scene when they arrive.
 class_name Hud

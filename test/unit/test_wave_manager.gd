@@ -124,6 +124,39 @@ func test_active_enemy_is_lowest_on_screen_then_leftmost() -> void:
 	assert_eq(active, enemies[2], "with A gone, the leftmost of the tied-Y enemies should be active")
 
 
+func test_formation_spawns_as_inverted_triangle() -> void:
+	wave_manager.start_wave("addition")
+	var enemies: Array = enemies_container.get_children()
+
+	var row_y_positions: Array = []
+	var rows := {}
+	for enemy in enemies:
+		var y: float = enemy.position.y
+		if not rows.has(y):
+			rows[y] = []
+			row_y_positions.append(y)
+		rows[y].append(enemy.position.x)
+
+	assert_eq(row_y_positions.size(), 4, "the inverted triangle has exactly four rows")
+	row_y_positions.sort()
+	for row_index in range(row_y_positions.size()):
+		var xs: Array = rows[row_y_positions[row_index]]
+		assert_eq(xs.size(), WaveManagerScript.FORMATION_ROW_COUNTS[row_index],
+			"row %d should hold %d enemies (4-3-2-1 top to bottom)" % [row_index, WaveManagerScript.FORMATION_ROW_COUNTS[row_index]])
+		var row_center: float = (xs.min() + xs.max()) / 2.0
+		assert_almost_eq(row_center, WaveManagerScript.FORMATION_CENTER_X, 0.01,
+			"each triangle row must be centered on the screen's horizontal axis")
+
+	# The single bottom tip is the frontmost enemy and is targeted first.
+	var tip_y: float = row_y_positions[3]
+	var tip: Node = null
+	for enemy in enemies:
+		if enemy.position.y == tip_y:
+			tip = enemy
+	assert_eq(wave_manager.get_active_enemy(), tip,
+		"the triangle's bottom tip should be the first active enemy")
+
+
 func test_fresh_set_of_ten_spawns_on_wave_clear() -> void:
 	wave_manager.start_wave("addition")
 	var first_wave_ids: Array = []

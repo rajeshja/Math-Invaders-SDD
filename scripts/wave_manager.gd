@@ -32,19 +32,22 @@ signal wave_cleared(category: String)
 signal wrong_answer
 
 ## Emitted when the category_sequence is exhausted after a wave clears -
-## the hook point for Phase 5's LevelManager. Not acted on further here.
+## the hook point for Phase 6's LevelManager. Not acted on further here.
 signal level_cleared
 
 ## -- Config --------------------------------------------------------------
-const FORMATION_COLUMNS: int = 5
-const FORMATION_ROWS: int = 2
+## Inverted-triangle formation: rows of 4 - 3 - 2 - 1 enemies from top to
+## bottom (summing to the default 10-enemy wave). Each row is centered on
+## the screen's horizontal axis and narrows by one ship per row, ending in
+## the single frontmost "tip" enemy just above the player.
+const FORMATION_ROW_COUNTS: Array[int] = [4, 3, 2, 1]
+const FORMATION_CENTER_X: float = 360.0
 const FORMATION_TOP_Y: float = 160.0
 const FORMATION_ROW_SPACING: float = 130.0
-const FORMATION_LEFT_X: float = 90.0
 const FORMATION_COLUMN_SPACING: float = 135.0
 
 ## Default Stage A sequence (Spec §2 Level 1 example / Phase 3 FR3.7).
-## LevelManager (Phase 5) will be what mutates/extends this per level.
+## LevelManager (Phase 6) will be what mutates/extends this per level.
 @export var category_sequence: Array[String] = [
 	"addition", "subtraction", "multiplication", "division"
 ]
@@ -168,7 +171,7 @@ func _on_wave_clear() -> void:
 	wave_cleared.emit(current_category)
 	_sequence_index += 1
 	if _sequence_index >= category_sequence.size():
-		# Sequence exhausted - hook point for Phase 5's LevelManager.
+		# Sequence exhausted - hook point for Phase 6's LevelManager.
 		level_cleared.emit()
 		_sequence_index = 0
 	start_wave(category_sequence[_sequence_index])
@@ -208,9 +211,19 @@ func _clear_container() -> void:
 		child.free()
 
 
+## Inverted-triangle layout: row r holds FORMATION_ROW_COUNTS[r] enemies
+## centered on FORMATION_CENTER_X, rows stacked downward from
+## FORMATION_TOP_Y. Indices beyond the defined rows overflow into a left-
+## to-right continuation of the last row (only reachable when the
+## configured enemies_per_wave exceeds 4 + 3 + 2 + 1).
 func _formation_position(index: int) -> Vector2:
-	var row: int = index / FORMATION_COLUMNS
-	var col: int = index % FORMATION_COLUMNS
-	var x: float = FORMATION_LEFT_X + col * FORMATION_COLUMN_SPACING
+	var remaining: int = index
+	var row: int = 0
+	while row < FORMATION_ROW_COUNTS.size() - 1 and remaining >= FORMATION_ROW_COUNTS[row]:
+		remaining -= FORMATION_ROW_COUNTS[row]
+		row += 1
+	var count_in_row: int = FORMATION_ROW_COUNTS[row]
+	var row_width: float = (count_in_row - 1) * FORMATION_COLUMN_SPACING
+	var x: float = FORMATION_CENTER_X - row_width / 2.0 + remaining * FORMATION_COLUMN_SPACING
 	var y: float = FORMATION_TOP_Y + row * FORMATION_ROW_SPACING
 	return Vector2(x, y)

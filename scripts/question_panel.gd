@@ -48,6 +48,11 @@ func set_answer_buttons_enabled(enabled: bool) -> void:
 		button.disabled = not enabled or not button.has_meta("value")
 
 
+## Starts the wrong-answer red flash on the tapped button and returns
+## immediately - callers must NOT await this function. The styleboxes
+## restore themselves after WRONG_FLASH_SECONDS. Gameplay code awaits
+## wait_wrong_feedback() instead, so answer resolution stays decoupled
+## from (and parallel to) every bullet animation.
 func flash_wrong_answer(button: Button) -> void:
 	if button == null:
 		return
@@ -71,8 +76,20 @@ func flash_wrong_answer(button: Button) -> void:
 	for style_name in original_styles.keys():
 		button.add_theme_stylebox_override(style_name, flash_style)
 
+	get_tree().create_timer(WRONG_FLASH_SECONDS).timeout.connect(
+		_restore_flash_styles.bind(button, original_styles), CONNECT_ONE_SHOT)
+
+
+## Awaitable that resolves once the wrong-answer feedback interval has
+## elapsed - the only thing question advancement may ever wait on. It is
+## deliberately NOT tied to any bullet's flight time.
+func wait_wrong_feedback() -> void:
 	await get_tree().create_timer(WRONG_FLASH_SECONDS).timeout
 
+
+func _restore_flash_styles(button: Button, original_styles: Dictionary) -> void:
+	if not is_instance_valid(button):
+		return
 	for style_name in original_styles.keys():
 		button.add_theme_stylebox_override(style_name, original_styles[style_name])
 

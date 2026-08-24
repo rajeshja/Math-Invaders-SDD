@@ -17,7 +17,7 @@ func get_muzzle_position() -> Vector2:
 
 
 ## Placeholder for firing juice (flash/recoil/animation). Intentionally a
-## no-op stub until Phase 8 polish - kept as a single call site so visual
+## no-op stub until Phase 9 polish - kept as a single call site so visual
 ## feedback can be added later without touching callers.
 func play_fire_feedback() -> void:
 	pass

@@ -1,4 +1,4 @@
-# Phase 5 --- Level Progression
+# Phase 6 --- Level Progression
 
 **Goal:** introduce `LevelManager.gd` so that clearing a level's full
 set of waves advances the player to a new, harder level and resets the
@@ -7,7 +7,7 @@ level completion the proficiency checkpoint. Each new level runs
 against its own resolved time budget; running out of time fails the
 level via Game Over.
 
-**Source docs:** Build Plan §Phase 5, Spec §2 (level structure, category
+**Source docs:** Build Plan §Phase 6, Spec §2 (level structure, category
 sequence per level), §5 (Stage B --- expanded difficulty), §6 (HUD level
 display), Tech Stack §4 (`LevelManager.gd`), §8 (LevelManager testing
 strategy).
@@ -18,61 +18,61 @@ strategy).
 
 ### Functional Requirements
 
--   FR5.1 --- `LevelManager.gd` exists and tracks the current level
+-   FR6.1 --- `LevelManager.gd` exists and tracks the current level
     number, starting at Level 1.
--   FR5.2 --- When all waves in the current level's category sequence
+-   FR6.2 --- When all waves in the current level's category sequence
     are cleared (i.e., `WaveManager` finishes its last category's wave),
     `LevelManager` is notified, shows the `level_complete_banner.png`
     transition, and advances to the next level.
--   FR5.3 --- `LevelManager` computes a difficulty parameter that
+-   FR6.3 --- `LevelManager` computes a difficulty parameter that
     increases as levels increase and passes it to `QuestionGenerator`
     (via `WaveManager`) for every question generated at that level, per
     Spec §5's Stage A → Stage B progression (larger operand ranges at
     higher levels, same four categories).
--   FR5.4 --- The HUD displays the current **Level** number alongside
+-   FR6.4 --- The HUD displays the current **Level** number alongside
     score and lives, per Spec §6.
--   FR5.5 --- At the start of a new level, `LevelManager` resets
+-   FR6.5 --- At the start of a new level, `LevelManager` resets
     `GameManager.lives` to the configured `gameplay/starting_lives`
     value, then provides `WaveManager` with the level's category
     sequence and tells it to spawn the **first** wave's full set of 10
     enemies (Addition), rather than continuing from wherever the
     previous level left off.
--   FR5.6 --- The category sequence's **content** (Addition →
+-   FR6.6 --- The category sequence's **content** (Addition →
     Subtraction → Multiplication → Division) is unchanged level-to-level
     in this phase --- only the difficulty parameter changes. However,
     `WaveManager` now accepts this sequence as an externally-provided
     value from `LevelManager` rather than only using its own Phase 3
-    hardcoded default --- this is the ownership handoff Phase 7 depends
+    hardcoded default --- this is the ownership handoff Phase 8 depends
     on to later extend the sequence with new categories, without a
     further architecture change at that point.
--   FR5.7 --- At the start of each level, `LevelManager` resolves the
+-   FR6.7 --- At the start of each level, `LevelManager` resolves the
     effective time limit via `GameConfig.get_level_time_limit(current_level,
     category_sequence.size())` and calls
     `GameManager.start_level_timer(limit)` before the first wave spawns.
     The timer runs for the whole level (never resetting between waves);
-    when it reaches zero, the level is failed via the Phase 4 Game Over
-    path with reason `TIME_EXPIRED`. Per-level overrides change only that
-    level's budget.
+    when it reaches zero, the level is failed via the shared Game Over
+    path with reason `TIME_EXPIRED` (Phase 5). Per-level overrides change
+    only that level's budget.
 
 ### Non-Functional Requirements
 
--   NFR5.1 --- The difficulty formula (level → operand-range/parameter
+-   NFR6.1 --- The difficulty formula (level → operand-range/parameter
     mapping) must be a pure, deterministic function that's testable in
     isolation, without requiring `WaveManager`'s scene tree.
--   NFR5.2 --- `LevelManager` and `WaveManager` must coordinate so that
+-   NFR6.2 --- `LevelManager` and `WaveManager` must coordinate so that
     "level complete" fires **exactly once** per level clear --- no
     double-advancement from a race between wave-clear and level-clear
     signals, and no silent failure to advance.
--   NFR5.4 --- The level-boundary lives reset occurs exactly once per
+-   NFR6.4 --- The level-boundary lives reset occurs exactly once per
     completed level and uses the current configured starting-lives
     value; it must not reset lives on ordinary wave transitions. The
     same holds for the timer: `start_level_timer` fires exactly once
     per level with the newly resolved limit, and ordinary wave
     transitions never restart it.
--   NFR5.5 --- The effective `tries_per_question` value is resolved once at
+-   NFR6.5 --- The effective `tries_per_question` value is resolved once at
     level start from the global setting plus any valid per-level override and
     is applied consistently to every question in that level.
--   NFR5.3 --- `WaveManager`'s Phase 3 default `category_sequence`
+-   NFR6.3 --- `WaveManager`'s Phase 3 default `category_sequence`
     (`["addition","subtraction","multiplication","division"]`) remains
     its fallback when no external sequence is provided, so Phase 3's
     existing `test_wave_manager.gd` category-sequencing assertions
@@ -82,8 +82,8 @@ strategy).
 ### Out of Scope
 
 -   New question categories beyond the existing four (Stage C content is
-    Phase 7).
--   High score persistence and "New High Score!" messaging (Phase 6).
+    Phase 8).
+-   High score persistence and "New High Score!" messaging (Phase 7).
 
 ------------------------------------------------------------------------
 
@@ -95,8 +95,8 @@ strategy).
     `difficulty = current_level`, or a small lookup table mapping level
     ranges to Stage A/Stage B operand-size tiers per Spec §5). Document
     the chosen formula directly in `LevelManager.gd`'s code comments so
-    it's unambiguous for future phases (mirrors the documentation
-    discipline established in Phase 4 for the health-loss trigger).
+    it's unambiguous for future phases (mirrors the in-code documentation
+    discipline used for the Phase 4 lives contract).
 2.  **Finish the Phase 3 hook point**: extend
     `WaveManager.on_wave_clear()` so that when the just-cleared wave was
     the **last** category in `category_sequence`, it emits an
@@ -119,7 +119,7 @@ strategy).
         new difficulty value, producing a fresh set of 10 enemies for
         the first wave of the new level. `WaveManager` retains its Phase
         3 hardcoded default for standalone/test use when no sequence is
-        provided (NFR5.3).
+        provided (NFR6.3).
     -   `start_level()` also resolves this level's time budget ---
         `GameConfig.get_level_time_limit(current_level, sequence.size())`
         --- and calls `GameManager.start_level_timer(limit)` after

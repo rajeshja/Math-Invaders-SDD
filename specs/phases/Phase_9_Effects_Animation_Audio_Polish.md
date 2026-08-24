@@ -1,11 +1,11 @@
-# Phase 8 --- Effects, Animation & Audio Polish
+# Phase 9 --- Effects, Animation & Audio Polish
 
 **Goal:** layer presentation polish --- destruction animation, parallax
 starfield, damage feedback, button press states, sound, and music --- on
-top of the fully-functional game from Phases 0--7, without touching any
+top of the fully-functional game from Phases 0--8, without touching any
 underlying gameplay logic.
 
-**Source docs:** Build Plan §Phase 8, Spec §7
+**Source docs:** Build Plan §Phase 9, Spec §7
 (`enemy_explosion_spritesheet.png`, `starfield_overlay.png`,
 `answer_button_pressed.png`, remaining placeholder assets), Tech Stack
 §7 (Image Asset Integration --- explicitly documents the
@@ -21,48 +21,48 @@ playtesting).
 
 ### Functional Requirements
 
--   FR8.1 --- On a correct answer, the destroyed enemy plays the
+-   FR9.1 --- On a correct answer, the destroyed enemy plays the
     `enemy_explosion_spritesheet.png` animation (4 frames @ 128×128) at
     its position before being removed, replacing the instant "disappear"
     behavior used since Phase 1.
--   FR8.2 --- The static background from Phase 1 is replaced by
+-   FR9.2 --- The static background from Phase 1 is replaced by
     `starfield_overlay.png` layered above `background_space.png`,
     animated with a slow scroll/parallax effect, per Tech Stack §7.
--   FR8.3 --- Taking damage from a wrong answer (i.e.,
+-   FR9.3 --- Taking damage from a wrong answer (i.e.,
     `GameManager.take_damage()` firing, per Phase 4) triggers a
     screen-shake and/or flash visual effect. The enemy-fire animation,
     enemy bullet, and player-hit flash from Phase 4 remain the primary
     damage feedback; these effects layer on top of it without replacing
     it.
--   FR8.4 --- Answer buttons swap to `answer_button_pressed.png` on
+-   FR9.4 --- Answer buttons swap to `answer_button_pressed.png` on
     tap-down and revert to `answer_button_normal.png` on
     release/resolution, replacing default Godot theme feedback, for both
     correct and incorrect taps.
--   FR8.5 --- Sound effects play for: firing (on correct answer), hit
+-   FR9.5 --- Sound effects play for: firing (on correct answer), hit
     (enemy destroyed), miss (wrong answer --- including the enemy's
     return fire and its impact on the player), wave complete, level
     complete, and game over (both causes) --- each triggered from the existing
     corresponding signal/event; no new gameplay signals are introduced.
--   FR8.6 --- Background music loops during gameplay and stops (or
+-   FR9.6 --- Background music loops during gameplay and stops (or
     pauses) when `GameManager` enters `GAME_OVER`.
--   FR8.7 --- **Low-time warning**: when `time_remaining` drops to 10
+-   FR9.7 --- **Low-time warning**: when `time_remaining` drops to 10
     seconds or less (constant documented in code; not a new Project
     Setting), the HUD `TimeLabel` pulses red and an optional tick/beep
     plays each second until zero or level clear. Purely presentational;
     must not alter timer behavior or gameplay state.
--   FR8.8 --- Any placeholder images remaining from Spec §7's asset
+-   FR9.8 --- Any placeholder images remaining from Spec §7's asset
     table that weren't already replaced in an earlier phase are swapped
     for final art in this phase (including `enemy_bullet.png` from
     Phase 4).
 
 ### Non-Functional Requirements
 
--   NFR8.1 --- All additions in this phase are purely presentational: no
+-   NFR9.1 --- All additions in this phase are purely presentational: no
     changes to `GameManager`, `WaveManager`, `LevelManager`,
     `HighScoreManager`, or any question strategy's underlying
-    state/logic, and every existing GUT test from Phases 2--7 continues
+    state/logic, and every existing GUT test from Phases 2--8 continues
     to pass unmodified.
--   NFR8.2 --- Explosion animation and screen-shake/flash effects must
+-   NFR9.2 --- Explosion animation and screen-shake/flash effects must
     not block or delay the underlying game-state transition --- e.g.,
     `enemies_remaining`/HUD updates and the next question loading happen
     immediately on the logic side, decoupled from how long the visual
@@ -71,8 +71,8 @@ playtesting).
 ### Out of Scope
 
 -   Any new gameplay systems, categories, or scoring rules.
--   Export/build configuration (Phase 9).
--   Playtesting-driven balance changes (Phase 10).
+-   Export/build configuration (Phase 10).
+-   Playtesting-driven balance changes (Phase 11).
 
 ------------------------------------------------------------------------
 
@@ -85,7 +85,7 @@ playtesting).
     the animation finishes (or a short fixed timer), while
     `WaveManager.on_correct_answer()`'s logic-side updates
     (`enemies_remaining` decrement, HUD signal, next question load) fire
-    immediately and are not gated on the animation, per NFR8.2.
+    immediately and are not gated on the animation, per NFR9.2.
 2.  **Parallax starfield**: add `starfield_overlay.png` as a second
     layer above `background_space.png` in the `Background` node; animate
     a looping vertical offset via `AnimationPlayer` (or a `Sprite2D`
@@ -115,14 +115,14 @@ playtesting).
     style and play a per-second tick cue until the level clears or Game
     Over fires. No `GameManager` changes.
 8.  **Placeholder audit**: cross-check Spec §7's asset table against
-    what's actually been integrated across Phases 0--7 and swap in any
+    what's actually been integrated across Phases 0--8 and swap in any
     remaining placeholder-dimension images for final art.
 9.  **No new automated tests are expected for this phase** --- per Tech
     Stack §8, scene-heavy visual/audio behavior is lower priority for
     unit testing and is primarily verified manually. Instead, this
     phase's testing bar is a full regression pass of the existing GUT
     suite to confirm the new signal-driven effects didn't disturb any
-    underlying logic (NFR8.1).
+    underlying logic (NFR9.1).
 
 ------------------------------------------------------------------------
 
@@ -131,13 +131,13 @@ playtesting).
 ### Automated Tests (GUT)
 
 -   No new dedicated test file for this phase (consistent with Build
-    Plan Phase 8 and Tech Stack §8's guidance that visual/audio polish
+    Plan Phase 9 and Tech Stack §8's guidance that visual/audio polish
     is manually verified).
 -   **Regression check:** re-run the full existing GUT suite (all
     strategy tests, `question_generator`, `WaveManager`, `LevelManager`,
     `GameManager`, `HighScoreManager`) to confirm 0 failures and no
     behavioral drift introduced by wiring new signal listeners for
-    effects/audio, per NFR8.1.
+    effects/audio, per NFR9.1.
 
 ### Manual Test Checklist
 
@@ -198,10 +198,13 @@ still passing.
 
 The red flash on the tapped answer button is required gameplay feedback, not
 optional polish. It should be brief (roughly 150–300 ms) and should occur
-immediately on the wrong tap. The next question is loaded after the feedback
-when the effective attempt count has been exhausted; for the default one
-attempt configuration, that means every wrong answer produces a red flash and
-then a new question.
+immediately on the wrong tap. Life loss, attempt counting, and any Game Over
+resolve instantly per Phase 4's parallel-resolution contract (FR4.13); only
+the next question's display waits out the feedback interval when the effective
+attempt count has been exhausted --- never any bullet animation. For the
+default one-attempt configuration, that means every wrong answer produces a
+red flash, the enemy bullet fires in parallel, and the new question appears as
+soon as the flash interval ends.
 
 If a level allows multiple attempts, the same question remains active after
 the flash until the configured number of attempts is exhausted.

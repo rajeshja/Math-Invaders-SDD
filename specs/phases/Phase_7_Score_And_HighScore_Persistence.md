@@ -1,4 +1,4 @@
-# Phase 6 --- Score & High Score Persistence
+# Phase 7 --- Score & High Score Persistence
 
 **Goal:** give the score its final HUD styling, add
 `HighScoreManager.gd` so the player's best score survives across app
@@ -6,7 +6,7 @@ restarts, and complete the "Play Again" session-restart flow that Phase
 4 explicitly left minimal --- clearly defining what a restart resets and
 what it must leave untouched.
 
-**Source docs:** Build Plan §Phase 6, Spec §4 (core loop step 10), §6
+**Source docs:** Build Plan §Phase 7, Spec §4 (core loop step 10), §6
 (high scores tracked and persisted), Tech Stack §5
 (`HighScoreManager.gd`), §6 (Persistence Details), §8 (HighScoreManager
 testing strategy); Phase 4 FR4.8 (Game Over is a terminated state "until
@@ -19,38 +19,38 @@ deferred to this phase).
 
 ### Functional Requirements
 
--   FR6.1 --- The score display is refined at the top of the HUD using
+-   FR7.1 --- The score display is refined at the top of the HUD using
     the game's chosen font/iconography (visual polish only; the
     underlying `score_changed` signal and value from `GameManager`,
     Phase 4, are unchanged).
--   FR6.2 --- `HighScoreManager.gd` (autoload) persists a single
+-   FR7.2 --- `HighScoreManager.gd` (autoload) persists a single
     high-score value locally via `FileAccess`/`ConfigFile` or a small
     JSON file in `user://`, per Tech Stack §6.
--   FR6.3 --- `HighScoreManager` loads the stored high score at startup
+-   FR7.3 --- `HighScoreManager` loads the stored high score at startup
     and exposes `get_high_score() -> int`.
--   FR6.4 --- `HighScoreManager` exposes
+-   FR7.4 --- `HighScoreManager` exposes
     `save_if_higher(score: int) -> bool`, which updates and persists the
     stored high score only if `score` exceeds the current stored value,
     returning whether a new record was set.
--   FR6.5 --- When `GameManager`'s `game_over` signal fires (Phase 4),
+-   FR7.5 --- When `GameManager`'s `game_over` signal fires (Phase 4),
     the game-over handling code (`Main.gd`/`GameOverScreen.gd` --- the
     same listener that swaps in the Game Over screen in Phase 4) calls
     `HighScoreManager.save_if_higher(score)` with the session's final
     score, per Spec §4 step 10. `GameManager` itself does not call
     `HighScoreManager` directly, keeping the two autoloads decoupled per
     Phase 0's architecture-ownership note.
--   FR6.6 --- The Game Over screen shows **"New High Score!"** alongside
+-   FR7.6 --- The Game Over screen shows **"New High Score!"** alongside
     the final score when `save_if_higher()` returns `true`, and
     otherwise shows the current persisted high score alongside the final
     score.
--   FR6.7 --- The stored high score persists across app restarts
+-   FR7.7 --- The stored high score persists across app restarts
     (verified by relaunching after a session).
--   FR6.8 --- The Game Over screen's "Play Again" control (Phase 4,
+-   FR7.8 --- The Game Over screen's "Play Again" control (Phase 4,
     FR4.8) is fully wired in this phase: tapping it returns the game to
     a freshly-started session --- Level 1, Wave 1 (Addition), 10 fresh
     enemies --- exactly as if the app had just been launched, and
     re-enables `QuestionPanel` input.
--   FR6.9 --- Restart resets exactly the following session state, and
+-   FR7.9 --- Restart resets exactly the following session state, and
     nothing else:
     -   **`GameManager`**: `score → 0`, `lives →` the configured
         starting lives count, `game_state → PLAYING`, `time_remaining →`
@@ -58,15 +58,15 @@ deferred to this phase).
         `score_changed`/`lives_changed`/`time_changed` so the HUD
         updates immediately).
     -   **`LevelManager`**: `current_level → 1`, `difficulty →` the
-        Level 1 value from its formula (Phase 5).
+        Level 1 value from its formula (Phase 6).
     -   **`WaveManager`**: any remaining enemy and bullet nodes from the
         previous session are cleared, the category sequence is rebuilt
         for Level 1 (the base 4-category list, or 5 if the advanced
-        threshold logic from Phase 7 is already in place and Level 1
+        threshold logic from Phase 8 is already in place and Level 1
         still qualifies --- it won't, by construction, but the reset
-        must not hardcode "4 waves" in a way that breaks once Phase 7
+        must not hardcode "4 waves" in a way that breaks once Phase 8
         lands), and a fresh Wave 1 (Addition) is spawned.
--   FR6.10 --- `HighScoreManager`'s stored value is explicitly **not**
+-   FR7.10 --- `HighScoreManager`'s stored value is explicitly **not**
     touched by restart --- the high score set (or not) by the session
     that just ended remains exactly as `save_if_higher()` left it, and
     the newly-restarted session's future `game_over` will compare
@@ -74,25 +74,25 @@ deferred to this phase).
 
 ### Non-Functional Requirements
 
--   NFR6.1 --- Save/load logic must be testable using GUT's temp-file
+-   NFR7.1 --- Save/load logic must be testable using GUT's temp-file
     helpers rather than the real `user://` save file, so test runs never
     overwrite the player's actual saved high score.
--   NFR6.2 --- Save/reload must round-trip exactly (the value written is
+-   NFR7.2 --- Save/reload must round-trip exactly (the value written is
     the value read back), and a missing or first-run save file must be
     handled gracefully (default to `0`) without erroring.
--   NFR6.3 --- A score exactly equal to the current high score does
+-   NFR7.3 --- A score exactly equal to the current high score does
     **not** count as beating it --- `save_if_higher` only updates on a
     strictly greater score, avoiding a false "New High Score!" message
     on a tie.
--   NFR6.4 --- Restart is a **single coordinated call path**, not three
+-   NFR7.4 --- Restart is a **single coordinated call path**, not three
     independently-triggered resets that could race --- stale
     enemy/bullet nodes and any lingering banner overlays must be cleared
     *before* the fresh Level 1/Wave 1 spawn happens, so the player never
     briefly sees old-session and new-session state overlap.
--   NFR6.5 --- Terminology note for this doc: **"restart"**/**"Play
+-   NFR7.5 --- Terminology note for this doc: **"restart"**/**"Play
     Again"** refers to starting a new session from the Game Over screen
-    without closing the app (FR6.8--FR6.10); **"app restart"** (FR6.7,
-    NFR6.1) refers to fully closing and relaunching the app, which is
+    without closing the app (FR7.8--FR7.10); **"app restart"** (FR7.7,
+    NFR7.1) refers to fully closing and relaunching the app, which is
     what high-score persistence is actually tested against. The two are
     independent --- a session restart never touches disk, and an app
     restart never touches in-memory
@@ -101,7 +101,7 @@ deferred to this phase).
 
 ### Out of Scope
 
--   Multiple/per-player high score profiles (Phase 11 stretch).
+-   Multiple/per-player high score profiles (Phase 12 stretch).
 -   Any change to how `GameManager` computes or increments score during
     play (Phase 4, unchanged).
 
@@ -149,20 +149,20 @@ deferred to this phase).
     3.  `LevelManager.reset_and_start()` --- sets `current_level = 1`,
         recomputes `difficulty` for Level 1, builds the Level 1
         `category_sequence`, hands it to `WaveManager` (the same
-        `set_category_sequence()` hand-off from Phase 5), and calls
+        `set_category_sequence()` hand-off from Phase 6), and calls
         `WaveManager.start_wave("addition")`, producing a fresh 10-enemy
         formation.
     4.  Hide the `GameOverScreen` and re-enable `QuestionPanel` input.
 
     -   `HighScoreManager` is **not** called anywhere in this path
-        (FR6.10) --- its state carries forward untouched from the
+        (FR7.10) --- its state carries forward untouched from the
         session that just ended.
 6.  **Write GUT tests** for `HighScoreManager` (see Testing Plan), using
     GUT's temp-file/temp-path helpers so the real
     `user://highscore.json` is never touched by the test suite. Also
     extend `test_game_manager.gd` (Phase 4) and `test_level_manager.gd`
-    (Phase 5) to cover `reset_session()`/`reset_and_start()` in
-    isolation, per the pattern Phase 7 already used to extend
+    (Phase 6) to cover `reset_session()`/`reset_and_start()` in
+    isolation, per the pattern Phase 8 already used to extend
     `test_level_manager.gd`.
 
 ------------------------------------------------------------------------
@@ -175,7 +175,7 @@ deferred to this phase).
 `high_score` and returns `true` when `score` is strictly greater than
 the current stored value. - `save_if_higher(score)` leaves `high_score`
 unchanged and returns `false` when `score` is less than or equal to the
-current stored value (explicitly covers the tie case per NFR6.3). -
+current stored value (explicitly covers the tie case per NFR7.3). -
 Save/reload round-trips correctly: after `save_if_higher()` writes a
 value, a **new** `HighScoreManager` instance pointed at the same (temp)
 path loads back the identical value via
@@ -185,9 +185,9 @@ malformed/corrupt save file is handled gracefully, falling back to a
 default rather than crashing `load_high_score()`. - All of the above use
 GUT's temp-file/temp-directory helpers to override `save_path` for the
 duration of the test --- **the real `user://highscore.json` is never
-read or written by the test suite**, per NFR6.1.
+read or written by the test suite**, per NFR7.1.
 
-**`test_game_manager.gd` (extended, per NFR6.4/FR6.9)** -
+**`test_game_manager.gd` (extended, per NFR7.4/FR7.9)** -
 `reset_session()` sets `score = 0`, `lives = configured starting_lives`,
 and `game_state = PLAYING`, regardless of what state the values were in
 beforehand (including from `GAME_OVER`). - `reset_session()` emits
@@ -200,11 +200,11 @@ a later level (e.g., Level 4), calling `reset_and_start()` resets
 value --- not left over from the prior session. - `reset_and_start()`
 calls the stubbed `WaveManager`'s sequence-setting method with the Level
 1 sequence and `start_wave("addition")`, mirroring the assertion already
-used for ordinary level starts (Phase 5).
+used for ordinary level starts (Phase 6).
 
 **Cross-cutting regression check** - `HighScoreManager`'s test suite is
 unaffected by anything in the restart path --- no restart-related test
-double or fixture touches `HighScoreManager`, confirming FR6.10 at the
+double or fixture touches `HighScoreManager`, confirming FR7.10 at the
 test level, not just by convention.
 
 ### Manual Test Checklist

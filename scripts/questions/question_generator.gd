@@ -5,7 +5,7 @@
 ## (Main.gd, WaveManager.gd) never need to know which concrete strategy is
 ## running - this is the ONLY class they talk to for questions.
 ##
-## Adding a new category (e.g. Phase 7's "prime") means adding one new
+## Adding a new category (e.g. Phase 8's "prime") means adding one new
 ## strategy file and one registration line here - no other call site
 ## changes (Phase 2 NFR2.2, Phase 3 FR3.5).
 class_name QuestionGenerator

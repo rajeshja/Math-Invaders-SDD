@@ -86,12 +86,12 @@ control exactly which math skill is being practiced at any moment.
     ┌─────────────────────────────┐
     │ Score:120 Lvl 2 🚀x2 ♥♥♥ ⏱87 │  ← HUD (top)
     │         Subtraction  6/10    │  ← Wave/category + remaining count
-    │   *  E  E  E  *  E  E  ·     │
-    │  ·    E     E    ·   E  *    │  ← Full formation of remaining
-    │     E    *      E    ·       │     enemies, shrinks as answered
-    │      ·        *        ·     │     Deep space bg (near-black/
-    │                  ↑            │     dark navy, sparse stars)
-    │                bullet         │
+    │       E   E   E   E          │  ← Formation row 1 (4 enemies)
+    │         E   E   E            │  ← Row 2 (3)
+    │           E   E              │  ← Row 3 (2) --- shrinks as answered
+    │             E                │  ← Row 4: the "tip" (active target)
+    │                  ↑            │     Deep space bg (near-black/
+    │                bullet         │     dark navy, sparse stars)
     │                               │
     │           🚀 (player)         │  ← Player ship, fixed near bottom
     ├──────────────────────────────┤
@@ -103,10 +103,14 @@ control exactly which math skill is being practiced at any moment.
     slowly-parallaxing starfield.
 -   **Player ship:** Fixed horizontal position near the bottom, above
     the question panel; visually fires when a correct answer is chosen.
--   **Enemies:** All 10 enemies for the current wave spawn together in a
-    formation at the start of the wave and remain stationary while the
-    player answers. One enemy at a time is the "active" target tied to
-    the current question; as questions are answered correctly, that
+-   **Enemies:** All 10 enemies for the current wave spawn together at
+    the start of the wave in an **inverted-triangle formation** ---
+    rows of 4, 3, 2, and 1 enemies from top to bottom, each row
+    centered on the screen's horizontal axis --- and remain stationary
+    while the player answers. One enemy at a time is the "active"
+    target tied to the current question; by the lowest-Y-then-lowest-X
+    ordering this is naturally the triangle's bottom tip first, then
+    upward row by row. As questions are answered correctly, that
     enemy is destroyed and removed, visibly shrinking the formation. A
     wrong answer does not move or remove any enemy.
 -   **Question panel:** Anchored to the bottom of the screen, always
@@ -130,23 +134,27 @@ control exactly which math skill is being practiced at any moment.
 2.  The question and its 4 choices are shown in the question panel, tied
     to the active enemy.
 3.  Player taps an answer button.
-4.  **Correct:** player ship fires a bullet at the active enemy; the
-    enemy is destroyed and removed from the formation --- the player
-    visibly sees the remaining count drop (e.g., 10 → 9); score
-    increases; wave progress updates (e.g., "6/10 remaining"); a new
-    question loads, linked to the next active enemy.
+4.  **Correct:** player ship fires a bullet at the active enemy and,
+    in the same instant, the enemy is destroyed and removed from the
+    formation --- bullet flight is purely presentational, so score
+    increases, wave progress updates (e.g., "6/10 remaining"), and a
+    new question loads immediately: the player can answer again while
+    the bullet is still visibly mid-flight. The player visibly sees
+    the remaining count drop (e.g., 10 → 9).
 5.  **Incorrect:** the active enemy and the rest of the formation remain
     in place. The selected answer button flashes red, the active enemy
     visibly fires a bullet at the player ship (traveling for exactly
     0.3 seconds and ending in a brief player-hit flash --- purely
     presentational), and the player takes
-    one point of damage: exactly one life is consumed. With the default
+    one point of damage: exactly one life is consumed, immediately ---
+    never delayed by any animation. With the default
     `tries_per_question = 1`, the current question is retired and a new
-    question is loaded. If the current level overrides the setting to a
-    value greater than 1, the same question may remain active until the
-    configured number of attempts has been used; every wrong attempt still
-    consumes exactly one life. No enemy is destroyed or moved by a wrong
-    answer.
+    question is loaded as soon as the brief red-flash interval ends,
+    never waiting on the enemy bullet. If the current level overrides
+    the setting to a value greater than 1, the same question may remain
+    active until the configured number of attempts has been used; every
+    wrong attempt still consumes exactly one life. No enemy is destroyed
+    or moved by a wrong answer.
 6.  **Life depletion:** when lives reach 0, the game enters `GAME_OVER`
     immediately and disables further answering. The number of starting
     lives is configurable at project level; the default is 3.
@@ -444,3 +452,12 @@ target in every case, implemented as a fixed-duration tween rather than a
 fixed velocity. The enemy fire visual is presentational only: it must not
 block input gating, question advancement, life consumption, or any
 Game Over transition, and no collision-based damage path may be introduced.
+
+**Parallel answer resolution (authoritative):** bullet flight time never
+takes away from the time available to answer questions. On a correct
+answer, score, destruction of the active enemy, and loading the next
+question all resolve at the same instant the player bullet launches; on a
+wrong answer, life consumption, attempt counting, and any Game Over
+transition resolve immediately, and only the next question's *display*
+may wait out the brief red-flash feedback interval (~0.18 s) --- never
+the launch, telegraph, or arrival of any bullet.
