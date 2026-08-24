@@ -67,6 +67,7 @@ var enemies_remaining: int = 0
 var enemies_per_wave: int = GameConfig.DEFAULT_ENEMIES_PER_WAVE
 var _sequence_index: int = -1
 var _active_enemy: Node = null
+var _pending_hit_enemies: Array[Node] = []
 
 
 func _ready() -> void:
@@ -80,6 +81,7 @@ func _ready() -> void:
 func start_wave(category: String) -> void:
 	current_category = category
 	_clear_container()
+	_pending_hit_enemies.clear()
 	enemies_per_wave = GameConfig.get_enemies_per_wave()
 
 	for i in range(enemies_per_wave):
@@ -117,22 +119,43 @@ func get_active_enemy() -> Node:
 	return remaining[0]
 
 
-## Call after a bullet confirms it hit the active enemy. Destroys it,
-## decrements the remaining count, and either triggers wave-clear or
-## advances to the next active enemy's question (Phase 3 FR3.4).
-func on_correct_answer() -> void:
-	if _active_enemy == null:
+## Call when a correct answer launches its player bullet. The targeted enemy
+## stays visible until `on_enemy_hit()` receives that bullet's arrival, but is
+## excluded from active-enemy selection so the next question can appear while
+## the bullet is in flight. The no-argument form retains the original
+## confirmed-hit behavior for non-visual callers.
+func on_correct_answer(target: Node = null) -> void:
+	var confirmed_immediately: bool = target == null
+	if target == null:
+		target = _active_enemy
+	if target == null or not is_instance_valid(target):
 		return
-	if is_instance_valid(_active_enemy):
-		# Detach immediately so get_active_enemy()'s next lookup (below)
-		# never sees this enemy via get_children() - queue_free()/destroy()
-		# only defers the actual memory free, not membership in the tree.
-		if _active_enemy.get_parent() == enemies_container:
-			enemies_container.remove_child(_active_enemy)
-		if _active_enemy.has_method("destroy"):
-			_active_enemy.destroy()
+	if _pending_hit_enemies.has(target):
+		return
+	_pending_hit_enemies.append(target)
+	if confirmed_immediately:
+		on_enemy_hit(target)
+		if enemies_remaining > 0:
+			_active_enemy = get_active_enemy()
+			_emit_active_question()
+		return
+	_active_enemy = get_active_enemy()
+	_emit_active_question()
+
+
+## Completes the gameplay side of a player-bullet hit: removes the enemy,
+## updates wave progress, and starts the next wave only after the hit arrives.
+func on_enemy_hit(enemy: Node) -> void:
+	if enemy == null or not _pending_hit_enemies.has(enemy):
+		return
+	_pending_hit_enemies.erase(enemy)
+	if is_instance_valid(enemy):
+		if enemy.get_parent() == enemies_container:
+			enemies_container.remove_child(enemy)
+		if enemy.has_method("destroy"):
+			enemy.destroy()
 		else:
-			_active_enemy.queue_free()
+			enemy.queue_free()
 
 	enemies_remaining = max(0, enemies_remaining - 1)
 	wave_progress_updated.emit(current_category, enemies_remaining, enemies_per_wave)
@@ -140,9 +163,6 @@ func on_correct_answer() -> void:
 	if enemies_remaining == 0:
 		_active_enemy = null
 		_on_wave_clear()
-	else:
-		_active_enemy = get_active_enemy()
-		_emit_active_question()
 
 
 ## Wrong answer: emit the damage event and leave the active enemy and
@@ -187,7 +207,11 @@ func _emit_active_question() -> void:
 func _remaining_enemies() -> Array:
 	if enemies_container == null:
 		return []
-	return enemies_container.get_children()
+	var remaining: Array = []
+	for enemy in enemies_container.get_children():
+		if not _pending_hit_enemies.has(enemy):
+			remaining.append(enemy)
+	return remaining
 
 
 func _compare_active_order(a: Node, b: Node) -> bool:

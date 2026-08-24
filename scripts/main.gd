@@ -90,23 +90,27 @@ func _on_answer_selected(value: int, button: Button) -> void:
 		_resolve_wrong_answer(button)
 
 
-## Correct answers resolve immediately: score, enemy destruction, and the
-## next question all happen in the same frame the player bullet LAUNCHES.
-## The bullet in flight is purely presentational - its travel time must
-## never delay the next question being ready to answer.
+## Correct answers launch the bullet and advance the question immediately.
+## The enemy remains visible until the bullet's arrival callback confirms the
+## hit, so visual destruction follows the projectile without blocking input.
 func _resolve_correct_answer() -> void:
 	var target: Node2D = _wave_manager.get_active_enemy() as Node2D
 	if target != null:
-		_fire_player_bullet(target.global_position)
+		_fire_player_bullet(target)
 	GameManager.add_score(1)
-	_wave_manager.on_correct_answer()
+	_wave_manager.on_correct_answer(target)
 
 
-func _fire_player_bullet(target_position: Vector2) -> void:
+func _fire_player_bullet(target: Node2D) -> void:
 	var bullet: Bullet = BULLET_SCENE.instantiate()
+	bullet.arrived.connect(_on_player_bullet_arrived.bind(target), CONNECT_ONE_SHOT)
 	_bullets_container.add_child(bullet)
-	bullet.launch(_player.get_muzzle_position(), target_position)
+	bullet.launch(_player.get_muzzle_position(), target.global_position)
 	_player.play_fire_feedback()
+
+
+func _on_player_bullet_arrived(target: Node2D) -> void:
+	_wave_manager.on_enemy_hit(target)
 
 
 ## Wrong-answer return-fire feedback (FR4.11): the active enemy plays a

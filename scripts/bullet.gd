@@ -3,9 +3,9 @@
 ## captured at spawn time in EXACTLY TRAVEL_TIME seconds regardless of
 ## distance - a fixed-duration tween, not a fixed velocity (FR4.12).
 ##
-## Purely presentational: whoever launched it resolves all gameplay (score,
-## enemy destruction, next question) at launch time - the flight itself is
-## feedback only and must never gate question advancement or input (FR4.13).
+## The launch-time answer flow resolves score and next-question selection;
+## player-bullet arrival confirms enemy destruction, while flight never gates
+## question advancement or input.
 ## The target is a plain Vector2 (not a live reference to the enemy node)
 ## so the bullet's own movement never depends on the enemy still existing.
 class_name Bullet
