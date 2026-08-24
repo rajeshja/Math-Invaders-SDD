@@ -25,10 +25,40 @@ func test_reset_session_loads_configured_starting_lives() -> void:
 	assert_false(manager.is_game_over())
 
 
+func test_new_session_starts_playing_with_no_reason_recorded() -> void:
+	assert_eq(manager.game_state, manager.GameState.PLAYING)
+	assert_eq(manager.last_game_over_reason, manager.GameOverReason.NONE)
+
+
 func test_wrong_answer_damage_consumes_exactly_one_life() -> void:
 	manager.lose_life()
 
 	assert_eq(manager.lives, 2)
+
+
+func test_repeated_wrong_answers_consume_one_life_each() -> void:
+	manager.lose_life()
+	manager.lose_life()
+
+	assert_eq(manager.lives, 1)
+	assert_false(manager.is_game_over())
+
+
+func test_correct_answer_score_does_not_change_lives() -> void:
+	manager.add_score(1)
+
+	assert_eq(manager.score, 1)
+	assert_eq(manager.lives, 3)
+
+
+func test_oversized_damage_clamps_at_zero_instead_of_going_negative() -> void:
+	watch_signals(manager)
+
+	manager.take_damage(5)
+
+	assert_eq(manager.lives, 0)
+	assert_true(manager.is_game_over())
+	assert_signal_emit_count(manager, "game_over", 1)
 
 
 func test_game_over_fires_once_at_zero_and_lives_never_go_negative() -> void:
@@ -44,8 +74,52 @@ func test_game_over_fires_once_at_zero_and_lives_never_go_negative() -> void:
 	assert_signal_emit_count(manager, "game_over", 1)
 
 
-func test_correct_answer_score_does_not_change_lives() -> void:
-	manager.add_score(1)
+func test_depletion_records_lives_depleted_reason() -> void:
+	manager.lose_life()
+	manager.lose_life()
+	manager.lose_life()
 
-	assert_eq(manager.score, 1)
+	assert_eq(
+		manager.last_game_over_reason,
+		manager.GameOverReason.LIVES_DEPLETED)
+
+
+func test_events_after_game_over_are_ignored() -> void:
+	watch_signals(manager)
+
+	manager.lose_life()
+	manager.lose_life()
+	manager.lose_life()
+	manager.lose_life()
+	manager.lose_life()
+	manager.add_score(10)
+
+	assert_eq(manager.lives, 0)
+	assert_eq(manager.score, 0)
+	assert_signal_emit_count(manager, "game_over", 1)
+	assert_signal_emit_count(manager, "lives_changed", 3)
+
+
+func test_reset_session_restores_lives_clears_reason_and_resumes_play() -> void:
+	manager.add_score(7)
+	manager.lose_life()
+	manager.lose_life()
+	manager.lose_life()
+	assert_true(manager.is_game_over())
+
+	ProjectSettings.set_setting(GameConfig.STARTING_LIVES_SETTING, 5)
+	manager.reset_session()
+
+	assert_eq(manager.lives, 5)
+	assert_eq(manager.score, 0)
+	assert_eq(manager.game_state, manager.GameState.PLAYING)
+	assert_eq(manager.last_game_over_reason, manager.GameOverReason.NONE)
+	assert_false(manager.is_game_over())
+
+
+func test_damage_is_only_consumed_while_playing() -> void:
+	manager.game_state = manager.GameState.PAUSED
+	manager.lose_life()
+
 	assert_eq(manager.lives, 3)
+	assert_false(manager.is_game_over())

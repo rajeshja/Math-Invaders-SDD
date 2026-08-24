@@ -8,6 +8,7 @@ class_name Main
 extends Node2D
 
 const BULLET_SCENE: PackedScene = preload("res://scenes/bullet.tscn")
+const ENEMY_BULLET_SCENE: PackedScene = preload("res://scenes/enemy_bullet.tscn")
 const QuestionAttemptTrackerScript = preload("res://scripts/question_attempt_tracker.gd")
 
 @onready var _wave_manager: WaveManager = $WaveManager
@@ -17,6 +18,7 @@ const QuestionAttemptTrackerScript = preload("res://scripts/question_attempt_tra
 @onready var _hud: Hud = $HUD
 @onready var _question_panel: QuestionPanel = $QuestionPanel
 @onready var _wave_banner: WaveBanner = $WaveBanner
+@onready var _game_over_overlay: GameOverOverlay = $GameOverOverlay
 
 var _current_question: Dictionary = {}
 var _accepting_input: bool = true
@@ -36,6 +38,11 @@ func _ready() -> void:
 	_wave_manager.question_ready.connect(_on_question_ready)
 	_wave_manager.wave_progress_updated.connect(_hud.update_wave_progress)
 	_wave_manager.wave_cleared.connect(_on_wave_cleared)
+	# The enemy return-fire visual path listens to the SAME single
+	# wrong-answer event the damage path consumes (FR4.11/NFR4.2). It is
+	# presentational only - it never decrements lives and never blocks
+	# question flow, input, or Game Over.
+	_wave_manager.wrong_answer.connect(_on_enemy_return_fire)
 
 	_question_panel.answer_selected.connect(_on_answer_selected)
 
@@ -85,6 +92,22 @@ func _fire_player_bullet(target_position: Vector2) -> void:
 	_player.play_fire_feedback()
 
 
+## Wrong-answer return-fire feedback (FR4.11): the active enemy plays a
+## ~0.1 s fire telegraph and one enemy bullet launches from its position
+## toward the player ship, flying exactly 0.3 s (Bullet.TRAVEL_TIME) and
+## ending in a brief player-hit flash. Runs synchronously alongside the
+## damage path; nothing here gates gameplay (NFR4.6).
+func _on_enemy_return_fire() -> void:
+	var shooter := _wave_manager.get_active_enemy() as Node2D
+	if shooter == null:
+		return
+	shooter.play_fire_feedback()
+	var bullet: EnemyBullet = ENEMY_BULLET_SCENE.instantiate()
+	bullet.arrived.connect(_player.play_hit_flash)
+	_bullets_container.add_child(bullet)
+	bullet.launch(shooter.global_position, _player.global_position)
+
+
 ## Wrong-answer logic resolves immediately (life loss, attempt counting,
 ## Game Over precedence). Only the next question's DISPLAY waits out the
 ## brief red-flash feedback interval; enemy return fire (introduced by the
@@ -116,3 +139,14 @@ func _resolve_wrong_answer(button: Button) -> void:
 func _on_game_over() -> void:
 	_accepting_input = false
 	_question_panel.set_answer_buttons_enabled(false)
+	_game_over_overlay.show_game_over(GameManager.score, _game_over_reason_text())
+
+
+## Maps GameManager's reason enum to the Game Over screen's reason line.
+## "Time's up!" (TIME_EXPIRED) joins in Phase 5.
+func _game_over_reason_text() -> String:
+	match GameManager.last_game_over_reason:
+		GameManager.GameOverReason.LIVES_DEPLETED:
+			return "Out of lives!"
+		_:
+			return ""

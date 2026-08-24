@@ -30,6 +30,11 @@ var linked_question: Dictionary = {}
 
 @onready var _sprite: Sprite2D = $Sprite2D if has_node("Sprite2D") else null
 
+## Brief fire telegraph duration (~0.1 s) played on wrong answers (FR4.11).
+const FIRE_TELEGRAPH_SECONDS := 0.1
+
+var _telegraph_tween: Tween = null
+
 
 ## Sets category + linked question and swaps the sprite texture for the
 ## category (Phase 2 FR2.7 / Phase 3 FR3.6).
@@ -54,3 +59,26 @@ func _apply_category_texture() -> void:
 ## arrival), not by the enemy itself.
 func destroy() -> void:
 	queue_free()
+
+
+## Brief fire telegraph before this enemy's return-fire bullet launches
+## (FR4.11): a quick flash + scale "recoil" tween. Fire-and-forget and
+## non-blocking - callers must NOT await it; gameplay (life loss, attempt
+## counting, Game Over) never waits on this animation.
+func play_fire_feedback() -> void:
+	if _sprite == null:
+		return
+	if _telegraph_tween != null and _telegraph_tween.is_valid():
+		_telegraph_tween.kill()
+	_sprite.scale = Vector2.ONE
+	_sprite.modulate = Color(1, 1, 1, 1)
+	_telegraph_tween = create_tween()
+	_telegraph_tween.set_parallel(true)
+	_telegraph_tween.tween_property(
+		_sprite, "scale", Vector2(1.25, 1.25), FIRE_TELEGRAPH_SECONDS)
+	_telegraph_tween.tween_property(
+		_sprite, "modulate", Color(1.0, 0.3, 0.3, 1.0), FIRE_TELEGRAPH_SECONDS)
+	_telegraph_tween.chain().tween_property(
+		_sprite, "scale", Vector2.ONE, FIRE_TELEGRAPH_SECONDS)
+	_telegraph_tween.parallel().tween_property(
+		_sprite, "modulate", Color(1, 1, 1, 1), FIRE_TELEGRAPH_SECONDS)

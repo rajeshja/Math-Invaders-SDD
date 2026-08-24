@@ -46,8 +46,15 @@ func get_tries_per_question(level: int) -> int:
 
 
 func _get_positive_int_setting(path: String, default_value: int) -> int:
+	# Missing settings resolve to default_value via get_setting's fallback;
+	# present-but-invalid values (non-numeric or below the minimum of 1)
+	# also fall back to the documented default rather than clamping
+	# (Phase 4 FR4.2: "defaulting safely ... if the setting is missing or
+	# invalid").
 	var value: int = int(ProjectSettings.get_setting(path, default_value))
-	return max(1, value)
+	if value < 1:
+		return default_value
+	return value
 
 
 func _ensure_setting(path: String, default_value: Variant, type: int) -> void:

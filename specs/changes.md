@@ -241,8 +241,8 @@ Added question-attempt count and red-feedback clarity to the balancing dimension
 - [ ] Emit `time_changed`; drive ticks from `Main._process` while `PLAYING` only.
 - [ ] Fail the level via Game Over (reason `TIME_EXPIRED`) exactly once at zero; show "Time's up!".
 - [ ] Add HUD countdown bound to `time_changed`.
-- [ ] Refactor all bullet travel to a shared fixed 0.3-second tween.
-- [ ] Add `enemy_bullet.png` + `enemy_bullet.tscn`; wire active-enemy return fire into the wrong-answer event path (presentational only).
+- [x] Refactor all bullet travel to a shared fixed 0.3-second tween.
+- [x] Add `enemy_bullet.png` + `enemy_bullet.tscn`; wire active-enemy return fire into the wrong-answer event path (presentational only).
 - [ ] Restart the timer at each level boundary (Phase 6) and on Play Again (Phase 7).
 - [ ] Extend GUT coverage for timer tick/expiry/pause/reset, config resolution, and overrides.
 
@@ -299,4 +299,4 @@ Balancing → 11, Stretch → 12.
 - [x] `QuestionPanel.flash_wrong_answer` is fire-and-forget with self-restoring styleboxes.
 - [x] `WaveManager._formation_position` lays out 4-3-2-1 centered rows.
 - [x] GUT coverage: inverted-triangle formation test added to `test_wave_manager.gd`.
-- [ ] When Phase 4 lands: enemy return fire hooks the existing `wrong_answer` event non-blockingly; fixed 0.3 s tween replaces velocity-based `bullet.gd` movement.
+- [x] When Phase 4 lands: enemy return fire hooks the existing `wrong_answer` event non-blockingly; fixed 0.3 s tween replaces velocity-based `bullet.gd` movement.

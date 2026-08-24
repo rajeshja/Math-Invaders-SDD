@@ -18,6 +18,7 @@ ASSETS = [
     ("background/starfield_overlay.png", 720, 1280, True, (200, 210, 255, 40), "STARS"),
     ("ships/player_ship.png", 128, 128, True, (60, 200, 255, 255), "PLYR"),
     ("ships/player_bullet.png", 16, 48, True, (255, 240, 90, 255), "BLT"),
+    ("ships/enemy_bullet.png", 16, 48, True, (255, 90, 90, 255), "EBLT"),
     ("enemies/enemy_ship_addition.png", 96, 96, True, (255, 90, 90, 255), "ADD"),
     ("enemies/enemy_ship_subtraction.png", 96, 96, True, (255, 160, 60, 255), "SUB"),
     ("enemies/enemy_ship_multiplication.png", 96, 96, True, (170, 90, 255, 255), "MUL"),
