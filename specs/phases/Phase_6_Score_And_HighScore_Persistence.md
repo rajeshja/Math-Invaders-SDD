@@ -53,8 +53,10 @@ deferred to this phase).
 -   FR6.9 --- Restart resets exactly the following session state, and
     nothing else:
     -   **`GameManager`**: `score → 0`, `lives →` the configured
-        starting lives count, `game_state → PLAYING` (emitting
-        `score_changed`/`lives_changed` so the HUD updates immediately).
+        starting lives count, `game_state → PLAYING`, `time_remaining →`
+        Level 1's resolved limit via `start_level_timer()` (emitting
+        `score_changed`/`lives_changed`/`time_changed` so the HUD
+        updates immediately).
     -   **`LevelManager`**: `current_level → 1`, `difficulty →` the
         Level 1 value from its formula (Phase 5).
     -   **`WaveManager`**: any remaining enemy and bullet nodes from the
@@ -275,6 +277,9 @@ passing GUT tests that never touch the real `user://` save file.
 `Play Again` resets the session to Level 1, so the effective
 `tries_per_question` also resolves again from the global setting plus the
 Level 1 override, if any. It does not persist the prior level's attempt count
-or current-question attempt counter.
+or current-question attempt counter. The level timer likewise restarts at
+Level 1's resolved limit (`GameConfig.get_level_time_limit(1, wave_count)`)
+--- a timer expiry that ended the previous session carries no penalty into
+the new one.
 
 The high score remains untouched.

@@ -30,20 +30,30 @@ playtesting).
     animated with a slow scroll/parallax effect, per Tech Stack §7.
 -   FR8.3 --- Taking damage from a wrong answer (i.e.,
     `GameManager.take_damage()` firing, per Phase 4) triggers a
-    screen-shake and/or flash visual effect.
+    screen-shake and/or flash visual effect. The enemy-fire animation,
+    enemy bullet, and player-hit flash from Phase 4 remain the primary
+    damage feedback; these effects layer on top of it without replacing
+    it.
 -   FR8.4 --- Answer buttons swap to `answer_button_pressed.png` on
     tap-down and revert to `answer_button_normal.png` on
     release/resolution, replacing default Godot theme feedback, for both
     correct and incorrect taps.
 -   FR8.5 --- Sound effects play for: firing (on correct answer), hit
-    (enemy destroyed), miss (wrong answer), wave complete, level
-    complete, and game over --- each triggered from the existing
+    (enemy destroyed), miss (wrong answer --- including the enemy's
+    return fire and its impact on the player), wave complete, level
+    complete, and game over (both causes) --- each triggered from the existing
     corresponding signal/event; no new gameplay signals are introduced.
 -   FR8.6 --- Background music loops during gameplay and stops (or
     pauses) when `GameManager` enters `GAME_OVER`.
--   FR8.7 --- Any placeholder images remaining from Spec §7's asset
+-   FR8.7 --- **Low-time warning**: when `time_remaining` drops to 10
+    seconds or less (constant documented in code; not a new Project
+    Setting), the HUD `TimeLabel` pulses red and an optional tick/beep
+    plays each second until zero or level clear. Purely presentational;
+    must not alter timer behavior or gameplay state.
+-   FR8.8 --- Any placeholder images remaining from Spec §7's asset
     table that weren't already replaced in an earlier phase are swapped
-    for final art in this phase.
+    for final art in this phase (including `enemy_bullet.png` from
+    Phase 4).
 
 ### Non-Functional Requirements
 
@@ -91,18 +101,23 @@ playtesting).
     and back to `answer_button_normal.png` once the correct/incorrect
     result resolves.
 5.  **Sound effects**: add `AudioStreamPlayer` nodes (or a small
-    `AudioManager.gd` autoload) for each cue --- fire, hit, miss, wave
-    complete, level complete, game over --- each connected to its
-    existing corresponding signal (bullet-fired, enemy-destroyed,
-    wrong-answer, `wave_complete`, `level_changed`/level-complete,
+    `AudioManager.gd` autoload) for each cue --- fire, hit, miss,
+    enemy return fire, player hit, wave complete, level complete, game
+    over --- each connected to its existing corresponding signal
+    (bullet-fired, enemy-destroyed, wrong-answer/enemy-fired,
+    enemy-bullet-arrival, `wave_complete`, `level_changed`/level-complete,
     `game_over`).
 6.  **Background music**: add a looping `AudioStreamPlayer` for music,
     started at game start; connect to `GameManager`'s `game_over`
     handling to pause/stop it on Game Over.
-7.  **Placeholder audit**: cross-check Spec §7's asset table against
+7.  **Low-time warning**: in the HUD layer, listen for `time_changed`;
+    when `time_remaining <= 10`, switch the `TimeLabel` to a pulsing red
+    style and play a per-second tick cue until the level clears or Game
+    Over fires. No `GameManager` changes.
+8.  **Placeholder audit**: cross-check Spec §7's asset table against
     what's actually been integrated across Phases 0--7 and swap in any
     remaining placeholder-dimension images for final art.
-8.  **No new automated tests are expected for this phase** --- per Tech
+9.  **No new automated tests are expected for this phase** --- per Tech
     Stack §8, scene-heavy visual/audio behavior is lower priority for
     unit testing and is primarily verified manually. Instead, this
     phase's testing bar is a full regression pass of the existing GUT
@@ -141,33 +156,40 @@ playtesting).
                                                                                  static deep-space background
 
   3                       Take damage (wrong answer)                             Visible screen shake and/or
-                                                                                 flash effect plays
+                                                                                 flash effect plays on top of
+                                                                                 the Phase 4 enemy-fire
+                                                                                 animation and player-hit
+                                                                                 flash
 
   4                       Tap any answer button                                  Button shows the pressed-state
-                                                                                 art
-                                                                                 (`answer_button_pressed.png`)
+                                                                                 art (`answer_button_pressed.png`)
                                                                                  immediately on tap-down
 
   5                       Play through                                           Each has its correct, distinct
-                          fire/hit/miss/wave-complete/level-complete/game-over   sound cue at the right moment
-                          moments                                                
+                           fire/hit/miss/enemy-return-fire/player-hit/wave-complete/level-complete/game-over   sound cue at the right moment
+                           moments                                                
 
   6                       Play a full session start to Game Over                 Background music loops
-                                                                                 continuously during play and
-                                                                                 stops/pauses at Game Over
+                                                                                  continuously during play and
+                                                                                  stops/pauses at Game Over
 
-  7                       Spot-check assets against Spec §7's table              No remaining
-                                                                                 placeholder-dimension
-                                                                                 solid-color images; all listed
-                                                                                 assets present as final art
+  7                       Reduce the level budget so fewer than                  The timer label pulses red with
+                           10 seconds remain (e.g., `seconds_per_wave = 2`)       an optional per-second tick,
+                                                                                  without changing gameplay
 
-  8                       Run full GUT suite                                     All prior phases' tests still
-                                                                                 pass, 0 failures, 0 regressions
+  8                       Spot-check assets against Spec §7's table              No remaining
+                                                                                  placeholder-dimension
+                                                                                  solid-color images; all listed
+                                                                                  assets present as final art
+
+  9                       Run full GUT suite                                     All prior phases' tests still
+                                                                                  pass, 0 failures, 0 regressions
   --------------------------------------------------------------------------------------------------------------
 
 **Definition of Done:** the game looks and sounds like a finished mobile
-game --- destruction animation, parallax background, damage feedback,
-button press states, full sound effects, and looping music --- with zero
+game --- destruction animation, enemy return fire with player-hit
+feedback, parallax background, damage feedback, button press states,
+low-time warning, full sound effects, and looping music --- with zero
 changes to underlying gameplay logic and the full existing GUT suite
 still passing.
 

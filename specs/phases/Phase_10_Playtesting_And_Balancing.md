@@ -19,10 +19,12 @@ regression backstop).
 
 -   FR10.1 --- Structured playtesting sessions are conducted with
     players in the target 6--12 age range, per Spec §1.
--   FR10.2 --- Observations are captured against four defined tuning
+-   FR10.2 --- Observations are captured against five defined tuning
     dimensions: question difficulty pacing per level, distractor
-    plausibility, wave length feel, and the configured
-    lives/mistake-budget feel.
+    plausibility, wave length feel, the configured
+    lives/mistake-budget feel, and the level time-limit feel (whether
+    the default waves × 30 s budget --- or any overrides --- produces
+    appropriate pressure without frustrating young players).
 -   FR10.3 --- Difficulty parameters (operand ranges per Spec §5's Stage
     A/B tiers, and/or the level→difficulty formula from Phase 5) are
     adjusted based on playtesting findings, without changing any
@@ -81,6 +83,14 @@ regression backstop).
         fixed count of 10 itself needs to change, flag this explicitly
         as a structural question for the team rather than silently
         altering a core rule of the Spec.
+    -   **Level time-limit feel** → adjust `gameplay/seconds_per_wave`
+        globally or add/tune entries in
+        `gameplay/level_time_limit_by_level` for specific levels.
+        Timeouts that feel frequent indicate the budget (or question
+        difficulty) is too tight; a budget nobody comes close to using
+        is too generous. The 0.3-second bullet travel time and the
+        timer's pause/wave-transition behavior are not tuning
+        dimensions.
     -   **Question-attempt feel** → adjust the global or per-level
         `tries_per_question` configuration and evaluate the clarity of the
         red wrong-answer feedback. Enemy descent is not a tuning dimension
@@ -113,12 +123,12 @@ regression backstop).
   \#                      Scenario                      Expected Result
   ----------------------- ----------------------------- -----------------------
   1                       Run at least one full         Findings captured
-                          playtesting session with      against all four tuning
-                          target-age-group players      dimensions: difficulty
-                                                        pacing, distractor
-                                                        plausibility, wave
-                                                        length feel,
-                                                        lives/mistake budget, question-attempt count, and wrong-answer feedback clarity
+                           playtesting session with      against all five tuning
+                           target-age-group players      dimensions: difficulty
+                                                         pacing, distractor
+                                                         plausibility, wave
+                                                         length feel,
+                                                         lives/mistake budget, level time-limit feel, question-attempt count, and wrong-answer feedback clarity
 
   2                       Review each captured finding  Each has either an
                                                         implemented parameter
@@ -144,7 +154,8 @@ regression backstop).
 
 **Definition of Done:** the game has been played by target-age-group
 testers, tuning adjustments to difficulty pacing, distractor
-plausibility, wave feel, and the lives/mistake budget, question-attempt count, and wrong-answer feedback clarity have been made
+plausibility, wave feel, the lives/mistake budget, the level time-limit
+budget, question-attempt count, and wrong-answer feedback clarity have been made
 based on that feedback (or explicitly deferred with rationale), all
 playtesting-surfaced bugs are fixed and verified, and the full GUT suite
 passes after the final round of balancing changes --- leaving a
@@ -162,3 +173,13 @@ without creating excessive repetition.
 Also verify that the red flash on an incorrect answer is immediately visible,
 understood as feedback rather than success, and does not prevent the next
 question from appearing when the attempt limit is reached.
+
+## 5. Level Time-Limit Balancing
+
+Playtesting must explicitly evaluate the level time budget. With the default
+`seconds_per_wave = 30`, a four-wave level gives 120 seconds; observe whether
+target-age players can realistically finish while still feeling gentle time
+pressure. Tune `seconds_per_wave` globally or per level via
+`gameplay/level_time_limit_by_level`. Confirm the HUD countdown, pause
+freezing, wave-transition continuity, and the "Time's up!" Game Over path all
+remain intact after any tuning change (full GUT regression required).

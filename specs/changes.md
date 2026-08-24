@@ -6,7 +6,7 @@ This file records the migration required for the existing implementation through
 
 ## Latest Gameplay Contract
 
-The previous change request removed enemy descent and replaced it with lives. This revision adds configurable attempts per question and explicit wrong-answer feedback.
+The previous change request removed enemy descent and replaced it with lives. This revision adds configurable attempts per question and explicit wrong-answer feedback. A later revision adds the per-level time limit, enemy return fire on wrong answers, and a fixed 0.3-second bullet travel time (see "Level Timer Revision" below).
 
 ### Global settings
 
@@ -40,6 +40,54 @@ With `starting_lives = 3` and `tries_per_question = 1`:
 - Question C → wrong → red flash → 0 lives → Game Over.
 
 With `tries_per_question_by_level = { 3: 2 }`, Level 3 permits two attempts on each question before that question advances, but each wrong attempt still costs one life.
+
+## Level Timer Revision (Phase 4 Extension)
+
+This revision extends Phase 4 and ripples into Phases 5, 6, 8, and 10.
+
+### Global settings
+
+- `gameplay/seconds_per_wave` — float, default `30`, minimum `1`. Seconds granted per wave when computing a level's default time limit.
+- `gameplay/level_time_limit_by_level` — Dictionary, default `{}`. A valid positive-seconds entry for a level replaces the computed limit for that level only.
+
+Both are read through `GameConfig.gd` (`get_seconds_per_wave()`,
+`get_level_time_limit(level, wave_count)`); no raw Project Settings reads in
+gameplay code.
+
+### Level timer contract
+
+1. A level's effective time limit = valid per-level override, otherwise `wave_count × seconds_per_wave`. With the four-wave level, that is **120 seconds for Level 1**.
+2. The timer starts at level start and decrements only while the game state is `PLAYING`; pausing freezes it.
+3. Wave transitions never reset or pause the timer; the whole level must be cleared within one continuous budget.
+4. Wrong answers do not consume time; correct answers do not add time.
+5. Reaching zero fails the level: `GAME_OVER` + `game_over` exactly once with reason `TIME_EXPIRED`; the Game Over screen shows "Time's up!" and answer input is disabled. There is no retry-the-level path; Play Again restarts at Level 1 with a fresh budget.
+6. Answer resolution precedes expiry processing each frame, so clearing the final enemy as time hits zero still counts as a clear.
+7. The HUD shows a live countdown matching `GameManager.time_remaining`.
+8. `GameManager` owns `time_remaining`/`level_time_limit`/`last_game_over_reason` (`NONE`/`LIVES_DEPLETED`/`TIME_EXPIRED`) and is advanced via a deterministic `tick(delta)` so GUT tests need no scene tree or wall clock.
+9. Each new level resolves its own limit at the boundary (Phase 5); Play Again re-resolves for Level 1 (Phase 6).
+
+### Enemy return fire contract
+
+1. Every wrong answer makes the active enemy play a brief fire telegraph (~0.1 s) and shoot one `enemy_bullet.png` projectile at the player ship, ending in a short player-hit flash.
+2. Purely presentational: exactly one life is still consumed by the authoritative damage path; the red flash and attempt rules are unchanged.
+3. No Area2D/collision-based damage may be introduced; bullets are tweens with scripted arrival callbacks.
+4. The animation never blocks input gating, question advancement, or Game Over; if the wrong answer ends the game, Game Over UI takes precedence.
+
+### Bullet travel time contract
+
+All bullets --- player bullets on correct answers and enemy bullets on wrong
+answers --- take **exactly 0.3 seconds** from source to target in every
+case, regardless of distance, implemented as a fixed-duration tween sharing
+one constant (`bullet.gd` `TRAVEL_TIME`). This replaces the previous slow,
+distance-dependent player-bullet travel.
+
+### Phase-by-phase impact
+
+- **Phase 4**: implements all three contracts above (timer, enemy return fire, 0.3 s travel) plus HUD countdown and Game Over reason display; extended `test_game_manager.gd`/`test_game_config.gd`.
+- **Phase 5**: each level start resolves its time limit via `GameConfig.get_level_time_limit(level, wave_count)` and calls `GameManager.start_level_timer()` exactly once; wave transitions never reset it; per-level overrides change only that level's budget.
+- **Phase 6**: Play Again restarts the Level 1 timer via the same resolution path; a timeout ending the prior session carries no penalty.
+- **Phase 8**: adds enemy-return-fire/player-hit sounds and a presentational low-time warning (pulsing red timer + optional tick during the final 10 seconds).
+- **Phase 10**: the level time budget becomes an explicit tuning dimension via `seconds_per_wave` and `level_time_limit_by_level`.
 
 ## Required Code Changes for Existing Phase-3 Code
 
@@ -174,3 +222,17 @@ Added question-attempt count and red-feedback clarity to the balancing dimension
 - [ ] Preserve correct-answer bullet/destruction behavior.
 - [ ] Update GUT tests for default and overridden attempt counts.
 - [ ] Run the full GUT suite before deleting this file.
+
+## Level Timer Revision Checklist
+
+- [ ] Add `gameplay/seconds_per_wave` with default `30`.
+- [ ] Add `gameplay/level_time_limit_by_level` with default `{}`.
+- [ ] Expose `get_seconds_per_wave()` / `get_level_time_limit(level, wave_count)` through `GameConfig.gd`.
+- [ ] Add `time_remaining`, `level_time_limit`, `last_game_over_reason`, `start_level_timer()`, and deterministic `tick(delta)` to `GameManager`.
+- [ ] Emit `time_changed`; drive ticks from `Main._process` while `PLAYING` only.
+- [ ] Fail the level via Game Over (reason `TIME_EXPIRED`) exactly once at zero; show "Time's up!".
+- [ ] Add HUD countdown bound to `time_changed`.
+- [ ] Refactor all bullet travel to a shared fixed 0.3-second tween.
+- [ ] Add `enemy_bullet.png` + `enemy_bullet.tscn`; wire active-enemy return fire into the wrong-answer event path (presentational only).
+- [ ] Restart the timer at each level boundary (Phase 5) and on Play Again (Phase 6).
+- [ ] Extend GUT coverage for timer tick/expiry/pause/reset, config resolution, and overrides.

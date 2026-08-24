@@ -5,7 +5,11 @@
 **Math Invaders** is a portrait-mode mobile math game built in Godot.
 Players defend against waves of enemy ships by answering multiple-choice
 math questions. Answering correctly fires a bullet that destroys the
-targeted enemy; answering wrong deals one point of damage by consuming one life. By default, each question has
+targeted enemy; answering wrong deals one point of damage by consuming one life,
+visualized by the active enemy firing a bullet back at the player. Each level
+has a configurable time limit --- defaulting to 30 seconds per wave (120
+seconds for the four-wave Level 1) --- and running out of time fails the level
+via Game Over. By default, each question has
 one allowed attempt: an incorrect answer flashes the selected answer red,
 consumes one life, and then the next question is shown. The allowed-attempt
 count is configurable globally and can be overridden per level. When a level
@@ -56,10 +60,13 @@ and waves are grouped into **levels**:
     -   Completing all waves in a level advances the player to the
         **next level**.
 -   **Progression across levels:** each new level keeps the same
-    category sequence but raises difficulty (larger numbers, tighter
-    time pressure), and later levels introduce new categories as
+    category sequence but raises difficulty (larger numbers, and a
+    level time limit that must be cleared within the per-level budget),
+    and later levels introduce new categories as
     additional waves (e.g., a "Prime Numbers" wave added once players
-    reach an advanced level).
+    reach an advanced level). Because the default limit is computed
+    from the wave count, adding a 5th wave raises the default budget to
+    150 seconds unless overridden.
 -   At the end of a wave, a brief transition ("Wave Complete!") shows
     before the next wave's fresh set of 10 enemies appears. At the end
     of a level, a "Level Complete!" transition shows before the next
@@ -77,7 +84,7 @@ control exactly which math skill is being practiced at any moment.
 ## 3. Screen Layout (Portrait, e.g. 720×1280 base resolution)
 
     ┌─────────────────────────────┐
-    │ Score:120  Lvl 2  🚀x2  ♥♥♥  │  ← HUD (top)
+    │ Score:120 Lvl 2 🚀x2 ♥♥♥ ⏱87 │  ← HUD (top)
     │         Subtraction  6/10    │  ← Wave/category + remaining count
     │   *  E  E  E  *  E  E  ·     │
     │  ·    E     E    ·   E  *    │  ← Full formation of remaining
@@ -108,6 +115,7 @@ control exactly which math skill is being practiced at any moment.
     -   Score
     -   **Level** (new)
     -   **Lives**
+    -   **Time remaining in the level** (new)
     -   **Current wave category + enemies remaining in the wave** (e.g.,
         "Subtraction 6/10 remaining") (new)
 
@@ -128,7 +136,10 @@ control exactly which math skill is being practiced at any moment.
     increases; wave progress updates (e.g., "6/10 remaining"); a new
     question loads, linked to the next active enemy.
 5.  **Incorrect:** the active enemy and the rest of the formation remain
-    in place. The selected answer button flashes red and the player takes
+    in place. The selected answer button flashes red, the active enemy
+    visibly fires a bullet at the player ship (traveling for exactly
+    0.3 seconds and ending in a brief player-hit flash --- purely
+    presentational), and the player takes
     one point of damage: exactly one life is consumed. With the default
     `tries_per_question = 1`, the current question is retired and a new
     question is loaded. If the current level overrides the setting to a
@@ -139,15 +150,23 @@ control exactly which math skill is being practiced at any moment.
 6.  **Life depletion:** when lives reach 0, the game enters `GAME_OVER`
     immediately and disables further answering. The number of starting
     lives is configurable at project level; the default is 3.
-7.  When all 10 enemies in the current wave are eliminated → "Wave
+7.  **Level time limit:** each level has a time limit (default:
+    number of waves × 30 seconds; 120 seconds for Level 1) shown as a
+    live countdown in the HUD. It runs only during play, continues
+    across wave transitions within the level, and is not consumed or
+    extended by answers. When it reaches zero the level is failed and
+    the game enters `GAME_OVER` exactly as for life depletion, with a
+    "Time's up!" reason shown.
+8.  When all 10 enemies in the current wave are eliminated → "Wave
     Complete" → a **fresh set of 10 enemies** spawns for the next wave
     (next category).
-8.  When all waves in the level are cleared → "Level Complete" → the
-    player's lives reset to the configured starting-lives value, then
+9.  When all waves in the level are cleared → "Level Complete" → the
+    player's lives reset to the configured starting-lives value, the
+    level timer restarts at the new level's configured limit, then
     the next level begins with increased difficulty (and, at later
     levels, additional categories), again starting with a full set of 10
     enemies.
-9.  Game over → compare score to stored high score, update if beaten,
+10. Game over → compare score to stored high score, update if beaten,
     show result screen with "Play Again."
 
 ------------------------------------------------------------------------
@@ -167,9 +186,10 @@ control exactly which math skill is being practiced at any moment.
 
 -   Same four wave categories, but with larger numbers (2--3 digit
     operands)
--   **Lives are the only mistake budget:** each wrong answer consumes
-    one life; no enemy descent or timer is used as a penalty in the
-    current design.
+-   **Lives are the only wrong-answer penalty:** each wrong answer consumes
+    one life; no enemy descent is used as a penalty. The per-level time
+    limit (Section 4, step 7) is a separate level-completion constraint,
+    not an answer penalty --- answers never consume or add time.
 
 ### Stage C --- New concepts (advanced levels)
 
@@ -193,8 +213,11 @@ top of screen 2. **Level** --- current level number 3. **Wave category +
 enemies remaining** --- e.g., "Multiplication 7/10 remaining", so the
 player knows what skill they're practicing and can see, both in the HUD
 text and in the shrinking enemy formation, how far through the current
-wave they are 4. **Lives** --- remaining lives. Wrong-answer feedback is
-shown on the tapped answer button by a brief red flash.
+wave they are 4. **Lives** --- remaining lives 5. **Time remaining** ---
+the current level's countdown, always matching
+`GameManager.time_remaining`. Wrong-answer feedback is shown on the tapped
+answer button by a brief red flash plus the active enemy firing a bullet at
+the player.
 
 High scores are tracked and persisted across sessions (see Tech Stack
 document for storage approach).
@@ -232,6 +255,18 @@ Settings rather than hardcoded in gameplay scripts:
                                                                        overrides; a
                                                                        level key replaces
                                                                        the global value
+
+  `gameplay/seconds_per_wave`   Float                            `30` Seconds granted per wave
+                                                                       when computing a
+                                                                       level's default time
+                                                                       limit; minimum `1`
+
+  `gameplay/level_time_limit_by_level` Dictionary              `{}` Optional per-level total
+                                                                       time-limit overrides in
+                                                                       seconds; a valid
+                                                                       positive value replaces
+                                                                       the computed limit for
+                                                                       that level
   -------------------------------------------------------------------------------------
 
 `starting_lives` is the mistake budget for the current level. Every
@@ -244,6 +279,13 @@ can override that value for individual levels; overrides must be positive
 integers. If an override is greater than 1, the question remains active for
 its remaining attempts before advancing. Each wrong attempt still costs one
 life.
+
+A level's effective time limit equals its valid per-level override from
+`level_time_limit_by_level`, or otherwise `wave_count × seconds_per_wave`
+--- with four waves and the default 30 seconds per wave, Level 1 gets
+120 seconds. Reaching zero fails the level via Game Over ("Time's up!").
+Both timer settings are read only through the same single configuration-
+access path as the other gameplay settings.
 
 ------------------------------------------------------------------------
 
@@ -276,7 +318,13 @@ blurring when the game scales to different screen sizes.
 
   Player              `player_bullet.png`                 16×48              Yes             Travels upward from the
   bullet/projectile                                                                          player ship to the
-                                                                                             active enemy
+                                                                                            active enemy in exactly
+                                                                                            0.3 seconds
+
+  Enemy               `enemy_bullet.png`                  16×48              Yes             Fired by the active enemy
+  bullet/projectile                                                                          at the player on wrong
+                                                                                            answers; travels downward
+                                                                                            in exactly 0.3 seconds
 
   Enemy ship ---      `enemy_ship_addition.png`           96×96              Yes             One visual variant per
   Addition                                                                                   wave category so the
@@ -375,3 +423,24 @@ The game uses a configurable maximum-attempt rule per question.
 - Correct answers always destroy the active enemy and advance immediately to the next question.
 - A wrong answer never moves the formation or active enemy.
 - If a wrong answer reduces lives to zero, Game Over takes precedence over question advancement and answer input is disabled.
+
+## 10. Level Time Limit & Bullet Travel (Authoritative)
+
+The game has one time limit per level, independent of the per-question
+attempt rule.
+
+- `gameplay/seconds_per_wave` is the global default seconds granted per wave and defaults to `30`.
+- `gameplay/level_time_limit_by_level` is a Dictionary of optional per-level total-limit overrides in seconds.
+- `GameConfig` resolves the effective value: a valid positive override for the current level, otherwise `wave_count × seconds_per_wave`. Gameplay code must not read the raw Project Settings directly.
+- With the four-wave default sequence, the default limit is `4 × 30 = 120` seconds.
+- The timer starts at level start, runs only while the game state is `PLAYING`, continues across wave transitions within the level, and freezes while paused.
+- Wrong answers never consume time; correct answers never add time.
+- When `time_remaining` reaches zero the level is failed: the game enters `GAME_OVER`, emits `game_over` exactly once with reason `TIME_EXPIRED`, disables answer input, and shows "Time's up!" on the Game Over screen alongside the final score.
+- Completing all of a level's waves before expiry completes the level; the next level restarts the timer at its own resolved limit.
+
+All bullets --- player bullets on correct answers and enemy bullets on
+wrong answers --- take **exactly 0.3 seconds** to travel from source to
+target in every case, implemented as a fixed-duration tween rather than a
+fixed velocity. The enemy fire visual is presentational only: it must not
+block input gating, question advancement, life consumption, or any
+Game Over transition, and no collision-based damage path may be introduced.

@@ -2,8 +2,10 @@
 
 **Goal:** introduce `LevelManager.gd` so that clearing a level's full
 set of waves advances the player to a new, harder level and resets the
-player's configurable life budget --- making level completion the
-proficiency checkpoint.
+player's configurable life budget --- and the level timer --- making
+level completion the proficiency checkpoint. Each new level runs
+against its own resolved time budget; running out of time fails the
+level via Game Over.
 
 **Source docs:** Build Plan §Phase 5, Spec §2 (level structure, category
 sequence per level), §5 (Stage B --- expanded difficulty), §6 (HUD level
@@ -43,6 +45,14 @@ strategy).
     hardcoded default --- this is the ownership handoff Phase 7 depends
     on to later extend the sequence with new categories, without a
     further architecture change at that point.
+-   FR5.7 --- At the start of each level, `LevelManager` resolves the
+    effective time limit via `GameConfig.get_level_time_limit(current_level,
+    category_sequence.size())` and calls
+    `GameManager.start_level_timer(limit)` before the first wave spawns.
+    The timer runs for the whole level (never resetting between waves);
+    when it reaches zero, the level is failed via the Phase 4 Game Over
+    path with reason `TIME_EXPIRED`. Per-level overrides change only that
+    level's budget.
 
 ### Non-Functional Requirements
 
@@ -55,7 +65,10 @@ strategy).
     signals, and no silent failure to advance.
 -   NFR5.4 --- The level-boundary lives reset occurs exactly once per
     completed level and uses the current configured starting-lives
-    value; it must not reset lives on ordinary wave transitions.
+    value; it must not reset lives on ordinary wave transitions. The
+    same holds for the timer: `start_level_timer` fires exactly once
+    per level with the newly resolved limit, and ordinary wave
+    transitions never restart it.
 -   NFR5.5 --- The effective `tries_per_question` value is resolved once at
     level start from the global setting plus any valid per-level override and
     is applied consistently to every question in that level.
@@ -107,6 +120,11 @@ strategy).
         the first wave of the new level. `WaveManager` retains its Phase
         3 hardcoded default for standalone/test use when no sequence is
         provided (NFR5.3).
+    -   `start_level()` also resolves this level's time budget ---
+        `GameConfig.get_level_time_limit(current_level, sequence.size())`
+        --- and calls `GameManager.start_level_timer(limit)` after
+        resetting lives, so every level begins with its full configured
+        budget and wave transitions never touch it.
     -   Emits a `level_changed` signal so the HUD can update.
 4.  **Wire difficulty through to `QuestionGenerator`**:
     `WaveManager.start_wave()` now accepts and forwards the current
@@ -145,7 +163,10 @@ exactly once at a level boundary, calls the stubbed `WaveManager`'s
 sequence-setting method with the expected 4-category array before
 calling `start_wave("addition")` --- confirming `LevelManager` actively
 provides the sequence rather than relying on `WaveManager`'s internal
-default.
+default. - `start_level()` calls `GameManager.start_level_timer()` with
+the resolved limit (4 waves × `seconds_per_wave` by default; a valid
+per-level override replaces it for that level only), exactly once per
+level, and ordinary wave-clear events never restart the timer.
 
 ### Manual Test Checklist
 
@@ -163,27 +184,36 @@ default.
                                                   formula
 
   3                       Watch the HUD across a  Level number updates
-                          level transition        correctly and lives reset to
-                                                  the configured starting value
-                                                  before the new level begins
+                           level transition        correctly and lives reset to
+                                                   the configured starting value
+                                                   before the new level begins;
+                                                   the countdown restarts at the
+                                                   new level's limit
 
-  4                       Play through several    Category sequence per level
-                          levels in sequence      is always Addition →
-                                                  Subtraction → Multiplication
-                                                  → Division; only difficulty
-                                                  changes
+  4                       Let the timer reach 0   Game Over appears with a
+                                                   "Time's up!" reason; no
+                                                   partial credit or retry of
+                                                   the same level
 
-  5                       Run full GUT suite      `test_level_manager.gd`
-                                                  passes, 0 failures, alongside
-                                                  all prior phases' passing
-                                                  tests (no regressions)
+  5                       Play through several    Category sequence per level
+                           levels in sequence      is always Addition →
+                                                   Subtraction →
+                                                   Multiplication → Division;
+                                                   only difficulty changes
+
+  6                       Run full GUT suite      `test_level_manager.gd`
+                                                   passes, 0 failures, alongside
+                                                   all prior phases' passing
+                                                   tests (no regressions)
   -----------------------------------------------------------------------------
 
 **Definition of Done:** a player can clear a full level's four waves,
 see the level-complete transition, and continue into a new level with
-visibly increased difficulty and a correctly updated HUD level display
---- with `LevelManager`'s difficulty-scaling and level-advancement logic
-covered by passing GUT tests.
+visibly increased difficulty, a correctly updated HUD level display,
+and a freshly resolved level time budget (with timer expiry failing the
+level via Game Over) --- with `LevelManager`'s difficulty-scaling,
+timer-resolution, and level-advancement logic covered by passing GUT
+tests.
 
 
 ## 4. Per-Level Question Attempt Override
@@ -207,3 +237,9 @@ life and produces the red answer-button feedback.
 Tests must verify that changing the override changes only the question-attempt
 rule for the specified level and does not alter lives, wave sequencing, or
 difficulty progression.
+
+The same resolution pattern applies to the level time limit:
+`GameConfig.get_level_time_limit(current_level, wave_count)` checks
+`gameplay/level_time_limit_by_level` for a valid positive-seconds entry and
+otherwise computes `wave_count × seconds_per_wave`. Changing a time-limit
+override must not alter lives, attempts, sequencing, or difficulty.

@@ -125,20 +125,37 @@ playable milestone.
     a clear sense of progress both on screen and in the HUD --- backed
     by passing strategy and `WaveManager` tests.
 
-### Phase 4 --- Lives and Game Over
+### Phase 4 --- Lives, Level Timer, and Game Over
 
 -   Implement the lives-only damage model: every wrong answer consumes
     exactly one life; no health pool and no enemy-bottom damage trigger.
+-   Wrong-answer feedback now includes the active enemy visibly firing
+    an `enemy_bullet.png` projectile at the player (purely presentational;
+    damage stays event-driven).
+-   Fix bullet travel: all bullets --- player and enemy --- take exactly
+    **0.3 seconds** to reach their target in all cases (fixed-duration
+    tween, distance-independent), replacing the previous slow travel.
+-   Add the per-level time limit: configurable via
+    `gameplay/seconds_per_wave` (default 30) with optional per-level
+    overrides in `gameplay/level_time_limit_by_level`; the default limit
+    is waves × seconds-per-wave (120 s for the four-wave Level 1).
+    Expiring fails the level via Game Over ("Time's up!"). HUD shows a
+    live countdown; the timer runs only while playing and never resets
+    between waves.
 -   Configure `gameplay/starting_lives` in Project Settings (default 3);
     render repeated `life_icon.png` in the HUD.
--   When lives reaches 0, enter Game Over immediately and disable answer
-    input.
+-   When lives reaches 0 or the timer reaches 0, enter Game Over
+    immediately and disable answer input; the Game Over screen shows the
+    reason (out of lives vs. time's up).
 -   **Testing:** add/update `test_game_manager.gd` covering
     one-life-per-wrong-answer, no damage on correct answers, game over
-    exactly at zero, configured starting lives, and session reset.
+    exactly at zero (lives or time), configured starting lives, timer
+    tick/expiry/pause/reset behavior, session reset --- plus
+    `test_game_config.gd` cases for the new time-limit settings.
 -   **Milestone:** full round-trip play session (start → answer
-    correctly/incorrectly → lose lives → game over screen), with the
-    lives state machine covered by passing tests.
+    correctly/incorrectly → see enemy return fire → beat the clock or
+    lose lives → game over screen), with the lives/attempt/timer state
+    machines covered by passing tests.
 
 ### Phase 5 --- Level Progression
 
@@ -150,12 +167,17 @@ playable milestone.
 -   Update HUD to display the current **Level** alongside score and
     lives.
 -   When a level is completed, reset lives to the configured
-    `gameplay/starting_lives` value before starting the next level. This
+    `gameplay/starting_lives` value and restart the level timer at the
+    new level's resolved limit (`GameConfig.get_level_time_limit(level,
+    wave_count)`) before starting the next level. This
     is the proficiency checkpoint: the player must clear every wave in
-    the current level to advance.
+    the current level --- within its time budget --- to advance.
+    Ordinary wave transitions never reset the timer.
 -   **Testing:** add `test_level_manager.gd` covering difficulty
-    scaling, category sequencing, level advancement, and the
-    level-boundary lives reset.
+    scaling, category sequencing, level advancement, the
+    level-boundary lives reset, and the level-boundary timer
+    resolution/reset (including that per-level overrides change only
+    that level's budget).
 -   **Milestone:** playing through multiple levels, each with the same
     wave/category structure but increasing difficulty, with
     `LevelManager` behavior covered by passing tests.
@@ -201,8 +223,11 @@ playable milestone.
     background (replacing the static background image from Phase 1).
 -   Add screen shake or flash on taking damage, and polished tap/press
     feedback using `answer_button_pressed.png`.
--   Add sound effects (fire, hit, miss, wave complete, level complete,
-    game over) and background music.
+-   Add sound effects (fire, hit, miss, enemy return fire, player hit,
+    wave complete, level complete, game over) and background music.
+    Add a low-time warning: the HUD timer label pulses red and/or ticks
+    audibly during the final 10 seconds of a level's budget
+    (presentational only).
 -   Any remaining placeholder images (from Section 7 of the Spec) are
     swapped for final art at this point, if not already replaced in
     earlier phases.
@@ -220,8 +245,9 @@ playable milestone.
 ### Phase 10 --- Playtesting & Balancing
 
 -   Playtest with target age group; adjust question difficulty pacing
-    per level, distractor plausibility, wave length feel, and enemy
-    speed.
+    per level, distractor plausibility, wave length feel, enemy
+    speed, and the level time-limit feel
+    (`seconds_per_wave` / per-level overrides) based on observations.
 -   Fix bugs found during testing; run the full GUT suite after
     balancing changes to catch regressions in difficulty scaling,
     distractor generation, and wave/level logic.
@@ -250,3 +276,32 @@ its allowed attempts are exhausted.
 
 This replaces the previous assumption that a wrong answer should keep the same
 question indefinitely. Enemy/formation descent remains removed.
+
+
+## Phase Change Note — Level Timer, Enemy Return Fire, and Fixed Bullet Travel Time
+
+Three related gameplay changes extend Phase 4 and ripple forward:
+
+1. **Per-level time limit.** New Project Settings
+   `gameplay/seconds_per_wave` (default `30`) and
+   `gameplay/level_time_limit_by_level` (default `{}`). A level's
+   effective limit is a valid per-level override, otherwise
+   `wave_count × seconds_per_wave` — 120 seconds for the four-wave
+   Level 1. The timer runs only while playing, never resets between
+   waves, and expiry fails the level via Game Over with reason
+   `TIME_EXPIRED`. `GameManager` owns `time_remaining` and is ticked
+   deterministically for testability; `GameConfig.gd` is the only
+   access path.
+2. **Enemy return fire on wrong answers.** The active enemy plays a
+   brief fire animation and shoots an `enemy_bullet.png` projectile at
+   the player whenever an answer is wrong. It is purely presentational:
+   one life is still consumed by the authoritative event path, and no
+   collision-based damage may be introduced.
+3. **Fixed bullet travel time.** All bullets — player and enemy — take
+   exactly **0.3 seconds** from source to target in every case,
+   implemented as a fixed-duration tween shared via `bullet.gd`
+   (`TRAVEL_TIME`), replacing distance-dependent/slow travel.
+
+Phase 5 restarts the timer at each level boundary; Phase 8 adds
+enemy-fire/player-hit sounds and a low-time warning; Phase 10 treats
+the time budget as a tuning dimension.

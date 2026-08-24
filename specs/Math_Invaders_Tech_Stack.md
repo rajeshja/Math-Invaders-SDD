@@ -50,10 +50,11 @@ physics, and rendering itself.
     ├── GameWorld (Node2D)
     │   ├── Player (CharacterBody2D/Sprite2D)
     │   ├── Enemies (Node2D — holds up to 10 concurrent enemy instances, arranged in a formation)
-    │   └── Bullets (Node2D — holds active bullet instances)
+    │   └── Bullets (Node2D — holds active player AND enemy bullet instances)
     ├── HUD (CanvasLayer)
     │   ├── ScoreLabel
     │   ├── LevelLabel
+    │   ├── TimeLabel               # remaining level time, e.g. "⏱ 87"
     │   ├── WaveProgressLabel      # e.g. "Subtraction 6/10 remaining"
     │   └── LivesDisplay
     └── QuestionPanel (CanvasLayer/Control)
@@ -171,8 +172,13 @@ same interface supports categories that aren't pure arithmetic.
 
 -   `GameManager.gd` --- overall game state (playing/paused/game-over),
     score, and lives; an incorrect answer consumes exactly one life.
-    `GameManager` emits `score_changed`, `lives_changed`, and
-    `game_over` signals. There is no health pool in the current gameplay
+    `GameManager` also owns the level timer: `time_remaining`,
+    `level_time_limit`, and `last_game_over_reason`
+    (`NONE`/`LIVES_DEPLETED`/`TIME_EXPIRED`), advanced via an explicit
+    `tick(delta)` that only acts while `PLAYING`. It emits `score_changed`,
+    `lives_changed`, `time_changed`, and
+    `game_over` signals; the signal fires exactly once per game end,
+    whichever cause (lives at zero or time at zero) triggers it first. There is no health pool in the current gameplay
     model.
 -   `HighScoreManager.gd` --- reads/writes persisted high score
     (JSON/`ConfigFile` in `user://`).
@@ -182,18 +188,24 @@ same interface supports categories that aren't pure arithmetic.
 -   `player.gd` --- handles firing animation/position
 
 -   `enemy.gd` --- a per-instance template (not a manager): handles this
-    enemy's own movement, holds a reference to its linked question, and
-    its own destruction. Up to 10 instances of this script run
+    enemy's own movement, holds a reference to its linked question,
+    plays its own destruction animation, and plays its wrong-answer
+    fire animation (a short telegraph plus one `enemy_bullet.tscn`
+    instance aimed at the player). Up to 10 instances of this script run
     concurrently within a wave, each independent, spawned and tracked by
     `WaveManager.gd`
 
--   `bullet.gd` --- movement and collision with enemy
+-   `bullet.gd` --- movement and collision with enemy; all travel is a
+    fixed-duration tween (`TRAVEL_TIME := 0.3` seconds) shared by the
+    player bullet and the enemy bullet, so travel time never varies
+    with distance
 
 -   `question_panel.gd` --- renders question/choices, emits a signal
     when the player taps an answer
 
--   `hud.gd` --- updates score, level, wave-progress, and lives displays
-    in response to `GameManager`/`WaveManager` signals
+-   `hud.gd` --- updates score, level, wave-progress, lives, and
+    time-remaining displays in response to `GameManager`/`WaveManager`
+    signals
 
 -   `GameConfig.gd` --- a small configuration-access singleton/helper
     that owns the names/defaults for project-level gameplay settings.
@@ -214,10 +226,18 @@ in Godot Project Settings. The current required settings are:
 -   `gameplay/tries_per_question` --- integer, default `1`, minimum `1`.
 -   `gameplay/tries_per_question_by_level` --- Dictionary, default `{}`;
     optional level-number → positive-integer overrides.
+-   `gameplay/seconds_per_wave` --- float, default `30`, minimum `1`;
+    seconds granted per wave when computing a level's default time limit.
+-   `gameplay/level_time_limit_by_level` --- Dictionary, default `{}`;
+    optional level-number → positive-seconds total time-limit overrides.
 
 `GameConfig.gd` exposes `get_tries_per_question(level)` which returns the
 level override when present and valid, otherwise the global setting. This is
-the only supported access path for the effective attempt count.
+the only supported access path for the effective attempt count. It likewise
+exposes `get_seconds_per_wave()` and
+`get_level_time_limit(level, wave_count)` (override when valid, otherwise
+`wave_count × seconds_per_wave`) as the only supported access path for the
+effective level time limit.
 
 The authoritative access path is `GameConfig.gd` (autoload/helper).
 `GameManager` reads the configured starting-lives value through
@@ -259,7 +279,8 @@ the project.
         │   └── starfield_overlay.png
         ├── ships/
         │   ├── player_ship.png
-        │   └── player_bullet.png
+        │   ├── player_bullet.png
+        │   └── enemy_bullet.png
         ├── enemies/
         │   ├── enemy_ship_addition.png
         │   ├── enemy_ship_subtraction.png
@@ -293,9 +314,13 @@ the project.
     `answer_button_normal.png`/`answer_button_pressed.png` as the
     `Button` node's theme textures.
 -   `hud.tscn` uses `life_icon.png` in an `HBoxContainer` that repeats
-    the icon per life remaining. `heart_icon.png` is not part of the
+    the icon per life remaining, plus a `TimeLabel` bound to
+    `GameManager.time_changed`. `heart_icon.png` is not part of the
     current gameplay HUD because health has been removed from the damage
     model.
+-   `bullet.tscn` and `enemy_bullet.tscn` both use `bullet.gd`'s shared
+    fixed 0.3-second travel tween; `player_bullet.png` faces upward,
+    `enemy_bullet.png` is rotated to face downward toward the player.
 -   `Background` node uses `background_space.png` as a full-screen
     `TextureRect`/`Sprite2D`, with `starfield_overlay.png` layered above
     it (optionally animated via a slow `AnimationPlayer` scroll or
@@ -385,7 +410,14 @@ test coverage.
     temp-file helpers rather than the real `user://` save file).
 -   **`GameManager.gd`**: each wrong-answer damage event consumes
     exactly one life; losing the final life triggers game over;
-    configured starting lives are restored at level/session reset.
+    configured starting lives are restored at level/session reset. The
+    level timer is tested by driving `tick(delta)` directly: time
+    decreases only while `PLAYING`, expiry triggers `game_over` exactly
+    once with reason `TIME_EXPIRED`, post-game-over ticks are no-ops,
+    and `reset_session()` restores the configured limit.
+-   **`GameConfig.gd`**: default fallbacks and per-level override
+    resolution for both the attempt count and the level time limit
+    (`wave_count × seconds_per_wave` when no valid override exists).
 
 Scene-heavy nodes with mostly visual behavior (`player.gd`, `enemy.gd`'s
 movement/animation, `hud.gd`'s display updates) are lower priority for
@@ -407,11 +439,14 @@ exactly which tests are added in each phase.
 - `get_starting_lives() -> int`
 - `get_enemies_per_wave() -> int`
 - `get_tries_per_question(level: int) -> int`
+- `get_seconds_per_wave() -> float`
+- `get_level_time_limit(level: int, wave_count: int) -> float`
 
 The effective attempt count is resolved once for a level and supplied to the
 question-flow logic. The default is one attempt. For an incorrect answer,
 `QuestionPanel` flashes the tapped button red, the game consumes one life,
-and then either retires the question (attempt limit reached) or permits the
+the active enemy fires its bullet at the player (0.3-second travel), and
+then either retires the question (attempt limit reached) or permits the
 next attempt on the same question (limit > 1). With the default of one, the
 next question is loaded after the red feedback.
 
