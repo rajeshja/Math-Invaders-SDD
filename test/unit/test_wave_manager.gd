@@ -113,6 +113,27 @@ func test_question_failed_defaults_to_no_selection_for_non_ui_callers() -> void:
 	assert_eq(captured, [-1])
 
 
+## Phase 13 FR13.1: fraction questions carry canonical STRING answers
+## through the failure path untouched (no int casting anywhere).
+func test_wrong_answer_on_fraction_question_records_string_pair() -> void:
+	wave_manager.start_wave("fraction_addition")
+	var active = wave_manager.get_active_enemy()
+	active.linked_question = {
+		"question_text": "What is 1/2 + 1/4?",
+		"correct_answer": "3/4",
+		"choices": ["3/4", "2/6", "1/4", "3/8"],
+	}
+	var captured := []
+	wave_manager.question_failed.connect(func(question, selected, correct):
+		captured.append([selected, correct]))
+
+	wave_manager.on_wrong_answer("2/6")
+
+	assert_eq(captured.size(), 1, "one question_failed per incorrect answer")
+	assert_eq(captured[0][0], "2/6", "the tapped STRING value is recorded")
+	assert_eq(captured[0][1], "3/4", "the correct STRING answer is recorded")
+
+
 ## Phase 9 FR9.4: LevelConfig generation options flow into new questions.
 func test_generation_options_are_applied_to_generated_questions() -> void:
 	var sequence: Array[String] = ["integer_addition"]

@@ -21,6 +21,8 @@ const DISPLAY_NAMES := {
 	"integer_multiplication": "Multiplication",
 	"integer_division": "Division",
 	"prime": "Prime Numbers",
+	"fraction_addition": "Fraction Addition",
+	"fraction_subtraction": "Fraction Subtraction",
 }
 
 var _strategies: Dictionary = {}
@@ -32,6 +34,8 @@ func _init() -> void:
 	_strategies["integer_multiplication"] = IntegerMultiplicationStrategy.new()
 	_strategies["integer_division"] = IntegerDivisionStrategy.new()
 	_strategies["prime"] = PrimeStrategy.new()
+	_strategies["fraction_addition"] = FractionAdditionStrategy.new()
+	_strategies["fraction_subtraction"] = FractionSubtractionStrategy.new()
 
 
 ## Returns the display label for a category key: the DISPLAY_NAMES entry

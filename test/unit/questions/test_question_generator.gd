@@ -39,6 +39,24 @@ func test_dispatches_prime_to_prime_strategy() -> void:
 	assert_string_contains(result["question_text"], "prime", "prime category should dispatch to PrimeStrategy")
 
 
+func test_dispatches_fraction_addition_to_fraction_addition_strategy() -> void:
+	var result: Dictionary = generator.generate_question("fraction_addition", 1)
+	assert_true(result.has("question_text"))
+	assert_eq(result["choices"].size(), 4, "fraction questions keep 4 choices")
+	assert_string_contains(result["question_text"], "+",
+			"fraction_addition should dispatch to FractionAdditionStrategy")
+	assert_string_contains(result["question_text"], "/",
+			"fraction questions carry fraction operands")
+	assert_true(result.has("answer_layout"), "stacking data travels with the question")
+
+
+func test_dispatches_fraction_subtraction_to_fraction_subtraction_strategy() -> void:
+	var result: Dictionary = generator.generate_question("fraction_subtraction", 1)
+	assert_string_contains(result["question_text"], "-",
+			"fraction_subtraction should dispatch to FractionSubtractionStrategy")
+	assert_true(result.has("answer_layout"), "stacking data travels with the question")
+
+
 func test_well_formed_dictionary_shape_for_known_category() -> void:
 	var result: Dictionary = generator.generate_question("integer_addition", 1)
 	assert_true(result.has("question_text"))
@@ -73,14 +91,22 @@ func test_get_categories_includes_prime_stage_c_category() -> void:
 	assert_true(categories.has("prime"), "'prime' should be registered in the category map")
 
 
-## Phase 12 FR12.4: display-name registry maps every registered key to its
-## player-facing HUD label.
+func test_get_categories_includes_fraction_categories() -> void:
+	var categories: Array = generator.get_categories()
+	assert_true(categories.has("fraction_addition"), "'fraction_addition' should be registered")
+	assert_true(categories.has("fraction_subtraction"), "'fraction_subtraction' should be registered")
+
+
+## Phase 12 FR12.4 / Phase 13 FR13.6: display-name registry maps every
+## registered key to its player-facing HUD label.
 func test_display_names_map_registered_keys_to_hud_labels() -> void:
 	assert_eq(QuestionGenerator.get_display_name("integer_addition"), "Addition")
 	assert_eq(QuestionGenerator.get_display_name("integer_subtraction"), "Subtraction")
 	assert_eq(QuestionGenerator.get_display_name("integer_multiplication"), "Multiplication")
 	assert_eq(QuestionGenerator.get_display_name("integer_division"), "Division")
 	assert_eq(QuestionGenerator.get_display_name("prime"), "Prime Numbers")
+	assert_eq(QuestionGenerator.get_display_name("fraction_addition"), "Fraction Addition")
+	assert_eq(QuestionGenerator.get_display_name("fraction_subtraction"), "Fraction Subtraction")
 
 
 ## Phase 12 FR12.4: unknown keys fall back to String.capitalize().

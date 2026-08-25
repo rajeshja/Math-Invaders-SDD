@@ -94,7 +94,7 @@ func effective_start_level() -> int:
 	return 1
 
 
-func _on_question_failed(question: Dictionary, selected_answer: int, correct_answer: int) -> void:
+func _on_question_failed(question: Dictionary, selected_answer, correct_answer) -> void:
 	_mistake_tracker.add_mistake(question, selected_answer, correct_answer)
 
 
@@ -130,7 +130,10 @@ func _on_level_complete_fx() -> void:
 	AudioManager.play_sfx("level_complete")
 
 
-func _on_answer_selected(value: int, button: Button) -> void:
+## `value` is an int for integer categories or the canonical String form
+## for fraction categories (Phase 13 FR13.1); comparison is exact equality
+## against the active question's correct_answer.
+func _on_answer_selected(value, button: Button) -> void:
 	if not GameManager.is_playing():
 		return
 	if not _accepting_input:
@@ -199,7 +202,7 @@ func _on_enemy_bullet_impact() -> void:
 ## brief red-flash feedback interval; enemy return fire (introduced by the
 ## Phase 4 lives system) will hook the same wrong_answer event and fly
 ## fully in parallel - question changes never wait on bullet travel.
-func _resolve_wrong_answer(selected_answer: int, button: Button) -> void:
+func _resolve_wrong_answer(selected_answer, button: Button) -> void:
 	var session_at_answer := _session_id
 	_question_panel.flash_wrong_answer(button)
 	AudioManager.play_sfx("miss")
