@@ -41,8 +41,8 @@ rules, distractor rules), §7 (`player_bullet.png`, enemy sprite table).
     instance visibly travels from the player position toward the active
     enemy's position (replacing Phase 1's instant disappear). Per the
     later parallel-resolution contract (Phase 4 FR4.13), gameplay ---
-    destruction, scoring, next question --- resolves at the moment the
-    bullet launches; the flight itself is purely presentational.
+    scoring and the next question --- resolves at the moment the
+    bullet launches, but the target enemy's destruction waits until the bullet arrives.
 -   FR2.6 --- On a wrong answer, the active enemy survives and remains
     in place. The tapped answer button flashes red. The wrong-answer event
     is emitted/handled as the gameplay damage trigger; it must not move the
@@ -183,10 +183,10 @@ signal (exact contract confirmed with the team, but the test asserts
   \#                      Scenario                Expected Result
   ----------------------- ----------------------- -------------------------------
   1                       Play an addition        Bullet sprite visibly travels
-                           question, answer        from player to enemy; enemy
-                           correctly               destroyed as the bullet fires;
-                                                   next question is ready while
-                                                   the bullet is still in flight;
+                           question, answer        from player to enemy; next
+                           correctly               question is ready while the
+                                                   bullet is still in flight;
+                                                   enemy destroyed on hit;
                                                    score +1
 
   2                       Play an addition        Enemy and formation remain

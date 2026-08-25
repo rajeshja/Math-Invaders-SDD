@@ -32,11 +32,11 @@ but never move the formation.
     deterministic and is re-evaluated whenever the remaining formation
     changes (including after an enemy is removed or the formation is
     reset).
--   FR3.4 --- On a correct answer, the active enemy is destroyed/removed
-    and the question panel advances to the next active enemy's question
-    **in the same frame the player bullet launches** --- the flight is
-    purely presentational feedback and never delays destruction,
-    scoring, or the next question. The visible formation shrinks by
+-   FR3.4 --- On a correct answer, the question panel advances to the next
+    active enemy's question **in the same frame the player bullet launches**.
+    The targeted enemy remains visible but is excluded from active-enemy
+    selection until the bullet's arrival confirms the hit and destroys it.
+    The visible formation shrinks by
     one.
 -   FR3.5 --- `multiplication_strategy.gd` and `division_strategy.gd`
     are added under `scripts/questions/strategies/`, registered in
@@ -121,10 +121,12 @@ but never move the formation.
     -   `get_active_enemy()`: returns the current target (e.g.,
         frontmost/lowest by position) and exposes its linked question to
         `QuestionPanel`.
-    -   `on_correct_answer()`: destroys the active enemy, decrements
+    -   `on_correct_answer(enemy)`: marks the active enemy as pending a hit
+        and advances to the next active enemy's question. If called with no
+        arguments, behaves as if the enemy was hit immediately.
+    -   `on_enemy_hit(enemy)`: destroys the enemy, decrements
         `enemies_remaining`, updates HUD wave-progress signal, and if
-        `enemies_remaining == 0`, triggers wave-clear; otherwise
-        advances to the next active enemy's question.
+        `enemies_remaining == 0`, triggers wave-clear.
     -   `on_wave_clear()`: shows `wave_complete_banner.png` briefly,
         advances `current_category` to the next entry in
         `category_sequence` (or signals level-complete if the sequence

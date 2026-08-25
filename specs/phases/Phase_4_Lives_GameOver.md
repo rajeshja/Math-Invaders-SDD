@@ -71,10 +71,11 @@ depletion), §6 (HUD lives requirement), §7 (`life_icon.png`,
     fired on wrong answers. Implementation is a fixed-duration tween,
     not a fixed velocity.
 -   FR4.13 --- **Parallel answer resolution**: answering is never
-    delayed by any bullet animation. On a **correct** answer, score,
-    destruction of the active enemy, and loading the next question all
-    resolve at the same instant the player bullet *launches*; its
-    flight is purely cosmetic. On a **wrong** answer, the life loss,
+    delayed by any bullet animation. On a **correct** answer, score
+    and the next active-enemy question all
+    resolve at the same instant the player bullet *launches*. The targeted
+    enemy remains visible but is excluded from active-enemy selection
+    until the bullet's arrival confirms the hit and destroys it. On a **wrong** answer, the life loss,
     attempt counting, and Game Over check resolve immediately; only
     the next question's *display* may wait out the brief red-flash
     feedback interval (~0.18 s), and it must never wait for the enemy
@@ -156,10 +157,9 @@ depletion), §6 (HUD lives requirement), §7 (`life_icon.png`,
     target position, replacing any fixed-velocity/slow travel; expose
     the constant so the enemy bullet reuses the identical duration.
 6.  **Parallel resolution wiring**: in `Main.gd`, the correct-answer
-    handler captures the active enemy's position, launches the bullet,
-    adds score, and calls `WaveManager.on_correct_answer()` (destroy +
-    next question) in the same frame; nothing subscribes gameplay
-    logic to the bullet's arrival. The wrong-answer handler starts the
+    handler launches the bullet, adds score, and calls `WaveManager.on_correct_answer()`
+    to emit the next question immediately. The bullet's arrival callback is wired to
+    `WaveManager.on_enemy_hit()` to handle enemy destruction. The wrong-answer handler starts the
     red flash non-blocking, resolves life/attempts/Game Over
     immediately, and awaits only the panel's fixed feedback interval
     before displaying the next question or re-enabling input.
@@ -306,11 +306,11 @@ Correct-answer sequence (for contrast):
 
 1. Player bullet launches from the ship toward the active enemy
    (exactly 0.3 s flight).
-2. In the **same frame**, score increments, the enemy detaches and is
-   destroyed, and the next active-enemy question is emitted to the
-   panel --- the player can answer again while the bullet is mid-flight.
-3. The bullet's arrival callback performs presentation cleanup only
-   (e.g., future hit-effect hooks); no gameplay logic waits on it.
+2. In the **same frame**, score increments, and the next active-enemy question is emitted to the
+   panel --- the player can answer again while the bullet is mid-flight. The targeted enemy
+   remains visible but is excluded from active-enemy selection.
+3. The bullet's arrival callback confirms the hit, destroying the enemy and updating the
+   wave's remaining count. Future hit-effect hooks will also trigger here.
 
 Constraints:
 

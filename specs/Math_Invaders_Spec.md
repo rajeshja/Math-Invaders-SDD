@@ -135,12 +135,13 @@ control exactly which math skill is being practiced at any moment.
     to the active enemy.
 3.  Player taps an answer button.
 4.  **Correct:** player ship fires a bullet at the active enemy and,
-    in the same instant, the enemy is destroyed and removed from the
-    formation --- bullet flight is purely presentational, so score
-    increases, wave progress updates (e.g., "6/10 remaining"), and a
-    new question loads immediately: the player can answer again while
-    the bullet is still visibly mid-flight. The player visibly sees
-    the remaining count drop (e.g., 10 → 9).
+    in the same instant, the score increases and the next question loads
+    immediately: the player can answer again while the bullet is still
+    visibly mid-flight. The targeted enemy remains visible but is excluded
+    from active-enemy selection until the bullet's arrival confirms
+    the hit, destroying the enemy and updating
+    wave progress (e.g., "6/10 remaining"). The player visibly sees
+    the remaining count drop (e.g., 10 → 9) upon bullet impact.
 5.  **Incorrect:** the active enemy and the rest of the formation remain
     in place. The selected answer button flashes red, the active enemy
     visibly fires a bullet at the player ship (traveling for exactly
@@ -455,8 +456,10 @@ Game Over transition, and no collision-based damage path may be introduced.
 
 **Parallel answer resolution (authoritative):** bullet flight time never
 takes away from the time available to answer questions. On a correct
-answer, score, destruction of the active enemy, and loading the next
-question all resolve at the same instant the player bullet launches; on a
+answer, score and loading the next
+question all resolve at the same instant the player bullet launches; the
+targeted enemy remains visible but excluded from selection until the bullet's
+arrival confirms the hit and destroys it. On a
 wrong answer, life consumption, attempt counting, and any Game Over
 transition resolve immediately, and only the next question's *display*
 may wait out the brief red-flash feedback interval (~0.18 s) --- never
