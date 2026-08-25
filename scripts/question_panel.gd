@@ -12,7 +12,12 @@ signal answer_selected(value: int, button: Button)
 
 const WRONG_FLASH_SECONDS := 0.18
 
+## Phase 11 FR10.4: base design height of the panel (matches the
+## offset_top = -360 anchor layout in question_panel.tscn).
+const PANEL_HEIGHT := 360.0
+
 @onready var _question_label: Label = $Panel/QuestionLabel
+@onready var _panel: Control = $Panel
 @onready var _answer_buttons: Array = [
 	$Panel/AnswerButtons/Button1,
 	$Panel/AnswerButtons/Button2,
@@ -24,6 +29,22 @@ const WRONG_FLASH_SECONDS := 0.18
 func _ready() -> void:
 	for button in _answer_buttons:
 		button.pressed.connect(_on_answer_button_pressed.bind(button))
+	_apply_safe_area()
+
+
+## Phase 11 FR10.4: on mobile devices, lift the whole panel above the
+## home-indicator/gesture-bar region and inset it away from rounded
+## screen corners, keeping every answer button fully visible and tappable.
+## No-op on desktop (zero insets), so editor behavior is unchanged.
+func _apply_safe_area() -> void:
+	var insets := SafeArea.get_canvas_insets(self)
+	if insets.left == 0.0 and insets.top == 0.0 \
+			and insets.right == 0.0 and insets.bottom == 0.0:
+		return
+	_panel.offset_top = -PANEL_HEIGHT - insets.bottom
+	_panel.offset_bottom = -insets.bottom
+	_panel.offset_left = insets.left
+	_panel.offset_right = -insets.right
 
 
 ## Displays a question Dictionary shaped like QuestionStrategy.generate()'s

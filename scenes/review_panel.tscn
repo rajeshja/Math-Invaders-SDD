@@ -59,7 +59,7 @@ size_flags_horizontal = 3
 theme_override_constants/separation = 12
 
 [node name="CloseButton" type="Button" parent="Margin/Rows"]
-custom_minimum_size = Vector2(280, 80)
+custom_minimum_size = Vector2(280, 110)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 36

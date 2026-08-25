@@ -2,7 +2,6 @@
 .godot/
 .import/
 export.cfg
-export_presets.cfg
 
 # VS Code config ignores
 .vscode/
@@ -21,5 +20,6 @@ Thumbs.db
 
 # Build output
 build/
+builds/
 *.pck
 *.zip

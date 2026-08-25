@@ -14,6 +14,7 @@ config/name="Math Invaders"
 run/main_scene="res://scenes/splash_screen.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 boot_splash/bg_color=Color(0.03137255, 0.0392157, 0.10980392, 1)
+boot_splash/image="res://assets/images/ui/boot_splash.png"
 config/icon="res://icon.svg"
 
 [autoload]

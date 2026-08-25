@@ -33,6 +33,24 @@ func _ready() -> void:
 	visible = false
 	_close_button.pressed.connect(_on_close_pressed)
 	_scroll.get_v_scroll_bar().value_changed.connect(_on_scrolled)
+	_apply_safe_area()
+
+
+## Phase 11 FR10.4: on mobile devices, pad the review panel's margins out
+## by the display safe area so the Close button and list rows are never
+## under the home-indicator/gesture-bar region or clipped by rounded
+## corners. No-op on desktop (zero insets).
+func _apply_safe_area() -> void:
+	var insets := SafeArea.get_canvas_insets(self)
+	if insets.left == 0.0 and insets.top == 0.0 \
+			and insets.right == 0.0 and insets.bottom == 0.0:
+		return
+	_margin.add_theme_constant_override("margin_left",
+			_margin.get_theme_constant("margin_left") + int(insets.left))
+	_margin.add_theme_constant_override("margin_right",
+			_margin.get_theme_constant("margin_right") + int(insets.right))
+	_margin.add_theme_constant_override("margin_bottom",
+			_margin.get_theme_constant("margin_bottom") + int(insets.bottom))
 
 
 ## Populates and opens the panel. Each entry is a Dictionary shaped like

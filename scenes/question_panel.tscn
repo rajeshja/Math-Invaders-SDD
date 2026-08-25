@@ -60,7 +60,7 @@ theme_override_constants/h_separation = 20
 theme_override_constants/v_separation = 20
 
 [node name="Button1" type="Button" parent="Panel/AnswerButtons"]
-custom_minimum_size = Vector2(320, 100)
+custom_minimum_size = Vector2(320, 110)
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxTexture_normal")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_pressed")
@@ -70,7 +70,7 @@ theme_override_font_sizes/font_size = 36
 text = "11"
 
 [node name="Button2" type="Button" parent="Panel/AnswerButtons"]
-custom_minimum_size = Vector2(320, 100)
+custom_minimum_size = Vector2(320, 110)
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxTexture_normal")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_pressed")
@@ -80,7 +80,7 @@ theme_override_font_sizes/font_size = 36
 text = "12"
 
 [node name="Button3" type="Button" parent="Panel/AnswerButtons"]
-custom_minimum_size = Vector2(320, 100)
+custom_minimum_size = Vector2(320, 110)
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxTexture_normal")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_pressed")
@@ -90,7 +90,7 @@ theme_override_font_sizes/font_size = 36
 text = "13"
 
 [node name="Button4" type="Button" parent="Panel/AnswerButtons"]
-custom_minimum_size = Vector2(320, 100)
+custom_minimum_size = Vector2(320, 110)
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxTexture_normal")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_pressed")

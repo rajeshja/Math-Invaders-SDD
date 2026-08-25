@@ -57,21 +57,21 @@ horizontal_alignment = 1
 text = "High Score: 0"
 
 [node name="PlayAgainButton" type="Button" parent="Backdrop/Center/Rows"]
-custom_minimum_size = Vector2(360, 80)
+custom_minimum_size = Vector2(360, 110)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 36
 text = "Play Again"
 
 [node name="ReviewMistakesButton" type="Button" parent="Backdrop/Center/Rows"]
-custom_minimum_size = Vector2(360, 80)
+custom_minimum_size = Vector2(360, 110)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 36
 text = "Review Mistakes"
 
 [node name="ReturnToMenuButton" type="Button" parent="Backdrop/Center/Rows"]
-custom_minimum_size = Vector2(360, 80)
+custom_minimum_size = Vector2(360, 110)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 36

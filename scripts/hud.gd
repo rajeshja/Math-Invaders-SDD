@@ -29,7 +29,31 @@ var _last_tick_second: int = -1
 
 func _ready() -> void:
 	_render_score()
+	_apply_safe_area()
 	GameManager.game_over.connect(_stop_low_time_warning)
+
+
+## Phase 11 FR10.4: on mobile devices, shift the top HUD out of notch /
+## rounded-corner / camera-cut regions so it is never obscured. No-op on
+## desktop (SafeArea returns zero insets there), keeping editor behavior
+## unchanged.
+func _apply_safe_area() -> void:
+	var insets := SafeArea.get_canvas_insets(self)
+	if insets.left == 0.0 and insets.top == 0.0 \
+			and insets.right == 0.0 and insets.bottom == 0.0:
+		return
+	for child in get_children():
+		if child is Control:
+			child.offset_top += insets.top
+			child.offset_bottom += insets.top
+	_score_label.offset_left += insets.left
+	_score_label.offset_right += insets.left
+	_wave_progress_label.offset_left += insets.left
+	_wave_progress_label.offset_right -= insets.right
+	_level_label.offset_left -= insets.right
+	_level_label.offset_right -= insets.right
+	_lives_display.offset_left -= insets.right
+	_lives_display.offset_right -= insets.right
 
 
 func _process(_delta: float) -> void:
