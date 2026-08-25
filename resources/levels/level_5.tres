@@ -12,3 +12,4 @@ time_limit_seconds = 270.0
 tries_per_question = 1
 allow_unlike_denominators = false
 max_decimal_places = 1
+points_per_question = 3

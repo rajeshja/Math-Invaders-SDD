@@ -58,6 +58,28 @@ const LEVEL_RESOURCE_PATHS: Array[String] = [
 ## number of places after the decimal point (0 = whole numbers only).
 @export_range(0, 4) var max_decimal_places: int = 0
 
+@export_group("Scoring")
+## Points awarded per correct answer in this level (Phase 17 FR17.1).
+## Values below 1 clamp to 1 at resolution time (FR17.2).
+@export var points_per_question: int = 1
+
+## One-time warning guard so an invalid authored value logs exactly once
+## instead of spamming every level start (FR17.2).
+static var _warned_invalid_points := false
+
+
+## Single validation path (FR17.2): values below 1 resolve to 1 with a
+## one-time push_warning; valid values pass through untouched.
+func resolved_points_per_question() -> int:
+	if points_per_question < 1:
+		if not _warned_invalid_points:
+			_warned_invalid_points = true
+			push_warning(
+					"LevelConfig: points_per_question %d is invalid; clamping to 1."
+							% points_per_question)
+		return 1
+	return points_per_question
+
 
 ## Options Dictionary passed through QuestionGenerator into every
 ## strategy's generate() call (WaveManager -> generator -> strategy).
