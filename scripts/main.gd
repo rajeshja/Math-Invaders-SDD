@@ -109,6 +109,11 @@ func _on_question_ready(question: Dictionary) -> void:
 
 func _on_level_changed(level: int) -> void:
 	_attempt_tracker.configure(_level_manager.effective_tries_per_question)
+	# Phase 19 FR19.3: every level boundary - session start, advancement,
+	# and Play Again all funnel through start_level() - re-applies that
+	# level's chosen player ship.
+	_player.apply_ship_texture(
+			_level_manager.resolved_config_for(level).resolved_player_ship_texture())
 	_hud.update_level(level)
 	_hud.update_time(GameManager.time_remaining)
 

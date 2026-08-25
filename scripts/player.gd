@@ -21,6 +21,20 @@ func get_muzzle_position() -> Vector2:
 	return global_position
 
 
+## Applies a per-level player ship image (Phase 19 FR19.3). Swaps ONLY the
+## sprite texture - size, position, muzzle offset, and feedback animations
+## are untouched (FR19.4). Invalid paths are ignored defensively so a bad
+## configuration can never blank the ship.
+func apply_ship_texture(path: String) -> void:
+	if _sprite == null or path.is_empty():
+		return
+	if not ResourceLoader.exists(path):
+		return
+	var texture := load(path)
+	if texture is Texture2D:
+		_sprite.texture = texture
+
+
 ## Placeholder for firing juice (flash/recoil/animation). Intentionally a
 ## no-op stub until Phase 9 polish - kept as a single call site so visual
 ## feedback can be added later without touching callers.

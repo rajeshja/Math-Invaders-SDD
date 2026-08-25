@@ -71,6 +71,31 @@ const LEVEL_RESOURCE_PATHS: Array[String] = [
 ## the category default sprite".
 @export var wave_enemy_textures: Array = []
 
+## Player ship image override (Phase 19 FR19.1): empty string keeps the
+## default assets/images/ships/player_ship.png; a configured path must
+## exist or the default is used with a one-time warning (FR19.2).
+@export var player_ship_texture: String = ""
+
+const DEFAULT_PLAYER_SHIP_TEXTURE := "res://assets/images/ships/player_ship.png"
+
+## One-time warning guard shared across configs so a bad authored path
+## logs once per session instead of at every resolution (FR19.2).
+static var _warned_missing_player_ship := false
+
+
+## Resolution rule (Phase 19 FR19.2): empty or missing paths fall back to
+## the default ship texture; only genuinely missing configured paths warn,
+## and only once. Unit-testable without the scene tree (NFR19.3).
+func resolved_player_ship_texture() -> String:
+	if player_ship_texture.is_empty():
+		return DEFAULT_PLAYER_SHIP_TEXTURE
+	if ResourceLoader.exists(player_ship_texture):
+		return player_ship_texture
+	if not _warned_missing_player_ship:
+		_warned_missing_player_ship = true
+		push_warning("LevelConfig: player ship '%s' is missing; using the default ship." % player_ship_texture)
+	return DEFAULT_PLAYER_SHIP_TEXTURE
+
 
 ## Normalized per-index texture sets (FR18.1): one Array[String] per wave,
 ## empty when unset; malformed elements (non-String entries, non-Array
