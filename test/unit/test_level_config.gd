@@ -211,6 +211,50 @@ func test_level_one_ships_the_three_image_demo() -> void:
 				"demo placeholder art exists (%s)" % str(path))
 
 
+## -- Phase 19: player ship resolution -----------------------------------------
+
+func test_player_ship_resolution_defaults_without_warning() -> void:
+	var config := LevelConfig.new()
+	assert_eq(config.player_ship_texture, "", "default is empty (FR19.1)")
+	assert_eq(config.resolved_player_ship_texture(),
+			LevelConfig.DEFAULT_PLAYER_SHIP_TEXTURE,
+			"empty selection keeps the default ship")
+
+
+func test_player_ship_resolution_returns_valid_configured_path() -> void:
+	var config := LevelConfig.new()
+	config.player_ship_texture = "res://assets/images/ships/player_ship.png"
+	assert_eq(config.resolved_player_ship_texture(),
+			"res://assets/images/ships/player_ship.png",
+			"valid configured paths pass through")
+
+
+func test_player_ship_missing_path_falls_back_and_warns_once() -> void:
+	LevelConfig._warned_missing_player_ship = false
+	var config := LevelConfig.new()
+	config.player_ship_texture = "res://assets/images/ships/no_such_ship.png"
+
+	assert_eq(config.resolved_player_ship_texture(),
+			LevelConfig.DEFAULT_PLAYER_SHIP_TEXTURE,
+			"missing paths fall back to the default")
+	assert_push_warning("no_such_ship", "missing configured ships warn once")
+
+	# Further resolutions stay defaulted but never re-warn.
+	assert_eq(config.resolved_player_ship_texture(),
+			LevelConfig.DEFAULT_PLAYER_SHIP_TEXTURE)
+
+	LevelConfig._warned_missing_player_ship = false
+
+
+func test_level_two_ships_the_variant_demo() -> void:
+	var level_two: LevelConfig = load(LEVEL_PATHS[1])
+	assert_eq(level_two.player_ship_texture,
+			"res://assets/images/ships/player_ship_alt.png",
+			"FR19.6: Level 2 demonstrates a variant ship")
+	assert_eq(level_two.resolved_player_ship_texture(),
+			"res://assets/images/ships/player_ship_alt.png")
+
+
 ## FR9.3/NFR9.1: fraction and decimal rules must be Inspector-editable
 ## fields on the resource itself.
 func test_fraction_and_decimal_rule_exports_exist_on_the_resource() -> void:
