@@ -76,7 +76,7 @@ func test_level_four_enables_unlike_denominators_for_fraction_waves() -> void:
 			"a later level turns unlike denominators on")
 
 
-func test_level_five_adds_prime_once_with_five_wave_budget() -> void:
+func test_level_five_keeps_prime_once_then_appends_decimal_waves() -> void:
 	var config: LevelConfig = load("res://resources/levels/level_5.tres")
 
 	var prime_count := 0
@@ -84,8 +84,20 @@ func test_level_five_adds_prime_once_with_five_wave_budget() -> void:
 		if category == "prime":
 			prime_count += 1
 	assert_eq(prime_count, 1)
-	assert_eq(config.category_sequence.back(), "prime")
-	assert_eq(config.time_limit_seconds, 150.0)
+	# Phase 15 FR15.8: the four decimal waves ride after the original five.
+	assert_eq(config.category_sequence.size(), 9)
+	assert_eq(config.category_sequence[4], "prime")
+	assert_eq(config.category_sequence[5], "decimal_addition")
+	assert_eq(config.category_sequence.back(), "decimal_division")
+	assert_eq(config.time_limit_seconds, 270.0,
+			"nine waves extend the budget from the five-wave baseline")
+
+
+func test_level_five_debuts_decimals_with_one_decimal_place() -> void:
+	var config: LevelConfig = load("res://resources/levels/level_5.tres")
+
+	assert_eq(config.max_decimal_places, 1,
+			"FR15.8: decimal debut level serves tenths first")
 
 
 func test_generation_options_expose_procedural_math_knobs() -> void:
