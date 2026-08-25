@@ -398,3 +398,62 @@ platform branches in gameplay code).
    verify launch, play, portrait lock (manual checklist items 1–6).
 3. On a notched device confirm HUD/question-panel clearance (safe-area).
 
+
+## Strategy Expansion & Per-Level Configuration Revision (Phases 12--19, Playtesting → 20)
+
+Requirements batch adding richer question categories and per-level
+configuration. Historical references above to a "Phase 12 Playtesting &
+Balancing" now mean **Phase 20**; the old Phase 13 Stretch section is
+**Phase 21**. Phases 0--11 are implemented and untouched.
+
+### 1. Strategy renaming (Phase 12)
+
+Category keys and strategy files/classes are renamed:
+`addition`→`integer_addition`, `subtraction`→`integer_subtraction`,
+`multiplication`→`integer_multiplication`, `division`→`integer_division`.
+A category display-name registry keeps HUD labels unchanged ("Addition",
+not raw keys). Pure refactor; behavior-preserving.
+
+### 2. New categories (Phases 13--16)
+
+- `fraction_addition` / `fraction_subtraction` (13),
+  `fraction_multiplication` / `fraction_division` (14),
+  `decimal_addition` / `decimal_subtraction` / `decimal_multiplication`
+  / `decimal_division` (15), `ratio_proportion` and `hcf_lcm` (16).
+- Fraction rules: difficulty scales by operand size AND by introducing
+  unlike fractions at higher tiers (`allow_unlike_denominators` gates);
+  questions/answers include proper, improper, and mixed fractions;
+  results must be simplified; fractions display stacked (numerator over
+  denominator) in questions and on answer buttons.
+- Answer-value model (Spec §12): answers may be canonical strings
+  (simplified fraction / canonical decimal); equality is exact string
+  equality of canonical forms; no choice may be value-equal to the
+  correct answer or another choice.
+- Decimals compute via shared scaled-integer arithmetic; division is
+  terminating-only by construction.
+
+### 3. Per-level configuration (Phases 17--19)
+
+All three live in each level's `LevelConfig.tres`; presentation/scoring
+only, with safe fallbacks (Spec §13):
+
+- `points_per_question` (default 1, clamped ≥ 1) --- points awarded per
+  correct answer in that level.
+- `wave_enemy_textures` --- index-aligned with `category_sequence`;
+  spawn slot `k` uses `set[k % set.size()]` (10 slots / 3 images renders
+  ship1, ship2, ship3, ship1, ship2, ship3, ship1, ship2, ship3,
+  ship1). Empty sets keep the category sprite.
+- `player_ship_texture` (empty = default `player_ship.png`) applied at
+  every level start, transition, and Play Again.
+
+### Checklist
+
+- [ ] Phase 12: rename keys/files/classes/resources/tests; add display-name registry.
+- [ ] Phase 13: answer-value model + `FractionValue` + stacked rendering + two fraction strategies.
+- [ ] Phase 14: fraction multiply/divide strategies + sprites.
+- [ ] Phase 15: decimal scale/format helper + four decimal strategies + sprites.
+- [ ] Phase 16: ratio/proportion + HCF/LCM strategies + sprites (+ roster extension if needed).
+- [ ] Phase 17: `points_per_question` end-to-end.
+- [ ] Phase 18: `wave_enemy_textures` cyclic assignment end-to-end.
+- [ ] Phase 19: `player_ship_texture` end-to-end.
+- [ ] Phase 20: playtest the expanded game; full GUT suite green.

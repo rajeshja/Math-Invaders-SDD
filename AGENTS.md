@@ -28,7 +28,15 @@ The specs, tech stack details, plan and phase details are captured in these fold
 - [Phase 9: Level Config And Player Experience](./specs/phases/Phase_9_Level_Config_and_Player_Experience.md) - Complete
 - [Phase 10: Effects, Animation, Audio, And Polish](./specs/phases/Phase_10_Effects_Animation_Audio_Polish.md) - Complete
 - [Phase 11: Mobile Export And Touch Optimization](./specs/phases/Phase_11_Mobile_Export_Touch_Optimization.md) - Complete
-- [Phase 12: Playtesting And Balancing](./specs/phases/Phase_12_Playtesting_And_Balancing.md) - Incomplete
+- [Phase 12: Integer Strategy Renaming](./specs/phases/Phase_12_Integer_Strategy_Renaming.md) - Pending
+- [Phase 13: Fraction Addition And Subtraction](./specs/phases/Phase_13_Fraction_Addition_And_Subtraction.md) - Pending
+- [Phase 14: Fraction Multiplication And Division](./specs/phases/Phase_14_Fraction_Multiplication_And_Division.md) - Pending
+- [Phase 15: Decimal Strategies](./specs/phases/Phase_15_Decimal_Strategies.md) - Pending
+- [Phase 16: Ratio Proportion HCF LCM](./specs/phases/Phase_16_Ratio_Proportion_HCF_LCM.md) - Pending
+- [Phase 17: Points Per Question Scoring](./specs/phases/Phase_17_Points_Per_Question_Scoring.md) - Pending
+- [Phase 18: Wave Enemy Ship Images](./specs/phases/Phase_18_Wave_Enemy_Ship_Images.md) - Pending
+- [Phase 19: Player Ship Image](./specs/phases/Phase_19_Player_Ship_Image.md) - Pending
+- [Phase 20: Playtesting And Balancing](./specs/phases/Phase_20_Playtesting_And_Balancing.md) - Incomplete
 
 ## Status
 

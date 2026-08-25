@@ -277,22 +277,118 @@ playable milestone.
 -   **Milestone:** installable build running on Android and/or iOS
     device.
 
-### Phase 12 --- Playtesting & Balancing
+### Phase 12 --- Integer Strategy Renaming & Category Key Migration
+
+-   Rename the four core strategies end-to-end: `addition` →
+    `integer_addition`, `subtraction` → `integer_subtraction`,
+    `multiplication` → `integer_multiplication`, `division` →
+    `integer_division` (files, classes, generator keys, enemy texture
+    map, default sequences, all level `.tres` files, tests).
+-   Introduce the category display-name registry so the HUD keeps
+    showing "Addition"/"Subtraction"/... rather than raw keys.
+-   Pure refactor: behavior-preserving, full GUT suite green.
+-   **Milestone:** naming foundation for the number-type categories,
+    game plays identically to Phase 11. See
+    `specs/phases/Phase_12_Integer_Strategy_Renaming.md`.
+
+### Phase 13 --- Fraction Foundations: Addition & Subtraction
+
+-   Extend the answer-value model so `correct_answer`/`choices` may be
+    canonical strings; add the shared `FractionValue` helper.
+-   Add `fraction_addition` and `fraction_subtraction` strategies with
+    the two-axis difficulty ladder (operand size AND unlike
+    denominators at higher tiers), proper/improper/mixed representation
+    mix, mandatory simplification, and value-distinct choices.
+-   Stacked fraction rendering (numerator above denominator) in the
+    question text AND on all four answer buttons, preserving touch
+    targets/red flash/safe areas.
+-   Category sprites + level authoring (fraction debut waves).
+-   **Milestone:** fraction waves playable with stacked simplified
+    answers; reusable foundation for Phases 14--16. See
+    `specs/phases/Phase_13_Fraction_Addition_And_Subtraction.md`.
+
+### Phase 14 --- Fraction Multiplication & Division
+
+-   Add `fraction_multiplication` and `fraction_division` reusing the
+    Phase 13 foundation: tiered ladders through cross-canceling and
+    reciprocal reasoning, mixed-number operands at higher tiers,
+    simplified value-distinct answers, stacked display.
+-   Category sprites + level authoring.
+-   **Milestone:** all four fraction operations shipped with zero edits
+    to the Phase 13 foundation files. See
+    `specs/phases/Phase_14_Fraction_Multiplication_And_Division.md`.
+
+### Phase 15 --- Decimal Strategies (Add/Sub/Mul/Div)
+
+-   Add the four decimal strategies computing exclusively via shared
+    scaled-integer arithmetic (never floats), canonical formatting
+    rules, terminating-decimal-only division built divisor-first, and
+    difficulty scaling along `max_decimal_places` plus magnitude.
+-   Place-shift/off-by-one distractors, category sprites, level
+    authoring.
+-   **Milestone:** exact decimal arithmetic across all four operations
+    on the existing plain-text answer pipeline. See
+    `specs/phases/Phase_15_Decimal_Strategies.md`.
+
+### Phase 16 --- Ratio & Proportion and HCF & LCM
+
+-   Add `ratio_proportion` (proportion solving, ratio sharing,
+    unit-rate scaling --- tiered forms) and `hcf_lcm` (tiered HCF/LCM
+    identification with meaningful near-miss distractors).
+-   Integer answers: no rendering/pipeline changes; registration,
+    sprites, level roster extension (`level_6.tres` if needed).
+-   **Milestone:** Spec §12 category registry complete with zero edits
+    to existing strategies. See
+    `specs/phases/Phase_16_Ratio_Proportion_HCF_LCM.md`.
+
+### Phase 17 --- Configurable Points Per Question Per Level
+
+-   `LevelConfig` gains `points_per_question` (default `1`,
+    Inspector-editable, validated ≥ 1); `Main` awards the resolved
+    value per correct answer instead of hardcoded `+1`.
+-   Personal bests, assumed full score, high scores verified untouched
+    (totals only).
+-   **Milestone:** per-level scoring tuned via `.tres` files; defaults
+    byte-identical to prior behavior. See
+    `specs/phases/Phase_17_Points_Per_Question_Scoring.md`.
+
+### Phase 18 --- Per-Wave Enemy Ship Image Sets
+
+-   `LevelConfig` gains `wave_enemy_textures` (index-aligned with
+    `category_sequence`); a wave's set of images is assigned to spawn
+    slots cyclically --- slot `k` uses `set[k % set.size()]` (10 slots /
+    3 images → ship1, 2, 3, 1, 2, 3, 1, 2, 3, 1).
+-   Empty sets fall back to the category sprite; bad paths warn and
+    fall back per slot; presentation only.
+-   **Milestone:** per-wave ship art variety configured entirely in
+    level resources. See
+    `specs/phases/Phase_18_Wave_Enemy_Ship_Images.md`.
+
+### Phase 19 --- Player Ship Image Per Level
+
+-   `LevelConfig` gains `player_ship_texture` (empty = default
+    `player_ship.png`; missing files fall back with a warning),
+    applied at every level start, transition, and Play Again.
+-   **Milestone:** completes the per-level visual/scoring configuration
+    trio (17--19). See `specs/phases/Phase_19_Player_Ship_Image.md`.
+
+### Phase 20 --- Playtesting & Balancing
 
 -   Playtest with target age group; adjust question difficulty pacing
-    per level, distractor plausibility, wave length feel, enemy
-    speed, and the level time-limit feel
-    (`seconds_per_wave` / per-level overrides) based on observations.
+    per level, distractor plausibility, wave length feel, and the
+    level time-limit feel based on observations --- now spanning ALL
+    categories (integers, fractions, decimals, ratio/HCF-LCM) plus the
+    per-level point values and ship-image selections.
 -   Fix bugs found during testing; run the full GUT suite after
     balancing changes to catch regressions in difficulty scaling,
     distractor generation, and wave/level logic.
 -   **Milestone:** balanced, kid-tested build ready for wider release,
     with the full GUT suite passing.
 
-### Phase 13 --- Stretch / Future Expansion
+### Phase 21 --- Stretch / Future Expansion
 
--   Additional math concepts as new strategies (fractions, percentages,
-    factors/multiples).
+-   Additional math concepts as new strategies (percentages;
+    fraction-decimal-percent conversions).
 -   Player profiles for multiple kids on one device.
 -   Wave/level select or endless-mode toggle.
 -   Additional non-math subject modules (spelling, science) reusing the
@@ -338,8 +434,9 @@ Three related gameplay changes extend Phase 4/5 and ripple forward:
    (`TRAVEL_TIME`), replacing distance-dependent/slow travel.
 
 Phase 6 restarts the timer at each level boundary; Phase 10 adds
-enemy-fire/player-hit sounds and a low-time warning; Phase 12 treats
-the time budget as a tuning dimension.
+enemy-fire/player-hit sounds and a low-time warning; Phase 20 (renumbered
+from 12 --- see the final change note) treats the time budget as a tuning
+dimension.
 
 
 ## Phase Change Note — Parallel Answer Resolution, Triangle Formation, and the Phase 4 Split
@@ -370,3 +467,43 @@ Three changes, applied to both the requirements and the existing code:
    phases shift by one: Level Progression 5→6, Score & High Score 6→7,
    New Categories 7→8, Level Config & Experience 8→9, Effects/Audio 9→10, Mobile Export 10→11,
    Playtesting & Balancing 11→12, Stretch 12→13.
+
+## Phase Change Note — Strategy Expansion, Level Visual Config, and the Phase 12→20 Renumbering
+
+A new requirements batch extends the question categories and per-level
+configuration, and the roadmap is renumbered to fit it:
+
+1. **Renumbering.** The old **Phase 12 — Playtesting & Balancing** moves
+   to **Phase 20** (its phase doc is now
+   `specs/phases/Phase_20_Playtesting_And_Balancing.md`), and the old
+   Phase 13 Stretch section becomes **Phase 21**. Phases 0–11 are
+   untouched and remain implemented as shipped.
+2. **New Phases 12–16 (question strategies).**
+   Phase 12 renames the four core strategies/keys to `integer_*`
+   (`addition→integer_addition`, `subtraction→integer_subtraction`,
+   `multiplication→integer_multiplication`, `division→integer_division`)
+   and adds a category display-name registry. Phases 13–14 add the four
+   fraction strategies (unlike-denominator difficulty ladder,
+   proper/improper/mixed representations, mandatory simplification,
+   stacked numerator-over-denominator rendering in questions AND answer
+   buttons, canonical string answers via a shared `FractionValue`
+   helper). Phase 15 adds the four decimal strategies on shared
+   scaled-integer arithmetic with canonical formatting and
+   terminating-only division. Phase 16 adds ratio & proportion and
+   HCF & LCM. Normative home for keys/display names/answer model:
+   Spec §12.
+3. **New Phases 17–19 (per-level configuration).** Phase 17 adds
+   `points_per_question` per level (default 1). Phase 18 adds
+   per-wave enemy image sets assigned cyclically by spawn slot
+   (`slot k → set[k mod set.size()]`; 10 slots / 3 images renders
+   ship1, ship2, ship3, ship1, … exactly). Phase 19 adds a per-level
+   player ship image. All live in `LevelConfig` resources; all are
+   presentation/scoring only with safe fallbacks. Normative home:
+   Spec §13.
+4. **Stretch content moved.** Fractions and factors/multiples-style
+   content is now planned work (Phases 13–16); percentages and
+   fraction-decimal-percent conversions remain stretch (Phase 21).
+
+Playtesting (Phase 20) therefore tunes the whole expanded game:
+category pacing across integers/fractions/decimals/ratio/HCF-LCM,
+per-level point values, and ship-image variety.

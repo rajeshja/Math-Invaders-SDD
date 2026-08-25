@@ -202,13 +202,56 @@ control exactly which math skill is being practiced at any moment.
 
 ### Stage C --- New concepts (advanced levels)
 
--   New wave categories added to the rotation: prime number
-    identification, factors/multiples, simple fractions/percentages
-    (stretch goal)
+-   **Prime numbers** --- shipped in Phase 8 as the extensibility
+    proving ground.
+-   **Number-type operation families (Phases 13--16)** --- the four core
+    operations re-expressed over richer number types, each family as its
+    own registered category/wave:
+    -   **Fractions:** `fraction_addition`, `fraction_subtraction`,
+        `fraction_multiplication`, `fraction_division`.
+    -   **Decimals:** `decimal_addition`, `decimal_subtraction`,
+        `decimal_multiplication`, `decimal_division`.
+-   **Concept categories (Phase 16):** `ratio_proportion` (proportion
+    solving, ratio sharing, unit-rate scaling) and `hcf_lcm` (highest
+    common factor / lowest common multiple identification).
+
+#### Fraction content rules (Phases 13--14, authoritative with Spec §12)
+
+-   **Difficulty scales on two axes:** not only larger numerators/
+    denominators, but also the introduction of **unlike fractions** at
+    higher difficulties (multiple-related denominator pairs first, then
+    coprime pairs requiring LCD reasoning). The LevelConfig knob
+    `allow_unlike_denominators` gates unlike-denominator generation.
+-   **Representation coverage:** questions and answers include
+    **mixed fractions and improper fractions** alongside proper
+    fractions, introduced progressively from Tier 2 upward. Within one
+    question all choices share one representation so format never leaks
+    the correct answer; equivalence is judged on simplified value, never
+    surface form.
+-   **Simplification is part of solving:** every expected answer is
+    reduced to lowest terms before display (a raw sum of 4/8 expects
+    1/2). No choice may be value-equal to the correct answer or another
+    choice.
+-   **Clear fraction display:** fractions render stacked --- numerator
+    above a horizontal bar above denominator --- in both the question
+    text and every answer button; mixed numbers show the whole part
+    beside the stacked remainder. Inline "a/b" text is acceptable only
+    outside gameplay surfaces (Mistake Review, logs).
+
+#### Decimal content rules (Phase 15)
+
+-   All arithmetic computed exactly via scaled integers (never binary
+    floats); canonical formatting (no trailing zeros, single leading
+    zero); division guarantees terminating decimals only, built
+    divisor-and-quotient first.
 
 ### Distractor & Difficulty Rules
 
 -   Distractors avoid duplicates and nonsensical values.
+-   For fraction/decimal categories, "duplicate" includes **value
+    equality**: an unsimplified equivalent (2/4 beside a correct 1/2) or
+    a re-formatted decimal is still a duplicate of the correct answer
+    and forbidden --- see Spec §12's answer-value model.
 -   Difficulty (number range and operand size) is parameterized per
     level, not hardcoded per question --- the same category can be asked
     at many difficulty tiers as levels increase.
@@ -321,9 +364,16 @@ blurring when the game scales to different screen sizes.
   layer)                                                  tileable                           background for a subtle
                                                                                              parallax scroll effect
 
-  Player ship         `player_ship.png`                   128×128            Yes             Faces upward; fixed near
-                                                                                             the bottom of the screen
-                                                                                             above the question panel
+  Player ship         `player_ship.png`                   128×128            Yes             Faces upward; fixed near the
+                                                                                              bottom of the screen
+                                                                                              above the question panel.
+                                                                                              **Per-level variants:** each
+                                                                                              level may select a different
+                                                                                              player ship image via its
+                                                                                              `LevelConfig` (Phase 19);
+                                                                                              variants should match this
+                                                                                              128×128 footprint;
+                                                                                              empty selection = this default
 
   Player              `player_bullet.png`                 16×48              Yes             Travels upward from the
   bullet/projectile                                                                          player ship to the
@@ -351,8 +401,27 @@ blurring when the game scales to different screen sizes.
 
   Enemy ship ---      `enemy_ship_prime.png`              96×96              Yes             Added later alongside
   Advanced/Prime                                                                             the Prime strategy; same
-  (Stage C)                                                                                  dimensions as the other
+                                                                                             dimensions as the other
                                                                                              enemy sprites
+
+  Enemy ship ---      `enemy_ship_fraction_addition.png`,   96×96            Yes             One sprite per fraction/
+  Fraction &          `enemy_ship_fraction_subtraction.png`,                                 decimal category (Phases
+  Decimal             `enemy_ship_fraction_multiplication.png`,                              13--15); same dimensions;
+  categories          `enemy_ship_fraction_division.png`,                                    placeholders acceptable.
+                      `enemy_ship_decimal_addition.png`,                                     Additionally, any wave in
+                      `enemy_ship_decimal_subtraction.png`,                                  any level may override its
+                      `enemy_ship_decimal_multiplication.png`,                               images entirely via its
+                      `enemy_ship_decimal_division.png`                                      LevelConfig's per-wave
+                                                                                             image set (Phase 18) ---
+                                                                                             e.g., custom `ship1.png`,
+                                                                                             `ship2.png`, `ship3.png`
+                                                                                             cycled across the formation
+
+  Enemy ship ---      `enemy_ship_ratio_proportion.png`   96×96              Yes             Ratio & Proportion and
+  Ratio / HCF-LCM     `enemy_ship_hcf_lcm.png`                                               HCF & LCM categories
+  (Stage C)                                                                                  (Phase 16); same
+                                                                                             dimensions; placeholders
+                                                                                             acceptable
 
   Enemy explosion /   `enemy_explosion_spritesheet.png`   512×128 (4 frames  Yes             Played when an enemy is
   destruction effect                                      @ 128×128)                         destroyed on a correct
@@ -475,3 +544,113 @@ the launch, telegraph, or arrival of any bullet.
 - **Splash Screen:** A startup splash screen featuring the Game Title and Developer Logo fades directly into the Main Menu.
 - **Mistake Review:** At the Game Over screen, a "Review Mistakes" button opens a scrollable panel displaying all wrong answers tracked during that session (Question, Selected Answer, Correct Answer).
 - **Developer Level Select:** An exported setting (`debug_start_level`) allows developers to force-start the game at any level, bypassing unlocking requirements for testing purposes.
+- **Points Per Question (Phase 17):** Each level awards its own
+  configured number of points per correct answer via `points_per_question`
+  in its `LevelConfig` (default `1`, validated ≥ 1), replacing the
+  hardcoded one-point-per-answer. See Section 13.
+- **Per-Wave Enemy Ship Images (Phase 18):** Each wave of each level may
+  select its own set of enemy ship images; when a set has multiple
+  images they are assigned to the formation cyclically by spawn slot.
+  See Section 13.
+- **Player Ship Per Level (Phase 19):** Each level may select the player
+  ship image used while playing it. See Section 13.
+
+## 12. Question Categories & Answer Model (Authoritative)
+
+### Category registry
+
+Internal category keys, player-facing display names, and strategy
+classes are declared in ONE place (the generator's registration map plus
+its display-name registry). The canonical keys after Phase 12:
+
+| Key | Display name | Introduced |
+|---|---|---|
+| `integer_addition` | Addition | Phase 12 (renamed from `addition`) |
+| `integer_subtraction` | Subtraction | Phase 12 (renamed) |
+| `integer_multiplication` | Multiplication | Phase 12 (renamed) |
+| `integer_division` | Division | Phase 12 (renamed) |
+| `prime` | Prime Numbers | Phase 8 |
+| `fraction_addition` | Fraction Addition | Phase 13 |
+| `fraction_subtraction` | Fraction Subtraction | Phase 13 |
+| `fraction_multiplication` | Fraction Multiplication | Phase 14 |
+| `fraction_division` | Fraction Division | Phase 14 |
+| `decimal_addition` | Decimal Addition | Phase 15 |
+| `decimal_subtraction` | Decimal Subtraction | Phase 15 |
+| `decimal_multiplication` | Decimal Multiplication | Phase 15 |
+| `decimal_division` | Decimal Division | Phase 15 |
+| `ratio_proportion` | Ratio & Proportion | Phase 16 |
+| `hcf_lcm` | HCF & LCM | Phase 16 |
+
+The HUD resolves display names through this registry --- raw keys are
+never shown to players, and renaming a key must never change its display
+name.
+
+### Answer-value model
+
+A question Dictionary keeps the shape
+`{ question_text, correct_answer, choices }`, but from Phase 13 onward
+`correct_answer` and each entry of `choices` may be:
+
+- an `int` (all integer-answer categories), or
+- a `String` holding the **canonical display form** of the value:
+  - fractions: fully simplified, denominator > 0, e.g. `"3/4"`,
+    `"7/3"`, `"2 1/3"` for mixed;
+  - decimals: no trailing zeros, single leading zero, e.g. `"0.5"`,
+    `"12.75"`.
+
+Correctness is exact string equality of canonical forms. Producers
+(strategies) guarantee canonicity and guarantee that within one question
+no two choices are value-equal (an unsimplified equivalent or reformatted
+decimal counts as equal). Fraction/decimal rendering data may accompany
+the choices (e.g., an `answer_layout` array) so the panel can draw
+stacked fractions; consumers must treat answer values as opaque and
+compare them only as produced.
+
+### Consumers
+
+Answer values flow through: question panel buttons → answer-selected
+event → correctness comparison → wrong-answer/mistake logging. All of
+these must accept both ints and strings; none may cast answers to int.
+
+## 13. Visual & Scoring Level Configuration (Authoritative)
+
+All three settings below live in each level's `LevelConfig` custom
+resource (`.tres`), editable in the Inspector, with safe fallbacks.
+They are presentation/scoring only: none may affect questions,
+difficulty, lives, or timing.
+
+### Points per question
+
+- `points_per_question: int = 1` per level; values below `1` clamp to
+  `1` with a warning.
+- Applied to every correct answer in that level across all waves.
+- Default `1` reproduces all pre-Phase-17 score totals exactly;
+  personal bests, assumed full score, and high scores operate on totals
+  and need no schema changes.
+
+### Per-wave enemy ship images
+
+- `wave_enemy_textures` is index-aligned with `category_sequence`;
+  element *i* configures the image set for wave *i* (an Array of texture
+  paths). Empty element = use that wave's category sprite as before.
+- **Ordering rule:** within a configured wave, spawn slot *k*
+  (0-based formation order) uses `textures[k % textures.size()]`.
+  Example --- Level 1 Wave 1 configured with `ship1.png`, `ship2.png`,
+  `ship3.png` renders its 10 enemies exactly as:
+  `ship1, ship2, ship3, ship1, ship2, ship3, ship1, ship2, ship3,
+  ship1`.
+- A set of one image repeats it for all 10; duplicate entries are
+  allowed; different waves may use entirely different sets.
+- Missing/invalid paths warn once per wave and fall back to the
+  category default for the affected slots only.
+
+### Player ship per level
+
+- `player_ship_texture: String = ""`; empty (or a path that fails to
+  load, with a warning) selects the default `assets/images/ships/
+  player_ship.png`.
+- Resolved and applied whenever a level starts: session start, natural
+  level advance, and Play Again (re-applying the session-start level's
+  ship).
+- Only the ship's texture changes; size, muzzle position, feedback
+  animations, and all gameplay behavior stay fixed.
