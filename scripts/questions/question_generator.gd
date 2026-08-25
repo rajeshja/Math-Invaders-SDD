@@ -29,6 +29,8 @@ const DISPLAY_NAMES := {
 	"decimal_subtraction": "Decimal Subtraction",
 	"decimal_multiplication": "Decimal Multiplication",
 	"decimal_division": "Decimal Division",
+	"ratio_proportion": "Ratio & Proportion",
+	"hcf_lcm": "HCF & LCM",
 }
 
 var _strategies: Dictionary = {}
@@ -48,6 +50,8 @@ func _init() -> void:
 	_strategies["decimal_subtraction"] = DecimalSubtractionStrategy.new()
 	_strategies["decimal_multiplication"] = DecimalMultiplicationStrategy.new()
 	_strategies["decimal_division"] = DecimalDivisionStrategy.new()
+	_strategies["ratio_proportion"] = RatioProportionStrategy.new()
+	_strategies["hcf_lcm"] = HcfLcmStrategy.new()
 
 
 ## Returns the display label for a category key: the DISPLAY_NAMES entry

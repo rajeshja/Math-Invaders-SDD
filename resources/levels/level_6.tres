@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="LevelConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/level_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+level_number = 6
+category_sequence = Array[String](["ratio_proportion", "hcf_lcm", "fraction_multiplication", "fraction_division", "decimal_multiplication", "decimal_division"])
+difficulty = 6
+max_operand_size = 0
+time_limit_seconds = 180.0
+tries_per_question = 1
+allow_unlike_denominators = true
+max_decimal_places = 2
