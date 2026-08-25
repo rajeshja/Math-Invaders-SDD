@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="LevelConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/level_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+level_number = 1
+category_sequence = Array[String](["addition", "subtraction", "multiplication", "division"])
+difficulty = 1
+max_operand_size = 0
+time_limit_seconds = 120.0
+tries_per_question = 1
+allow_unlike_denominators = false
+max_decimal_places = 0

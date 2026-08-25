@@ -34,14 +34,23 @@ var time_remaining: float = 0.0
 var game_state: GameState = GameState.PLAYING
 var last_game_over_reason: GameOverReason = GameOverReason.NONE
 
+## Phase 9 hand-off from the Main Menu (FR9.6): the level the player chose
+## to start at, consumed (and reset to 0) by Main.gd when the game scene
+## loads. 0 means "no explicit selection - start at Level 1".
+var pending_start_level: int = 0
+
 
 func _ready() -> void:
 	reset_session()
 
 
-func reset_session() -> void:
+## `starting_score` (Phase 9 FR9.7/FR9.8) is the "assumed full score"
+## injected when the session skips ahead: the sum of personal bests for
+## every level before the chosen starting level. A fresh Level 1 session
+## passes nothing and starts at 0 exactly as before.
+func reset_session(starting_score: int = 0) -> void:
 	starting_lives = GameConfig.get_starting_lives()
-	score = 0
+	score = maxi(0, starting_score)
 	lives = starting_lives
 	time_remaining = level_time_limit
 	game_state = GameState.PLAYING

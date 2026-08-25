@@ -18,9 +18,29 @@ extends RefCounted
 ## Subclasses MUST override this. The base implementation pushes an error
 ## and returns a safe empty/default dictionary rather than crashing, so a
 ## strategy that forgets to override generate() fails loudly but safely.
-func generate(difficulty: int) -> Dictionary:
-	push_error("QuestionStrategy.generate() called directly - subclasses must override generate(difficulty).")
+##
+## `options` (Phase 9 FR9.3) carries LevelConfig's procedural-generation
+## parameters (e.g. max_operand, allow_unlike_denominators,
+## max_decimal_places) from the level resource into the strategy.
+## Strategies fall back to their internal difficulty curve for any option
+## that is absent/invalid, so generate(difficulty) keeps working unchanged.
+func generate(difficulty: int, options: Dictionary = {}) -> Dictionary:
+	push_error("QuestionStrategy.generate() called directly - subclasses must override generate(difficulty, options).")
 	return _empty_result()
+
+
+## Shared helper for option resolution: returns options[option_key] as an
+## int when it is a valid integer >= minimum_value, otherwise fallback.
+func _positive_int_option(options: Dictionary, option_key: String, minimum_value: int, fallback: int) -> int:
+	if not options.has(option_key):
+		return fallback
+	var raw: Variant = options[option_key]
+	if raw is bool or not (raw is int or raw is float):
+		return fallback
+	var value := int(raw)
+	if value < minimum_value:
+		return fallback
+	return value
 
 
 func _empty_result() -> Dictionary:

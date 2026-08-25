@@ -85,6 +85,52 @@ func test_wrong_answer_does_not_move_remove_or_retarget_formation() -> void:
 	assert_signal_emit_count(wave_manager, "wrong_answer", 1, "one wrong answer event should be emitted per incorrect answer")
 
 
+## Phase 9 FR9.15: every wrong answer carries Mistake Review details.
+func test_wrong_answer_emits_question_failed_details_for_mistake_review() -> void:
+	wave_manager.start_wave("addition")
+	var active = wave_manager.get_active_enemy()
+	var linked: Dictionary = active.linked_question
+	var captured := []
+	wave_manager.question_failed.connect(func(question, selected, correct):
+		captured.append([question, selected, correct]))
+
+	wave_manager.on_wrong_answer(99)
+
+	assert_eq(captured.size(), 1, "one question_failed per incorrect answer")
+	assert_eq(captured[0][0], linked, "the active question travels with the event")
+	assert_eq(captured[0][1], 99, "the tapped value is recorded")
+	assert_eq(captured[0][2], int(linked.get("correct_answer", 0)), "so is the right answer")
+
+
+func test_question_failed_defaults_to_no_selection_for_non_ui_callers() -> void:
+	wave_manager.start_wave("addition")
+	var captured := []
+	wave_manager.question_failed.connect(func(_question, selected, _correct):
+		captured.append(selected))
+
+	wave_manager.on_wrong_answer()
+
+	assert_eq(captured, [-1])
+
+
+## Phase 9 FR9.4: LevelConfig generation options flow into new questions.
+func test_generation_options_are_applied_to_generated_questions() -> void:
+	var sequence: Array[String] = ["addition"]
+	wave_manager.set_category_sequence(sequence)
+	wave_manager.set_generation_options({"max_operand": 5})
+	wave_manager.start_first_wave()
+
+	for i in range(20):
+		wave_manager.regenerate_active_question()
+
+	for enemy in enemies_container.get_children():
+		var text: String = str(enemy.linked_question.get("question_text", ""))
+		for fragment in text.replace("What is ", "").replace("?", "").split("+"):
+			var operand := int(fragment.strip_edges())
+			if operand > 0:
+				assert_lte(operand, 5, "pinned operand ceiling reaches every strategy")
+
+
 func test_regenerate_active_question_keeps_same_enemy_and_formation() -> void:
 	wave_manager.start_wave("addition")
 	var before_positions := {}

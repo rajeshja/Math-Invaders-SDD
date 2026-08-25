@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://gameover_overlay_01"]
+[gd_scene load_steps=4 format=3 uid="uid://gameover_overlay_01"]
 
 [ext_resource type="Script" path="res://scripts/game_over_overlay.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/images/ui/game_over_bg.png" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/review_panel.tscn" id="3"]
 
 [node name="GameOverOverlay" type="CanvasLayer"]
 layer = 10
@@ -27,7 +28,7 @@ grow_vertical = 2
 
 [node name="Rows" type="VBoxContainer" parent="Backdrop/Center"]
 layout_mode = 2
-theme_override_constants/separation = 24
+theme_override_constants/separation = 20
 
 [node name="TitleLabel" type="Label" parent="Backdrop/Center/Rows"]
 layout_mode = 2
@@ -56,8 +57,24 @@ horizontal_alignment = 1
 text = "High Score: 0"
 
 [node name="PlayAgainButton" type="Button" parent="Backdrop/Center/Rows"]
-custom_minimum_size = Vector2(320, 88)
+custom_minimum_size = Vector2(360, 80)
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 36
 text = "Play Again"
+
+[node name="ReviewMistakesButton" type="Button" parent="Backdrop/Center/Rows"]
+custom_minimum_size = Vector2(360, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 36
+text = "Review Mistakes"
+
+[node name="ReturnToMenuButton" type="Button" parent="Backdrop/Center/Rows"]
+custom_minimum_size = Vector2(360, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 36
+text = "Main Menu"
+
+[node name="ReviewPanel" parent="." instance=ExtResource("3")]

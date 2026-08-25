@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Math Invaders"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/splash_screen.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 boot_splash/bg_color=Color(0.03137255, 0.0392157, 0.10980392, 1)
 config/icon="res://icon.svg"
@@ -38,9 +38,6 @@ enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 starting_lives=3
 enemies_per_wave=10
 tries_per_question=1
-tries_per_question_by_level={}
-seconds_per_wave=30.0
-level_time_limit_by_level={}
 
 [rendering]
 

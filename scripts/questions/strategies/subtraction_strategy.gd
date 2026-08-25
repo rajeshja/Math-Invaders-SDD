@@ -2,13 +2,14 @@
 ##
 ## Mirrors AdditionStrategy's structure (Phase 2 §2.3). Guards against
 ## negative results for the target age group by always picking a >= b.
+## Operand ceiling configurable via options["max_operand"] (Phase 9).
 class_name SubtractionStrategy
 extends QuestionStrategy
 
 
-func generate(difficulty: int) -> Dictionary:
+func generate(difficulty: int, options: Dictionary = {}) -> Dictionary:
 	var clamped_difficulty: int = max(1, difficulty)
-	var max_operand: int = _max_operand_for_difficulty(clamped_difficulty)
+	var max_operand: int = _max_operand(clamped_difficulty, options)
 
 	var a: int = randi_range(1, max_operand)
 	var b: int = randi_range(1, max_operand)
@@ -36,3 +37,8 @@ func generate(difficulty: int) -> Dictionary:
 
 func _max_operand_for_difficulty(difficulty: int) -> int:
 	return 12 + (difficulty - 1) * 20
+
+
+func _max_operand(difficulty: int, options: Dictionary) -> int:
+	return _positive_int_option(options, "max_operand", 1,
+		_max_operand_for_difficulty(difficulty))

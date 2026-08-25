@@ -31,6 +31,11 @@ signal wave_cleared(category: String)
 ## this as the lives/damage trigger; WaveManager does not move enemies.
 signal wrong_answer
 
+## Phase 9 FR9.15: emitted alongside wrong_answer with everything the
+## Mistake Review system needs - the active question, the tapped value,
+## and the correct answer. Main.gd feeds this into its capped mistake log.
+signal question_failed(question: Dictionary, selected_answer: int, correct_answer: int)
+
 ## Emitted once when the category_sequence is exhausted after a wave clears.
 signal level_cleared
 ## Phase 6 name for the level-boundary hook.
@@ -62,6 +67,9 @@ var enemies_container: Node = null
 
 var question_generator: QuestionGenerator = QuestionGenerator.new()
 var difficulty: int = 1
+## LevelConfig's procedural-generation parameters for the active level
+## (Phase 9 FR9.4); passed through to every generate_question() call.
+var generation_options: Dictionary = {}
 
 var current_category: String = ""
 var enemies_remaining: int = 0
@@ -101,6 +109,11 @@ func set_category_sequence(sequence: Array[String]) -> void:
 	_sequence_index = category_sequence.find(current_category)
 
 
+## Applies the active level's generation options (Phase 9 FR9.4).
+func set_generation_options(options: Dictionary) -> void:
+	generation_options = options.duplicate()
+
+
 func start_wave(category: String, wave_difficulty: int = -1) -> void:
 	if wave_difficulty >= 1:
 		difficulty = wave_difficulty
@@ -113,7 +126,7 @@ func start_wave(category: String, wave_difficulty: int = -1) -> void:
 		var enemy := enemy_scene.instantiate()
 		enemies_container.add_child(enemy)
 		enemy.position = _formation_position(i)
-		var question: Dictionary = question_generator.generate_question(category, difficulty)
+		var question: Dictionary = question_generator.generate_question(category, difficulty, generation_options)
 		if enemy.has_method("setup"):
 			enemy.setup(category, question)
 
@@ -190,11 +203,20 @@ func on_enemy_hit(enemy: Node) -> void:
 		_on_wave_clear()
 
 
-## Wrong answer: emit the damage event and leave the active enemy and
+## Wrong answer: emit the damage event (plus the FR9.15 question_failed
+## detail event for Mistake Review) and leave the active enemy and
 ## formation stationary. Attempt counting/question replacement belongs to
-## the question-flow owner, not WaveManager.
-func on_wrong_answer() -> void:
+## the question-flow owner, not WaveManager. `selected_answer` defaults to
+## -1 for callers that have no tapped value (tests, non-UI flows).
+func on_wrong_answer(selected_answer: int = -1) -> void:
 	wrong_answer.emit()
+	var active_question: Dictionary = {}
+	var correct_answer: int = 0
+	if _active_enemy != null and is_instance_valid(_active_enemy) \
+			and "linked_question" in _active_enemy:
+		active_question = _active_enemy.linked_question
+		correct_answer = active_question.get("correct_answer", 0)
+	question_failed.emit(active_question, selected_answer, correct_answer)
 
 
 ## Retires the active enemy's current question and replaces it with a
@@ -204,7 +226,7 @@ func on_wrong_answer() -> void:
 func regenerate_active_question() -> void:
 	if _active_enemy == null or not is_instance_valid(_active_enemy):
 		return
-	var question: Dictionary = question_generator.generate_question(current_category, difficulty)
+	var question: Dictionary = question_generator.generate_question(current_category, difficulty, generation_options)
 	if "linked_question" in _active_enemy:
 		_active_enemy.linked_question = question
 	question_ready.emit(question)

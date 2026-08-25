@@ -22,16 +22,17 @@ The specs, tech stack details, plan and phase details are captured in these fold
 - [Phase 3: Wave Structure](./specs/phases/Phase_3_Wave_Structure.md) - Complete
 - [Phase 4: Lives and Game Over](./specs/phases/Phase_4_Lives_GameOver.md) - Complete
 - [Phase 5: Level Timer](./specs/phases/Phase_5_Level_Timer.md) - Complete
-- [Phase 6: Level Progression](./specs/phases/Phase_6_Level_Progression.md) - Incomplete
-- [Phase 7: Score and High Score Persistence](./specs/phases/Phase_7_Score_And_HighScore_Persistence.md) - Complete
-- [Phase 8: New Question Categories](./specs/phases/Phase_8_New_Question_Categories.md) - Incomplete
-- [Phase 9: Effects, Animation, Audio, and Polish](./specs/phases/Phase_9_Effects_Animation_Audio_Polish.md) - Incomplete
-- [Phase 10: Mobile Export and Touch Optimization](./specs/phases/Phase_10_Mobile_Export_Touch_Optimization.md) - Incomplete
-- [Phase 11: Playtesting and Balancing](./specs/phases/Phase_11_Playtesting_And_Balancing.md) - Incomplete
+- [Phase 6: Level Progression](./specs/phases/Phase_6_Level_Progression.md) - Complete
+- [Phase 7: Score And High Score Persistence](./specs/phases/Phase_7_Score_And_HighScore_Persistence.md) - Complete
+- [Phase 8: New Question Categories](./specs/phases/Phase_8_New_Question_Categories.md) - Complete
+- [Phase 9: Level Config And Player Experience](./specs/phases/Phase_9_Level_Config_and_Player_Experience.md) - Complete
+- [Phase 10: Effects, Animation, Audio, And Polish](./specs/phases/Phase_10_Effects_Animation_Audio_Polish.md) - Incomplete
+- [Phase 11: Mobile Export And Touch Optimization](./specs/phases/Phase_11_Mobile_Export_Touch_Optimization.md) - Incomplete
+- [Phase 12: Playtesting And Balancing](./specs/phases/Phase_12_Playtesting_And_Balancing.md) - Incomplete
 
 ## Status
 
-The code has been implemented up to Phase 7.
+The code has been implemented up to Phase 9.
 
 ## Godot Executable paths
 

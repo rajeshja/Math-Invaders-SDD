@@ -16,9 +16,9 @@ const CHOICE_COUNT := 4
 const SMALLEST_PRIME := 2
 
 
-func generate(difficulty: int) -> Dictionary:
+func generate(difficulty: int, options: Dictionary = {}) -> Dictionary:
 	var clamped_difficulty: int = max(1, difficulty)
-	var max_value: int = _max_value_for_difficulty(clamped_difficulty)
+	var max_value: int = _max_value(clamped_difficulty, options)
 
 	var prime: int = _pick_random_prime(max_value)
 	var choices: Array = _build_choice_set(prime, max_value)
@@ -49,6 +49,11 @@ static func is_prime(n: int) -> bool:
 
 func _max_value_for_difficulty(difficulty: int) -> int:
 	return 25 + (difficulty - 1) * 25
+
+
+func _max_value(difficulty: int, options: Dictionary) -> int:
+	return _positive_int_option(options, "max_operand", 10,
+		_max_value_for_difficulty(difficulty))
 
 
 func _primes_up_to(max_value: int) -> Array:

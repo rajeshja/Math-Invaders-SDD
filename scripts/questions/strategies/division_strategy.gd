@@ -3,14 +3,15 @@
 ## Per Tech Stack §3 and Phase 3 NFR3.1: picks the DIVISOR and QUOTIENT
 ## first, then derives the dividend = divisor * quotient. This guarantees
 ## the question always resolves to a whole number - it never produces a
-## fractional expected answer.
+## fractional expected answer. Value ceiling configurable via
+## options["max_operand"] (Phase 9).
 class_name DivisionStrategy
 extends QuestionStrategy
 
 
-func generate(difficulty: int) -> Dictionary:
+func generate(difficulty: int, options: Dictionary = {}) -> Dictionary:
 	var clamped_difficulty: int = max(1, difficulty)
-	var max_value: int = _max_value_for_difficulty(clamped_difficulty)
+	var max_value: int = _max_value(clamped_difficulty, options)
 
 	var divisor: int = randi_range(2, max_value)
 	var quotient: int = randi_range(1, max_value)
@@ -35,3 +36,8 @@ func generate(difficulty: int) -> Dictionary:
 
 func _max_value_for_difficulty(difficulty: int) -> int:
 	return 10 + (difficulty - 1) * 5
+
+
+func _max_value(difficulty: int, options: Dictionary) -> int:
+	return _positive_int_option(options, "max_operand", 2,
+		_max_value_for_difficulty(difficulty))

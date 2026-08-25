@@ -1,0 +1,92 @@
+## LevelConfig resource tests (Phase 9 Testing Plan: verify .tres files can
+## be loaded and supply expected parameters).
+extends GutTest
+
+const LEVEL_PATHS: Array[String] = [
+	"res://resources/levels/level_1.tres",
+	"res://resources/levels/level_2.tres",
+	"res://resources/levels/level_3.tres",
+	"res://resources/levels/level_4.tres",
+	"res://resources/levels/level_5.tres",
+]
+
+
+func test_every_registered_level_resource_loads_as_level_config() -> void:
+	for path in LevelConfig.LEVEL_RESOURCE_PATHS:
+		assert_true(ResourceLoader.exists(path), "%s exists" % path)
+		var resource := load(path)
+		assert_is(resource, LevelConfig)
+
+
+func test_levels_are_numbered_sequentially_from_one() -> void:
+	var configs := LevelConfig.load_all_levels()
+
+	assert_eq(configs.size(), LEVEL_PATHS.size())
+	for i in range(configs.size()):
+		assert_eq(configs[i].level_number, i + 1, "slot %d holds level %d" % [i, i + 1])
+
+
+func test_each_config_supplies_valid_gameplay_parameters() -> void:
+	for path in LEVEL_PATHS:
+		var config: LevelConfig = load(path)
+		assert_gt(config.time_limit_seconds, 0.0, "%s time budget positive" % path)
+		assert_gte(config.tries_per_question, 1, "%s attempts at least one" % path)
+		assert_gte(config.difficulty, 1, "%s difficulty sane" % path)
+		assert_false(config.category_sequence.is_empty(), "%s defines waves" % path)
+
+
+func test_base_levels_use_four_category_sequence_and_default_budget() -> void:
+	var expected: Array[String] = [
+		"addition", "subtraction", "multiplication", "division"
+	]
+	for level in [1, 2, 3, 4]:
+		var config: LevelConfig = load(LEVEL_PATHS[level - 1])
+		assert_eq(config.category_sequence, expected,
+			"level %d keeps the Phase 6 four-category rotation" % level)
+		assert_eq(config.time_limit_seconds, 120.0)
+
+
+func test_level_five_adds_prime_once_with_five_wave_budget() -> void:
+	var config: LevelConfig = load("res://resources/levels/level_5.tres")
+
+	var prime_count := 0
+	for category in config.category_sequence:
+		if category == "prime":
+			prime_count += 1
+	assert_eq(prime_count, 1)
+	assert_eq(config.category_sequence.back(), "prime")
+	assert_eq(config.time_limit_seconds, 150.0)
+
+
+func test_generation_options_expose_procedural_math_knobs() -> void:
+	var config: LevelConfig = load("res://resources/levels/level_3.tres")
+	config.max_operand_size = 50
+
+	var options: Dictionary = config.generation_options()
+
+	assert_eq(options.get("max_operand"), 50)
+	assert_eq(options.get("allow_unlike_denominators"), false)
+	assert_eq(options.get("max_decimal_places"), 0)
+
+
+## FR9.3/NFR9.1: fraction and decimal rules must be Inspector-editable
+## fields on the resource itself.
+func test_fraction_and_decimal_rule_exports_exist_on_the_resource() -> void:
+	var script: Script = load("res://scripts/level_config.gd")
+	var property_names: Array = script.get_script_property_list().map(
+		func(prop): return prop.name)
+	assert_has(property_names, "allow_unlike_denominators")
+	assert_has(property_names, "max_decimal_places")
+
+
+func test_max_operand_option_overrides_strategy_difficulty_curve() -> void:
+	var generator := QuestionGenerator.new()
+	var pinned := {"max_operand": 5}
+
+	for attempt in range(30):
+		var question: Dictionary = generator.generate_question("addition", 10, pinned)
+		var text: String = question.get("question_text", "")
+		var operands := text.replace("What is ", "").replace("?", "").split(" + ")
+		for operand_text in operands:
+			assert_lte(int(operand_text.strip_edges()), 5,
+				"pinned ceiling beats the difficulty curve")

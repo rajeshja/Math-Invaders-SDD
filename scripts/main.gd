@@ -10,6 +10,12 @@ extends Node2D
 const BULLET_SCENE: PackedScene = preload("res://scenes/bullet.tscn")
 const ENEMY_BULLET_SCENE: PackedScene = preload("res://scenes/enemy_bullet.tscn")
 const QuestionAttemptTrackerScript = preload("res://scripts/question_attempt_tracker.gd")
+const MistakeTrackerScript = preload("res://scripts/mistake_tracker.gd")
+
+## Developer force-start level (Phase 9 FR9.9). When > 0 the game starts
+## directly at that level, bypassing the Main Menu AND unlock restrictions.
+## Leave at 0 for the normal Splash -> Menu -> Game flow.
+@export var debug_start_level: int = 0
 
 @onready var _wave_manager: WaveManager = $WaveManager
 @onready var _player: Player = $GameWorld/Player
@@ -25,6 +31,7 @@ const QuestionAttemptTrackerScript = preload("res://scripts/question_attempt_tra
 var _current_question: Dictionary = {}
 var _accepting_input: bool = true
 var _attempt_tracker: RefCounted = QuestionAttemptTrackerScript.new()
+var _mistake_tracker: RefCounted = MistakeTrackerScript.new()
 ## Bumped by restart_session(); lets awaited wrong-answer continuations
 ## detect that the session they belonged to is gone (NFR7.4).
 var _session_id: int = 0
@@ -48,15 +55,35 @@ func _ready() -> void:
 	# presentational only - it never decrements lives and never blocks
 	# question flow, input, or Game Over.
 	_wave_manager.wrong_answer.connect(_on_enemy_return_fire)
+	# FR9.15: every incorrect answer lands in the capped mistake log for
+	# this session's Mistake Review.
+	_wave_manager.question_failed.connect(_on_question_failed)
 
 	_question_panel.answer_selected.connect(_on_answer_selected)
 	_game_over_overlay.play_again_pressed.connect(restart_session)
+	_game_over_overlay.return_to_menu_pressed.connect(_return_to_main_menu)
 
-	_level_manager.start_level()
+	_level_manager.start_session(effective_start_level())
 
 
 func _process(delta: float) -> void:
 	GameManager.tick(delta)
+
+
+## Resolves the session's starting level (FR9.6/FR9.9): the debug export
+## wins when set, otherwise the Main Menu's pending choice, else Level 1.
+func effective_start_level() -> int:
+	if debug_start_level > 0:
+		return debug_start_level
+	if GameManager.pending_start_level > 0:
+		var requested: int = GameManager.pending_start_level
+		GameManager.pending_start_level = 0
+		return requested
+	return 1
+
+
+func _on_question_failed(question: Dictionary, selected_answer: int, correct_answer: int) -> void:
+	_mistake_tracker.add_mistake(question, selected_answer, correct_answer)
 
 
 func _on_question_ready(question: Dictionary) -> void:
@@ -90,7 +117,7 @@ func _on_answer_selected(value: int, button: Button) -> void:
 	if value == _current_question.get("correct_answer", null):
 		_resolve_correct_answer()
 	else:
-		_resolve_wrong_answer(button)
+		_resolve_wrong_answer(value, button)
 
 
 ## Correct answers launch the bullet and advance the question immediately.
@@ -137,10 +164,10 @@ func _on_enemy_return_fire() -> void:
 ## brief red-flash feedback interval; enemy return fire (introduced by the
 ## Phase 4 lives system) will hook the same wrong_answer event and fly
 ## fully in parallel - question changes never wait on bullet travel.
-func _resolve_wrong_answer(button: Button) -> void:
+func _resolve_wrong_answer(selected_answer: int, button: Button) -> void:
 	var session_at_answer := _session_id
 	_question_panel.flash_wrong_answer(button)
-	_wave_manager.on_wrong_answer()
+	_wave_manager.on_wrong_answer(selected_answer)
 	GameManager.lose_life()
 	var attempt_limit_reached: bool = _attempt_tracker.record_wrong_attempt()
 
@@ -171,15 +198,20 @@ func _on_game_over() -> void:
 		GameManager.score,
 		_game_over_reason_text(),
 		new_record,
-		HighScoreManager.get_high_score())
+		HighScoreManager.get_high_score(),
+		HighScoreManager.get_player_name(),
+		_mistake_tracker.get_mistakes())
 
 
 ## Single coordinated restart entry point (FR7.8/FR7.9), called only by the
-## Game Over screen's Play Again button. Stale nodes and banner overlays are
-## cleared BEFORE the fresh Level 1/Wave 1 spawn, all within one call so the
-## two sessions never overlap on screen (NFR7.4). HighScoreManager is
-## deliberately NOT touched here (FR7.10): the persisted value carries
-## forward exactly as save_if_higher() left it.
+## Game Over screen's Play Again button. Phase 9 FR9.18: the fresh session
+## starts at the SAME level the user originally started at - not a
+## hard-reset to Level 1/Wave 1. Stale nodes and banner overlays are
+## cleared BEFORE the fresh spawn, all within one call so the two sessions
+## never overlap on screen (NFR7.4). The mistake log is session-scoped and
+## starts empty again; HighScoreManager is deliberately NOT touched here
+## (FR7.10): the persisted value carries forward exactly as save_if_higher()
+## left it.
 func restart_session() -> void:
 	_session_id += 1
 	_game_over_overlay.hide_overlay()
@@ -189,8 +221,22 @@ func restart_session() -> void:
 	_wave_manager.clear_all()
 	_current_question = {}
 	_attempt_tracker.reset_question()
-	GameManager.reset_session()
+	_mistake_tracker.clear()
+	GameManager.reset_session(_assumed_starting_score())
 	_level_manager.reset_and_start()
+
+
+## FR9.19: back to level select / name entry without starting a new game.
+func _return_to_main_menu() -> void:
+	GameManager.pending_start_level = 0
+	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+
+
+## The assumed full score for this session's start level, re-applied on
+## Play Again so a same-level restart begins with the same base as the
+## first launch of that session (FR9.7/FR9.8/FR9.18).
+func _assumed_starting_score() -> int:
+	return HighScoreManager.get_assumed_score_for_level(_level_manager.session_start_level)
 
 
 func _clear_bullets() -> void:

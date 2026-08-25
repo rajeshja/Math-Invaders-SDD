@@ -25,10 +25,15 @@ func _init() -> void:
 ## Returns the same Dictionary shape as QuestionStrategy.generate():
 ## { question_text, correct_answer, choices }.
 ##
+## `options` carries LevelConfig's procedural-generation parameters
+## (Phase 9 FR9.3/FR9.4) straight through to the strategy; strategies
+## ignore keys they don't use and fall back to their difficulty curve
+## when an option is absent.
+##
 ## Unknown categories fail gracefully: logs an error and returns a safe
 ## empty/default Dictionary rather than crashing (Phase 2 FR2.3 / the
 ## test_question_generator.gd "unknown category" case).
-func generate_question(category: String, difficulty: int) -> Dictionary:
+func generate_question(category: String, difficulty: int, options: Dictionary = {}) -> Dictionary:
 	if not _strategies.has(category):
 		push_error("QuestionGenerator: unknown category '%s'" % category)
 		return {
@@ -37,7 +42,7 @@ func generate_question(category: String, difficulty: int) -> Dictionary:
 			"choices": [],
 		}
 	var strategy: QuestionStrategy = _strategies[category]
-	return strategy.generate(difficulty)
+	return strategy.generate(difficulty, options)
 
 
 ## Returns the list of category names this generator currently supports,

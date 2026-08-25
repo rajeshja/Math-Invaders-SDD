@@ -294,14 +294,14 @@ Balancing → 12, Stretch → 13.
 
 ## Phase 9 Level Configuration & Experience Split Checklist
 
-- [ ] Introduce `LevelConfig.gd` Custom Resource.
-- [ ] Migrate `LevelManager.gd` to use `.tres` definitions.
-- [ ] Track flawless streak and save `unlocked_level` in JSON via SaveManager.
-- [ ] Track personal best scores in JSON via SaveManager.
-- [ ] Implement assumed score on skip.
-- [ ] Implement Mistake Review UI from `GameOverScreen`.
-- [ ] Add Splash Screen and Main Menu Name Entry.
-- [ ] Add developer debug_start_level.
+- [x] Introduce `LevelConfig.gd` Custom Resource.
+- [x] Migrate `LevelManager.gd` to use `.tres` definitions.
+- [x] Track flawless streak and save `unlocked_level` in JSON via SaveManager.
+- [x] Track personal best scores in JSON via SaveManager.
+- [x] Implement assumed score on skip.
+- [x] Implement Mistake Review UI from `GameOverScreen`.
+- [x] Add Splash Screen and Main Menu Name Entry.
+- [x] Add developer debug_start_level.
 
 ## Parallel Resolution & Triangle Checklist
 
