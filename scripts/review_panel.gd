@@ -3,19 +3,36 @@
 ## A dumb display component: GameOverOverlay hands it the session's
 ## capped mistake list; it renders one row per mistake inside a
 ## ScrollContainer so arbitrary counts work on small screens.
+##
+## Phase 10 FR9.8 polish (all presentational): the panel slides up over
+## the Game Over screen with a paper-sliding sound, plays the same sound
+## (in reverse spirit) on close, and emits soft UI ticks while the list
+## scrolls.
 class_name ReviewPanel
 extends Control
 
 signal closed
 
+const OPEN_SECONDS := 0.3
+const CLOSE_SECONDS := 0.22
+const SLIDE_DISTANCE := 260.0
+const SCROLL_TICK_MIN_INTERVAL_MS := 90
+
 @onready var _summary_label: Label = $Margin/Rows/SummaryLabel
 @onready var _mistakes_list: VBoxContainer = $Margin/Rows/Scroll/MistakesList
 @onready var _close_button: Button = $Margin/Rows/CloseButton
+@onready var _scroll: ScrollContainer = $Margin/Rows/Scroll
+@onready var _margin: MarginContainer = $Margin
+@onready var _dim: ColorRect = $Dim
+
+var _anim: Tween = null
+var _last_scroll_tick_ms: int = 0
 
 
 func _ready() -> void:
 	visible = false
 	_close_button.pressed.connect(_on_close_pressed)
+	_scroll.get_v_scroll_bar().value_changed.connect(_on_scrolled)
 
 
 ## Populates and opens the panel. Each entry is a Dictionary shaped like
@@ -40,7 +57,38 @@ func show_mistakes(mistakes: Array[Dictionary]) -> void:
 		row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		row.add_theme_font_size_override("font_size", 26)
 		_mistakes_list.add_child(row)
+	_scroll.scroll_vertical = 0
+	_animate_open()
+
+
+func _animate_open() -> void:
+	if _anim != null and _anim.is_valid():
+		_anim.kill()
 	visible = true
+	AudioManager.play_sfx("paper")
+	var rest_position := _margin.position
+	_margin.position = rest_position + Vector2(0, SLIDE_DISTANCE)
+	_margin.modulate.a = 0.0
+	_dim.modulate.a = 0.0
+	_anim = create_tween().set_parallel(true)
+	_anim.tween_property(_margin, "position", rest_position, OPEN_SECONDS) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_anim.tween_property(_margin, "modulate:a", 1.0, OPEN_SECONDS)
+	_anim.tween_property(_dim, "modulate:a", 1.0, OPEN_SECONDS)
+
+
+func _animate_close() -> void:
+	if _anim != null and _anim.is_valid():
+		_anim.kill()
+	AudioManager.play_sfx("paper", -4.0)
+	_anim = create_tween().set_parallel(true)
+	_anim.tween_property(_margin, "position:y", _margin.position.y + SLIDE_DISTANCE,
+			CLOSE_SECONDS).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	_anim.tween_property(_margin, "modulate:a", 0.0, CLOSE_SECONDS)
+	_anim.tween_property(_dim, "modulate:a", 0.0, CLOSE_SECONDS)
+	_anim.chain().tween_callback(func():
+		visible = false
+		closed.emit())
 
 
 func _clear_rows() -> void:
@@ -49,5 +97,14 @@ func _clear_rows() -> void:
 
 
 func _on_close_pressed() -> void:
-	visible = false
-	closed.emit()
+	_animate_close()
+
+
+## FR9.8: soft UI tick while scrolling the mistake list, throttled so fast
+## flicks don't machine-gun the cue.
+func _on_scrolled(_value: int) -> void:
+	var now := Time.get_ticks_msec()
+	if now - _last_scroll_tick_ms < SCROLL_TICK_MIN_INTERVAL_MS:
+		return
+	_last_scroll_tick_ms = now
+	AudioManager.play_sfx("scroll_tick")

@@ -7,6 +7,15 @@ extends CanvasLayer
 
 const LIFE_ICON: Texture2D = preload("res://assets/images/ui/life_icon.png")
 
+## Phase 10 FR9.7: when time_remaining drops to this many seconds or less,
+## TimeLabel pulses red with a per-second tick. A code constant (NOT a
+## Project Setting) per spec; purely presentational - it must never alter
+## timer behavior or gameplay state.
+const LOW_TIME_WARNING_SECONDS := 10.0
+const WARNING_COLOR := Color(1.0, 0.22, 0.2, 1.0)
+const NORMAL_COLOR := Color(1, 1, 1, 1)
+const PULSE_SPEED := 0.012
+
 @onready var _score_label: Label = $ScoreLabel
 @onready var _level_label: Label = $LevelLabel
 @onready var _time_label: Label = $TimeLabel
@@ -14,10 +23,23 @@ const LIFE_ICON: Texture2D = preload("res://assets/images/ui/life_icon.png")
 @onready var _lives_display: HBoxContainer = $LivesDisplay
 
 var _score: int = 0
+var _warning_active: bool = false
+var _last_tick_second: int = -1
 
 
 func _ready() -> void:
 	_render_score()
+	GameManager.game_over.connect(_stop_low_time_warning)
+
+
+func _process(_delta: float) -> void:
+	if not _warning_active:
+		return
+	var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() * PULSE_SPEED)
+	_time_label.modulate = NORMAL_COLOR.lerp(WARNING_COLOR, 0.35 + 0.65 * pulse)
+	_time_label.pivot_offset = _time_label.size / 2.0
+	var s := 1.0 + 0.08 * pulse
+	_time_label.scale = Vector2(s, s)
 
 
 func add_score(amount: int = 1) -> void:
@@ -49,6 +71,35 @@ func update_lives(lives: int) -> void:
 func update_time(seconds_remaining: float) -> void:
 	var display_seconds := int(ceil(max(0.0, seconds_remaining)))
 	_time_label.text = "Time: %d" % display_seconds
+	_update_low_time_warning(seconds_remaining, display_seconds)
+
+
+## FR9.7: purely presentational low-time warning. Starts pulsing + ticking
+## at the 10-second mark, stops at zero (game over fires), when a new
+## level's timer resets the value upward, or when Game Over arrives via
+## any cause. Never touches GameManager.
+func _update_low_time_warning(seconds_remaining: float, display_seconds: int) -> void:
+	var in_window: bool = GameManager.is_playing() \
+			and seconds_remaining > 0.0 \
+			and seconds_remaining <= LOW_TIME_WARNING_SECONDS
+	if not in_window:
+		if _warning_active:
+			_stop_low_time_warning()
+		return
+	if not _warning_active:
+		_warning_active = true
+		_last_tick_second = display_seconds
+	if display_seconds < _last_tick_second:
+		_last_tick_second = display_seconds
+		if display_seconds >= 1:
+			AudioManager.play_sfx("tick")
+
+
+func _stop_low_time_warning() -> void:
+	_warning_active = false
+	_last_tick_second = -1
+	_time_label.modulate = NORMAL_COLOR
+	_time_label.scale = Vector2.ONE
 
 
 func _render_score() -> void:

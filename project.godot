@@ -21,6 +21,7 @@ config/icon="res://icon.svg"
 GameConfig="*res://scripts/game_config.gd"
 GameManager="*res://scripts/game_manager.gd"
 HighScoreManager="*res://scripts/high_score_manager.gd"
+AudioManager="*res://scripts/audio_manager.gd"
 
 [display]
 

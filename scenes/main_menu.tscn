@@ -74,10 +74,12 @@ theme_override_font_sizes/font_size = 30
 horizontal_alignment = 1
 text = "Start At Level"
 
-[node name="LevelSelect" type="OptionButton" parent="Center/Rows/LevelCard/LevelRows"]
+[node name="LevelGrid" type="GridContainer" parent="Center/Rows/LevelCard/LevelRows"]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 34
+columns = 3
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
 
 [node name="HighScoreLabel" type="Label" parent="Center/Rows"]
 layout_mode = 2

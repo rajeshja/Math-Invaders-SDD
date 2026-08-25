@@ -33,7 +33,21 @@ var linked_question: Dictionary = {}
 ## Brief fire telegraph duration (~0.1 s) played on wrong answers (FR4.11).
 const FIRE_TELEGRAPH_SECONDS := 0.1
 
+## One-shot destruction animation spawned at this enemy's position on
+## destroy() (Phase 10 FR9.1). WaveManager removes this enemy from the
+## container BEFORE calling destroy(), so the node itself can no longer
+## play anything - the effect is a standalone scene added to the scene's
+## "fx_host" node (registered via the "fx_host" group) instead. When no
+## host exists (unit tests, headless doubles) the visual is simply skipped
+## and destruction behaves exactly as before, per NFR9.1.
+const EXPLOSION_EFFECT_SCENE := preload("res://scenes/explosion_effect.tscn")
+
 var _telegraph_tween: Tween = null
+var _fx_host: Node = null
+
+
+func _ready() -> void:
+	_fx_host = get_tree().get_first_node_in_group("fx_host")
 
 
 ## Sets category + linked question and swaps the sprite texture for the
@@ -57,8 +71,26 @@ func _apply_category_texture() -> void:
 ## Destroys this enemy instance. Bullet-travel-then-destroy timing is
 ## orchestrated by whoever calls this (WaveManager, via bullet.gd's
 ## arrival), not by the enemy itself.
+##
+## Phase 10 FR9.1: the caller removes this node from the tree first, so
+## the explosion plays from a standalone effect scene parented to the
+## cached "fx_host" node at this enemy's former position. Fire-and-forget:
+## queue_free() happens immediately and nothing waits on the animation
+## (NFR9.2 - HUD/wave updates already fired before this point).
 func destroy() -> void:
+	_spawn_explosion()
 	queue_free()
+
+
+func _spawn_explosion() -> void:
+	if _fx_host == null or not is_instance_valid(_fx_host) \
+			or not _fx_host.is_inside_tree():
+		return
+	var effect: ExplosionEffect = EXPLOSION_EFFECT_SCENE.instantiate()
+	_fx_host.add_child(effect)
+	# The Enemies/Effects containers both sit at the scene origin under
+	# GameWorld, so this node's local position equals its former global one.
+	effect.global_position = global_position
 
 
 ## Brief fire telegraph before this enemy's return-fire bullet launches
