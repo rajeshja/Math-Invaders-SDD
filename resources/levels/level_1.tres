@@ -13,3 +13,4 @@ tries_per_question = 1
 allow_unlike_denominators = false
 max_decimal_places = 0
 points_per_question = 1
+wave_enemy_textures = [["res://assets/images/enemies/ship1.png", "res://assets/images/enemies/ship2.png", "res://assets/images/enemies/ship3.png"]]

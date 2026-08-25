@@ -61,11 +61,15 @@ func _ready() -> void:
 
 
 ## Sets category + linked question and swaps the sprite texture for the
-## category (Phase 2 FR2.7 / Phase 3 FR3.6).
-func setup(p_category: String, p_question: Dictionary) -> void:
+## category (Phase 2 FR2.7 / Phase 3 FR3.6). `texture_override`
+## (Phase 18 FR18.5) applies AFTER the category default so configured
+## per-wave images win; empty overrides change nothing.
+func setup(p_category: String, p_question: Dictionary, texture_override: String = "") -> void:
 	category = p_category
 	linked_question = p_question
 	_apply_category_texture()
+	if texture_override != "":
+		_apply_override_texture(texture_override)
 
 
 func _apply_category_texture() -> void:
@@ -73,6 +77,13 @@ func _apply_category_texture() -> void:
 		return
 	var path: String = CATEGORY_TEXTURES.get(category, "")
 	if path == "":
+		return
+	if ResourceLoader.exists(path):
+		_sprite.texture = load(path)
+
+
+func _apply_override_texture(path: String) -> void:
+	if _sprite == null:
 		return
 	if ResourceLoader.exists(path):
 		_sprite.texture = load(path)

@@ -71,6 +71,9 @@ var difficulty: int = 1
 ## LevelConfig's procedural-generation parameters for the active level
 ## (Phase 9 FR9.4); passed through to every generate_question() call.
 var generation_options: Dictionary = {}
+## Per-wave enemy texture overrides for the active level (Phase 18
+## FR18.1/FR18.4), index-aligned with category_sequence.
+var wave_texture_sets: Array = []
 
 var current_category: String = ""
 var enemies_remaining: int = 0
@@ -96,6 +99,9 @@ func clear_all() -> void:
 	current_category = ""
 	enemies_remaining = 0
 	_sequence_index = -1
+	# Phase 18 FR18.4: a restarted session must not leak the previous
+	# level's art; start_level() re-forwards fresh sets anyway.
+	wave_texture_sets = []
 	_clear_container()
 
 
@@ -115,6 +121,13 @@ func set_generation_options(options: Dictionary) -> void:
 	generation_options = options.duplicate()
 
 
+## Stores the active level's per-wave enemy texture sets (Phase 18
+## FR18.4), index-aligned with category_sequence. Empty inner sets mean
+## "category default" for that wave.
+func set_wave_texture_sets(sets: Array) -> void:
+	wave_texture_sets = sets.duplicate(true)
+
+
 func start_wave(category: String, wave_difficulty: int = -1) -> void:
 	if wave_difficulty >= 1:
 		difficulty = wave_difficulty
@@ -123,18 +136,50 @@ func start_wave(category: String, wave_difficulty: int = -1) -> void:
 	_pending_hit_enemies.clear()
 	enemies_per_wave = GameConfig.get_enemies_per_wave()
 
-	for i in range(enemies_per_wave):
+	var slot_overrides := _resolved_slot_paths(_texture_set_for_current_index())
+
+	for k in range(enemies_per_wave):
 		var enemy := enemy_scene.instantiate()
 		enemies_container.add_child(enemy)
-		enemy.position = _formation_position(i)
+		enemy.position = _formation_position(k)
 		var question: Dictionary = question_generator.generate_question(category, difficulty, generation_options)
 		if enemy.has_method("setup"):
-			enemy.setup(category, question)
+			enemy.setup(category, question,
+					slot_overrides[k] if k < slot_overrides.size() else "")
 
 	enemies_remaining = enemies_per_wave
 	wave_progress_updated.emit(current_category, enemies_remaining, enemies_per_wave)
 	_active_enemy = get_active_enemy()
 	_emit_active_question()
+
+
+## The texture set aligned to the SAME sequence index used for category
+## selection (Phase 18 FR18.4); empty when unset or out of range.
+func _texture_set_for_current_index() -> Array:
+	if _sequence_index < 0 or _sequence_index >= wave_texture_sets.size():
+		return []
+	var element: Variant = wave_texture_sets[_sequence_index]
+	return element if element is Array else []
+
+
+## Resolves one path per spawn slot via the FR18.2 modulo rule, with the
+## FR18.3 fallbacks: missing/empty entries fall back to the category
+## default (empty string), warning ONCE per unique bad path per wave.
+func _resolved_slot_paths(texture_set: Array) -> Array[String]:
+	var paths: Array[String] = []
+	if texture_set.is_empty():
+		return paths
+	var warned := {}
+	for k in range(GameConfig.get_enemies_per_wave()):
+		var raw: Variant = texture_set[k % texture_set.size()]
+		var path := str(raw)
+		if path != "" and not ResourceLoader.exists(path):
+			if not warned.has(path):
+				warned[path] = true
+				push_warning("WaveManager: wave texture '%s' is missing; using the category default for those slots." % path)
+			path = ""
+		paths.append(path)
+	return paths
 
 
 ## Starts the first wave of the configured category_sequence. Convenience

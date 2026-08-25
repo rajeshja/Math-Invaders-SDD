@@ -94,6 +94,8 @@ func start_level() -> void:
 	wave_manager.set_category_sequence(category_sequence)
 	if wave_manager.has_method("set_generation_options"):
 		wave_manager.set_generation_options(config.generation_options())
+	if wave_manager.has_method("set_wave_texture_sets"):
+		wave_manager.set_wave_texture_sets(config.resolved_wave_texture_sets())
 	GameManager.reset_lives()
 	GameManager.start_level_timer(maxf(1.0, config.time_limit_seconds))
 	_lives_lost_this_level = 0
