@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 level_number = 3
-category_sequence = Array[String](["integer_addition", "integer_subtraction", "integer_multiplication", "integer_division"])
+category_sequence = Array[String](["integer_addition", "integer_subtraction", "integer_multiplication", "integer_division", "fraction_addition", "fraction_subtraction"])
 difficulty = 3
 max_operand_size = 50
-time_limit_seconds = 120.0
+time_limit_seconds = 180.0
 tries_per_question = 1
 allow_unlike_denominators = false
 max_decimal_places = 0

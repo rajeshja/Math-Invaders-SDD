@@ -35,15 +35,45 @@ func test_each_config_supplies_valid_gameplay_parameters() -> void:
 		assert_false(config.category_sequence.is_empty(), "%s defines waves" % path)
 
 
-func test_base_levels_use_four_category_sequence_and_default_budget() -> void:
+func test_levels_one_two_and_four_keep_base_integer_rotation_budget() -> void:
 	var expected: Array[String] = [
 		"integer_addition", "integer_subtraction", "integer_multiplication", "integer_division"
 	]
-	for level in [1, 2, 3, 4]:
+	# Levels 1-2 stay pure-integer on the base budget; level 4 grew fraction
+	# waves (see the dedicated tests below) but keeps them appended after
+	# the unchanged integer rotation.
+	for level in [1, 2]:
 		var config: LevelConfig = load(LEVEL_PATHS[level - 1])
 		assert_eq(config.category_sequence, expected,
 			"level %d keeps the Phase 6 four-category rotation" % level)
 		assert_eq(config.time_limit_seconds, 120.0)
+
+	var level_four: LevelConfig = load(LEVEL_PATHS[3])
+	assert_eq(level_four.category_sequence.slice(0, 4), expected,
+			"level 4 keeps the integer rotation up front")
+
+
+## Phase 13 FR13.11: Level 3 debuts the fraction categories appended after
+## the integer waves, with unlike denominators gated OFF.
+func test_level_three_debuts_fraction_waves_with_unlike_denominators_gated_off() -> void:
+	var config: LevelConfig = load(LEVEL_PATHS[2])
+
+	assert_eq(config.category_sequence.size(), 6)
+	assert_eq(config.category_sequence[4], "fraction_addition")
+	assert_eq(config.category_sequence[5], "fraction_subtraction")
+	assert_false(config.allow_unlike_denominators,
+			"debut level serves Tier 1/2 like-denominator content first")
+	assert_gt(config.time_limit_seconds, 120.0,
+			"two extra waves extend the time budget")
+
+
+func test_level_four_enables_unlike_denominators_for_fraction_waves() -> void:
+	var config: LevelConfig = load("res://resources/levels/level_4.tres")
+
+	assert_eq(config.category_sequence[4], "fraction_addition")
+	assert_eq(config.category_sequence[5], "fraction_subtraction")
+	assert_true(config.allow_unlike_denominators,
+			"a later level turns unlike denominators on")
 
 
 func test_level_five_adds_prime_once_with_five_wave_budget() -> void:

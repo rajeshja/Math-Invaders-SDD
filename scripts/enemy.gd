@@ -18,6 +18,8 @@ const CATEGORY_TEXTURES := {
 	"integer_multiplication": "res://assets/images/enemies/enemy_ship_multiplication.png",
 	"integer_division": "res://assets/images/enemies/enemy_ship_division.png",
 	"prime": "res://assets/images/enemies/enemy_ship_prime.png",
+	"fraction_addition": "res://assets/images/enemies/enemy_ship_fraction_addition.png",
+	"fraction_subtraction": "res://assets/images/enemies/enemy_ship_fraction_subtraction.png",
 }
 
 ## The math category this enemy belongs to (e.g. "integer_addition").

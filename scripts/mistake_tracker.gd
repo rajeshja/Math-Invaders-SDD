@@ -15,8 +15,10 @@ var _mistakes: Array[Dictionary] = []
 
 
 ## Records one wrong answer. `question` is the full question Dictionary
-## as generated; only its display fields are kept.
-func add_mistake(question: Dictionary, selected_answer: int, correct_answer: int) -> void:
+## as generated; only its display fields are kept. Answers are stored as
+## produced: ints for integer categories, canonical display Strings for
+## fraction categories (Phase 13 FR13.1) - the review panel renders both.
+func add_mistake(question: Dictionary, selected_answer, correct_answer) -> void:
 	_mistakes.append({
 		"question_text": str(question.get("question_text", "")),
 		"selected_answer": selected_answer,

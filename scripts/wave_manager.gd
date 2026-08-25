@@ -33,8 +33,9 @@ signal wrong_answer
 
 ## Phase 9 FR9.15: emitted alongside wrong_answer with everything the
 ## Mistake Review system needs - the active question, the tapped value,
-## and the correct answer. Main.gd feeds this into its capped mistake log.
-signal question_failed(question: Dictionary, selected_answer: int, correct_answer: int)
+## and the correct answer. Values are int (integer categories) or canonical
+## String (fraction categories - Phase 13 FR13.1).
+signal question_failed(question: Dictionary, selected_answer, correct_answer)
 
 ## Emitted once when the category_sequence is exhausted after a wave clears.
 signal level_cleared
@@ -207,11 +208,12 @@ func on_enemy_hit(enemy: Node) -> void:
 ## detail event for Mistake Review) and leave the active enemy and
 ## formation stationary. Attempt counting/question replacement belongs to
 ## the question-flow owner, not WaveManager. `selected_answer` defaults to
-## -1 for callers that have no tapped value (tests, non-UI flows).
-func on_wrong_answer(selected_answer: int = -1) -> void:
+## -1 for callers that have no tapped value (tests, non-UI flows); it may
+## be an int or a canonical fraction String (Phase 13 FR13.1).
+func on_wrong_answer(selected_answer = -1) -> void:
 	wrong_answer.emit()
 	var active_question: Dictionary = {}
-	var correct_answer: int = 0
+	var correct_answer = 0
 	if _active_enemy != null and is_instance_valid(_active_enemy) \
 			and "linked_question" in _active_enemy:
 		active_question = _active_enemy.linked_question
