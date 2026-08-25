@@ -19,6 +19,7 @@ func _init() -> void:
 	_strategies["subtraction"] = SubtractionStrategy.new()
 	_strategies["multiplication"] = MultiplicationStrategy.new()
 	_strategies["division"] = DivisionStrategy.new()
+	_strategies["prime"] = PrimeStrategy.new()
 
 
 ## Returns the same Dictionary shape as QuestionStrategy.generate():

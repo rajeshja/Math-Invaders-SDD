@@ -9,6 +9,15 @@ const CATEGORY_SEQUENCE: Array[String] = [
 	"addition", "subtraction", "multiplication", "division"
 ]
 
+## Phase 8 FR8.4/FR8.5: at levels >= this threshold the advanced "prime"
+## category is appended ONCE to the sequence as a 5th wave. Below the
+## threshold the sequence stays exactly the Phase 6 four-category rotation.
+## Because GameConfig.get_level_time_limit() derives the budget from the
+## wave count, advanced levels automatically get waves x seconds-per-wave
+## (e.g. 5 x 30 = 150 s) unless a per-level override exists.
+const ADVANCED_LEVEL_THRESHOLD := 5
+const ADVANCED_CATEGORY := "prime"
+
 var wave_manager: Node = null
 var level_complete_banner: Node = null
 
@@ -37,6 +46,8 @@ func difficulty_for_level(level: int) -> int:
 
 func start_level() -> void:
 	category_sequence = CATEGORY_SEQUENCE.duplicate()
+	if current_level >= ADVANCED_LEVEL_THRESHOLD:
+		category_sequence.append(ADVANCED_CATEGORY)
 	difficulty = difficulty_for_level(current_level)
 	effective_tries_per_question = GameConfig.get_tries_per_question(current_level)
 	wave_manager.set_category_sequence(category_sequence)

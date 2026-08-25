@@ -30,6 +30,15 @@ func test_dispatches_division_to_division_strategy() -> void:
 	assert_string_contains(result["question_text"], "/", "division category should dispatch to DivisionStrategy")
 
 
+func test_dispatches_prime_to_prime_strategy() -> void:
+	var result: Dictionary = generator.generate_question("prime", 1)
+	assert_true(result.has("question_text"))
+	assert_true(result.has("correct_answer"))
+	assert_true(result.has("choices"))
+	assert_eq(result["choices"].size(), 4)
+	assert_string_contains(result["question_text"], "prime", "prime category should dispatch to PrimeStrategy")
+
+
 func test_well_formed_dictionary_shape_for_known_category() -> void:
 	var result: Dictionary = generator.generate_question("addition", 1)
 	assert_true(result.has("question_text"))
@@ -57,3 +66,8 @@ func test_get_categories_includes_all_four_stage_a_categories() -> void:
 	assert_true(categories.has("subtraction"))
 	assert_true(categories.has("multiplication"))
 	assert_true(categories.has("division"))
+
+
+func test_get_categories_includes_prime_stage_c_category() -> void:
+	var categories: Array = generator.get_categories()
+	assert_true(categories.has("prime"), "'prime' should be registered in the category map")

@@ -158,3 +158,56 @@ func test_reset_and_start_resets_lives_like_a_fresh_session() -> void:
 	level_manager.reset_and_start()
 
 	assert_eq(GameManager.lives, GameConfig.get_starting_lives())
+
+
+## -- Phase 8: advanced prime category --------------------------------------
+
+func _prime_count(sequence: Array) -> int:
+	var count := 0
+	for category in sequence:
+		if category == "prime":
+			count += 1
+	return count
+
+
+func test_sequence_below_threshold_excludes_prime() -> void:
+	level_manager.current_level = level_manager.ADVANCED_LEVEL_THRESHOLD - 1
+	level_manager.start_level()
+
+	var handed: Array = wave_stub.calls_for("set_category_sequence").back().args[0]
+	assert_eq(handed, BASE_SEQUENCE, "below the threshold the sequence is unchanged from Phase 6")
+	assert_eq(_prime_count(handed), 0)
+
+
+func test_sequence_at_threshold_appends_prime_once_as_fifth_wave() -> void:
+	level_manager.current_level = level_manager.ADVANCED_LEVEL_THRESHOLD
+	level_manager.start_level()
+
+	var handed: Array = wave_stub.calls_for("set_category_sequence").back().args[0]
+	assert_eq(handed.size(), BASE_SEQUENCE.size() + 1, "prime is appended as a 5th wave")
+	assert_eq(handed.slice(0, BASE_SEQUENCE.size()), BASE_SEQUENCE, "the base four categories keep their order")
+	assert_eq(handed.back(), "prime", "'prime' sits at the documented end position")
+	assert_eq(_prime_count(handed), 1)
+	# Spec §2: the extra wave raises the default budget to waves x seconds.
+	assert_eq(GameManager.level_time_limit, 150.0)
+
+
+func test_sequence_above_threshold_includes_prime_exactly_once() -> void:
+	level_manager.current_level = level_manager.ADVANCED_LEVEL_THRESHOLD + 3
+	level_manager.start_level()
+
+	var handed: Array = wave_stub.calls_for("set_category_sequence").back().args[0]
+	assert_eq(handed.size(), BASE_SEQUENCE.size() + 1)
+	assert_eq(handed.back(), "prime")
+	assert_eq(_prime_count(handed), 1, "'prime' must never repeat within a level")
+
+
+func test_reset_and_start_returns_to_sequence_without_prime() -> void:
+	level_manager.current_level = level_manager.ADVANCED_LEVEL_THRESHOLD + 1
+	level_manager.start_level()
+	assert_eq(_prime_count(wave_stub.calls_for("set_category_sequence").back().args[0]), 1)
+
+	level_manager.reset_and_start()
+
+	assert_eq(level_manager.current_level, 1)
+	assert_eq(wave_stub.calls_for("set_category_sequence").back().args[0], BASE_SEQUENCE)
