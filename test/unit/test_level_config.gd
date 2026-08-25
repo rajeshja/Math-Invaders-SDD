@@ -160,6 +160,57 @@ func test_authored_levels_carry_non_default_scoring() -> void:
 	assert_eq(level_five.resolved_points_per_question(), 3)
 
 
+## Phase 18 FR18.1: wave texture sets default empty and normalize into
+## per-index String arrays aligned with category_sequence.
+func test_wave_enemy_textures_default_empty_and_align() -> void:
+	var config := LevelConfig.new()
+	config.category_sequence = ["a", "b", "c"] as Array[String]
+
+	var sets: Array = config.resolved_wave_texture_sets()
+	assert_eq(sets.size(), 3, "one slot per sequence entry")
+	for set_array in sets:
+		assert_eq(set_array.size(), 0, "unset waves resolve to empty sets")
+
+
+func test_wave_enemy_textures_partial_configuration_pads_with_empty() -> void:
+	var config := LevelConfig.new()
+	config.category_sequence = ["a", "b", "c"] as Array[String]
+	config.wave_enemy_textures = [["res://x.png"]]
+
+	var sets: Array = config.resolved_wave_texture_sets()
+	assert_eq(sets[0].size(), 1)
+	assert_eq(str(sets[0][0]), "res://x.png")
+	assert_eq(sets[1].size(), 0, "unconfigured later waves stay default")
+	assert_eq(sets[2].size(), 0)
+
+
+func test_wave_enemy_textures_tolerates_malformed_elements() -> void:
+	var config := LevelConfig.new()
+	config.category_sequence = ["a", "b", "c"] as Array[String]
+	config.wave_enemy_textures = [
+		"not_an_array",                       # whole element malformed
+		["res://ok.png", 42, "", null],       # mixed junk entries
+		{"dict": true},
+	]
+
+	var sets: Array = config.resolved_wave_texture_sets()
+	assert_eq(sets[0].size(), 0, "non-array elements resolve empty")
+	assert_eq(sets[1].size(), 1, "only valid non-empty strings survive")
+	assert_eq(str(sets[1][0]), "res://ok.png")
+	assert_eq(sets[2].size(), 0)
+
+
+func test_level_one_ships_the_three_image_demo() -> void:
+	var level_one: LevelConfig = load(LEVEL_PATHS[0])
+	assert_eq(level_one.wave_enemy_textures.size(), 1,
+			"FR18.7: Wave 1 demonstrates the three-image set")
+	var wave_one_set: Array = level_one.wave_enemy_textures[0]
+	assert_eq(wave_one_set.size(), 3)
+	for path in wave_one_set:
+		assert_true(ResourceLoader.exists(str(path)),
+				"demo placeholder art exists (%s)" % str(path))
+
+
 ## FR9.3/NFR9.1: fraction and decimal rules must be Inspector-editable
 ## fields on the resource itself.
 func test_fraction_and_decimal_rule_exports_exist_on_the_resource() -> void:

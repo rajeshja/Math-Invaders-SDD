@@ -63,6 +63,30 @@ const LEVEL_RESOURCE_PATHS: Array[String] = [
 ## Values below 1 clamp to 1 at resolution time (FR17.2).
 @export var points_per_question: int = 1
 
+@export_group("Wave Visuals")
+## Per-wave enemy image overrides (Phase 18 FR18.1), index-aligned with
+## category_sequence: element i lists texture path Strings for the wave at
+## category_sequence[i]. Within a wave, spawn slot k uses element
+## k % set.size() (cycling). Empty outer array / empty elements mean "use
+## the category default sprite".
+@export var wave_enemy_textures: Array = []
+
+
+## Normalized per-index texture sets (FR18.1): one Array[String] per wave,
+## empty when unset; malformed elements (non-String entries, non-Array
+## elements) are tolerated by being dropped, so bad authored data can
+## never crash spawning.
+func resolved_wave_texture_sets() -> Array:
+	var sets: Array = []
+	for i in range(category_sequence.size()):
+		var normalized: Array[String] = []
+		if i < wave_enemy_textures.size() and wave_enemy_textures[i] is Array:
+			for entry in wave_enemy_textures[i]:
+				if entry is String and not (entry as String).is_empty():
+					normalized.append(entry)
+		sets.append(normalized)
+	return sets
+
 ## One-time warning guard so an invalid authored value logs exactly once
 ## instead of spamming every level start (FR17.2).
 static var _warned_invalid_points := false

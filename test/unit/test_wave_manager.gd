@@ -240,3 +240,108 @@ func test_fresh_set_of_ten_spawns_on_wave_clear() -> void:
 
 	for id in second_wave_ids:
 		assert_false(first_wave_ids.has(id), "fresh spawn must not reuse stale instances from the previous wave")
+
+
+## -- Phase 18: per-wave enemy texture sets ------------------------------------
+
+const SHIP1 := "res://assets/images/enemies/ship1.png"
+const SHIP2 := "res://assets/images/enemies/ship2.png"
+const SHIP3 := "res://assets/images/enemies/ship3.png"
+const DEFAULT_ADDITION_TEX := "res://assets/images/enemies/enemy_ship_addition.png"
+
+
+func _spawned_texture_paths() -> Array:
+	var paths: Array = []
+	for enemy in enemies_container.get_children():
+		var texture: Texture2D = enemy._sprite.texture
+		paths.append(texture.resource_path)
+	return paths
+
+
+func _texture_sequence(sequence: Array, sets: Array) -> void:
+	var typed: Array[String] = []
+	for entry in sequence:
+		typed.append(entry)
+	wave_manager.set_category_sequence(typed)
+	wave_manager.set_wave_texture_sets(sets)
+	wave_manager.start_first_wave()
+
+
+func test_three_image_set_cycles_in_formation_order() -> void:
+	_texture_sequence(["integer_addition"], [[SHIP1, SHIP2, SHIP3]])
+
+	var expected := [
+		SHIP1, SHIP2, SHIP3, SHIP1, SHIP2, SHIP3, SHIP1, SHIP2, SHIP3, SHIP1,
+	]
+	assert_eq(_spawned_texture_paths(), expected,
+			"FR18.2: slot k uses set element k %% set size")
+
+
+func test_single_image_set_applies_to_all_ten() -> void:
+	_texture_sequence(["integer_addition"], [[SHIP2]])
+
+	var expected := []
+	for i in range(10):
+		expected.append(SHIP2)
+	assert_eq(_spawned_texture_paths(), expected, "FR18.6: one-image sets repeat")
+
+
+func test_empty_set_uses_category_default_for_all_ten() -> void:
+	_texture_sequence(["integer_addition"], [[]])
+
+	var expected := []
+	for i in range(10):
+		expected.append(DEFAULT_ADDITION_TEX)
+	assert_eq(_spawned_texture_paths(), expected,
+			"FR18.3: empty sets keep the category sprite")
+
+
+func test_no_sets_at_all_matches_phase_17_behavior() -> void:
+	wave_manager.start_wave("integer_addition")
+
+	var expected := []
+	for i in range(10):
+		expected.append(DEFAULT_ADDITION_TEX)
+	assert_eq(_spawned_texture_paths(), expected,
+			"NFR18.2: unset overrides are byte-identical to prior behavior")
+
+
+func test_missing_path_warns_once_and_falls_back_per_slot() -> void:
+	var bogus := "res://assets/images/enemies/no_such_ship.png"
+	_texture_sequence(["integer_addition"], [[SHIP1, bogus]])
+
+	var paths := _spawned_texture_paths()
+	# Slots cycle a 2-set: even slots SHIP1, odd slots fallback default.
+	for k in range(paths.size()):
+		if k % 2 == 0:
+			assert_eq(paths[k], SHIP1, "valid slots keep their image")
+		else:
+			assert_eq(paths[k], DEFAULT_ADDITION_TEX,
+					"bogus slot falls back to the category default")
+	assert_push_warning("no_such_ship", "one warning per missing path per wave")
+
+
+func test_advancing_waves_pick_the_next_index_set() -> void:
+	_texture_sequence(
+			["integer_addition", "integer_subtraction"],
+			[[SHIP1, SHIP2], [SHIP3]])
+
+	assert_eq(_spawned_texture_paths()[0], SHIP1,
+			"wave 1 uses the first set's cycle")
+	for i in range(10):
+		wave_manager.on_correct_answer()
+
+	assert_eq(wave_manager.current_category, "integer_subtraction")
+	var second_wave := _spawned_texture_paths()
+	for path in second_wave:
+		assert_eq(path, SHIP3, "wave 2 uses the second index's single-image set")
+
+
+func test_clear_all_resets_stored_sets() -> void:
+	_texture_sequence(["integer_addition"], [[SHIP1]])
+	wave_manager.clear_all()
+	wave_manager.start_wave("integer_subtraction")
+
+	for path in _spawned_texture_paths():
+		assert_eq(path, "res://assets/images/enemies/enemy_ship_subtraction.png",
+			"cleared sessions cannot leak the previous level's art")
