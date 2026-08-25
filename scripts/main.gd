@@ -156,7 +156,7 @@ func _resolve_correct_answer() -> void:
 	if target != null:
 		_fire_player_bullet(target)
 		AudioManager.play_sfx("fire")
-	GameManager.add_score(1)
+	GameManager.add_score(_level_manager.effective_points_per_question)
 	_wave_manager.on_correct_answer(target)
 
 

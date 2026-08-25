@@ -125,6 +125,41 @@ func test_generation_options_expose_procedural_math_knobs() -> void:
 	assert_eq(options.get("max_decimal_places"), 0)
 
 
+## Phase 17 FR17.1/FR17.2: scoring field defaults to 1, clamps invalid
+## values with a one-time warning, and round-trips through authored .tres
+## fixtures.
+func test_points_per_question_defaults_to_one() -> void:
+	var config := LevelConfig.new()
+	assert_eq(config.points_per_question, 1, "fresh resources default to 1")
+	assert_eq(config.resolved_points_per_question(), 1)
+
+
+func test_resolved_points_clamps_invalid_values_with_warning() -> void:
+	# Reset the one-time warning guard so this test owns its emission.
+	LevelConfig._warned_invalid_points = false
+	var config := LevelConfig.new()
+	config.points_per_question = 0
+
+	assert_eq(config.resolved_points_per_question(), 1, "0 clamps to 1")
+	assert_push_warning("clamping to 1", "invalid values warn exactly once")
+
+	# Further invalid resolutions stay clamped but never re-warn.
+	assert_eq(config.resolved_points_per_question(), 1)
+
+	# Restore the guard state for any other test touching invalid values.
+	LevelConfig._warned_invalid_points = false
+
+
+func test_authored_levels_carry_non_default_scoring() -> void:
+	var level_one: LevelConfig = load(LEVEL_PATHS[0])
+	assert_eq(level_one.points_per_question, 1,
+			"FR17.6: Level 1 stays at the default 1")
+	var level_five: LevelConfig = load(LEVEL_PATHS[4])
+	assert_eq(level_five.points_per_question, 3,
+			"later levels rise modestly as categories get harder")
+	assert_eq(level_five.resolved_points_per_question(), 3)
+
+
 ## FR9.3/NFR9.1: fraction and decimal rules must be Inspector-editable
 ## fields on the resource itself.
 func test_fraction_and_decimal_rule_exports_exist_on_the_resource() -> void:

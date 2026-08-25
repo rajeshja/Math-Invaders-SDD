@@ -21,6 +21,9 @@ var current_level: int = 1
 var session_start_level: int = 1
 var difficulty: int = 1
 var effective_tries_per_question: int = GameConfig.DEFAULT_TRIES_PER_QUESTION
+## Points per correct answer resolved from the active LevelConfig
+## (Phase 17 FR17.3); Main reads this instead of the hardcoded +1.
+var effective_points_per_question: int = 1
 var category_sequence: Array[String] = []
 var _configs: Array[LevelConfig] = []
 var _level_clear_in_progress: bool = false
@@ -87,6 +90,7 @@ func start_level() -> void:
 	category_sequence = config.category_sequence.duplicate()
 	difficulty = effective_difficulty_for(current_level, config)
 	effective_tries_per_question = max(1, config.tries_per_question)
+	effective_points_per_question = config.resolved_points_per_question()
 	wave_manager.set_category_sequence(category_sequence)
 	if wave_manager.has_method("set_generation_options"):
 		wave_manager.set_generation_options(config.generation_options())
