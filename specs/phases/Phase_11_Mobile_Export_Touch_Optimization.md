@@ -1,4 +1,4 @@
-# Phase 10 --- Mobile Export & Touch Optimization
+# Phase 11 --- Mobile Export & Touch Optimization
 
 **Goal:** package the fully-featured, fully-polished game (Phases 0--9)
 into an installable Android and/or iOS build, and verify it holds up

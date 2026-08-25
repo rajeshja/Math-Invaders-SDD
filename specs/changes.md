@@ -89,8 +89,8 @@ distance-dependent player-bullet travel.
 - **Phase 5**: implements the timer contract itself (countdown HUD, deterministic tick, `TIME_EXPIRED`) plus the config resolution tests.
 - **Phase 6**: each level start resolves its time limit via `GameConfig.get_level_time_limit(level, wave_count)` and calls `GameManager.start_level_timer()` exactly once; wave transitions never reset it; per-level overrides change only that level's budget.
 - **Phase 7**: Play Again restarts the Level 1 timer via the same resolution path; a timeout ending the prior session carries no penalty.
-- **Phase 9**: adds enemy-return-fire/player-hit sounds and a presentational low-time warning (pulsing red timer + optional tick during the final 10 seconds).
-- **Phase 11**: the level time budget becomes an explicit tuning dimension via `seconds_per_wave` and `level_time_limit_by_level`.
+- **Phase 10**: adds enemy-return-fire/player-hit sounds and a presentational low-time warning (pulsing red timer + optional tick during the final 10 seconds).
+- **Phase 12**: the level time budget becomes an explicit tuning dimension via `seconds_per_wave` and `level_time_limit_by_level`.
 
 ## Required Code Changes for Existing Phase-3 Code
 
@@ -202,15 +202,15 @@ ticking, countdown HUD, and the `TIME_EXPIRED` game over path.
 
 New categories inherit the same attempt configuration and wrong-answer feedback. `WaveManager` must not special-case attempts by category.
 
-### Phase 9 — Effects, Animation & Audio Polish
+### Phase 10 — Effects, Animation & Audio Polish
 
 Red wrong-answer feedback is promoted to a required presentation behavior. The red flash is immediate and brief; optional screen-shake/secondary damage feedback must not replace it.
 
-### Phase 10 — Mobile Export & Touch
+### Phase 11 — Mobile Export & Touch
 
 Verified that the red feedback is visible and touch-safe on-device and that the same attempt configuration behaves identically on desktop and mobile.
 
-### Phase 11 — Playtesting & Balancing
+### Phase 12 — Playtesting & Balancing
 
 Added question-attempt count and red-feedback clarity to the balancing dimensions. Enemy descent speed is no longer a gameplay tuning dimension because descent is removed.
 
@@ -288,9 +288,20 @@ playable increment and is now:
 - **Phase 5 — Level Timer**: the per-level countdown layered onto that
   working game, with its own `TIME_EXPIRED` game over path.
 
-All later phases shift by one: Level Progression → 6, Score & High Score → 7,
-New Categories → 8, Effects/Audio → 9, Mobile Export → 10, Playtesting &
-Balancing → 11, Stretch → 12.
+All later phases shift by one, and a subsequent split introduced Phase 9: Level Progression → 6, Score & High Score → 7,
+New Categories → 8, Level Config & Player Experience → 9, Effects/Audio → 10, Mobile Export → 11, Playtesting &
+Balancing → 12, Stretch → 13.
+
+## Phase 9 Level Configuration & Experience Split Checklist
+
+- [ ] Introduce `LevelConfig.gd` Custom Resource.
+- [ ] Migrate `LevelManager.gd` to use `.tres` definitions.
+- [ ] Track flawless streak and save `unlocked_level` in JSON via SaveManager.
+- [ ] Track personal best scores in JSON via SaveManager.
+- [ ] Implement assumed score on skip.
+- [ ] Implement Mistake Review UI from `GameOverScreen`.
+- [ ] Add Splash Screen and Main Menu Name Entry.
+- [ ] Add developer debug_start_level.
 
 ## Parallel Resolution & Triangle Checklist
 

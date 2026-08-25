@@ -238,7 +238,18 @@ playable milestone.
     categories, each with its own correct art, and covered by the same
     strategy-level test pattern established in earlier phases.
 
-### Phase 9 --- Effects, Animation & Audio Polish
+### Phase 9 --- Level Configuration & Player Experience
+
+-   Introduce `LevelConfig.gd` as a Custom Resource to centralize level definitions (categories, difficulty, timer, attempts).
+-   Update `LevelManager.gd` to load `.tres` level files.
+-   Add a Mastery condition: clear a level flawless (0 lives lost) 3 times in a row to unlock the next level.
+-   Allow players to select their starting level from unlocked levels, and initialize the game with their personal best score from skipped levels.
+-   Add a Name Entry on the Main Menu and a Splash Screen.
+-   Add a "Review Mistakes" button on Game Over to review incorrect answers.
+-   Add a Developer Level Select toggle to force start at any level.
+-   **Milestone:** Game incorporates centralized level configs, persists unlocked progression, handles assumed score on level skip, and includes Mistake Review and Splash Screen UI.
+
+### Phase 10 --- Effects, Animation & Audio Polish
 
 -   Add the `enemy_explosion_spritesheet.png` destruction animation on
     correct answers (replacing the simple "disappear" from earlier
@@ -257,7 +268,7 @@ playable milestone.
     earlier phases.
 -   **Milestone:** game looks and sounds like a finished mobile game.
 
-### Phase 10 --- Mobile Export & Touch Optimization
+### Phase 11 --- Mobile Export & Touch Optimization
 
 -   Configure Android/iOS export presets in Godot.
 -   Verify touch target sizes for answer buttons (44px+ minimum touch
@@ -266,7 +277,7 @@ playable milestone.
 -   **Milestone:** installable build running on Android and/or iOS
     device.
 
-### Phase 11 --- Playtesting & Balancing
+### Phase 12 --- Playtesting & Balancing
 
 -   Playtest with target age group; adjust question difficulty pacing
     per level, distractor plausibility, wave length feel, enemy
@@ -278,7 +289,7 @@ playable milestone.
 -   **Milestone:** balanced, kid-tested build ready for wider release,
     with the full GUT suite passing.
 
-### Phase 12 --- Stretch / Future Expansion
+### Phase 13 --- Stretch / Future Expansion
 
 -   Additional math concepts as new strategies (fractions, percentages,
     factors/multiples).
@@ -326,8 +337,8 @@ Three related gameplay changes extend Phase 4/5 and ripple forward:
    implemented as a fixed-duration tween shared via `bullet.gd`
    (`TRAVEL_TIME`), replacing distance-dependent/slow travel.
 
-Phase 6 restarts the timer at each level boundary; Phase 9 adds
-enemy-fire/player-hit sounds and a low-time warning; Phase 11 treats
+Phase 6 restarts the timer at each level boundary; Phase 10 adds
+enemy-fire/player-hit sounds and a low-time warning; Phase 12 treats
 the time budget as a tuning dimension.
 
 
@@ -357,5 +368,5 @@ Three changes, applied to both the requirements and the existing code:
    (playable end-to-end without time pressure) and **Phase 5 — Level
    Timer** (the countdown layered onto that working game). All later
    phases shift by one: Level Progression 5→6, Score & High Score 6→7,
-   New Categories 7→8, Effects/Audio 8→9, Mobile Export 9→10,
-   Playtesting & Balancing 10→11, Stretch 11→12.
+   New Categories 7→8, Level Config & Experience 8→9, Effects/Audio 9→10, Mobile Export 10→11,
+   Playtesting & Balancing 11→12, Stretch 12→13.

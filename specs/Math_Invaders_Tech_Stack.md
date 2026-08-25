@@ -167,6 +167,7 @@ same interface supports categories that aren't pure arithmetic.
     increase, and (at defined thresholds) adds new categories into
     `WaveManager`'s sequence. Tells `WaveManager` to reset and spawn the
     first wave's full set of 10 enemies when a new level begins.
+    *Phase 9 Update:* `LevelManager` now loads data from `LevelConfig.gd` custom resources (`.tres` files) to determine categories, waves, difficulty, time limits, and attempts per level. This replaces the hard-coded procedural scaling.
 
 ------------------------------------------------------------------------
 
@@ -255,14 +256,16 @@ configured value. The persisted high score is unaffected.
 
 ------------------------------------------------------------------------
 
-## 7. Persistence Details
+## 7. Persistence & Save Architecture
 
--   High scores and (optionally) last-reached level/category performance
-    are stored locally via `FileAccess`/`ConfigFile` or a small JSON
+-   High scores and profile data (player name, personal bests, unlocked levels)
+    are stored locally via `FileAccess`/`ConfigFile` or a JSON
     file in `user://`, so they survive app restarts without requiring a
     backend.
+-   `HighScoreManager.gd` (or `SaveManager.gd`) tracks these metrics and handles safe JSON schema migrations.
 -   No cloud sync or backend is required for the initial build; this can
     be layered in later without restructuring the above architecture.
+-   **Mistake Review Tracking:** During a session, incorrect answers are recorded in-memory (storing the question, selected answer, and correct answer) and surfaced via the `GameOverScreen` UI. This temporary data is not persisted to disk.
 
 ------------------------------------------------------------------------
 

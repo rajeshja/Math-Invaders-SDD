@@ -1,4 +1,4 @@
-# Phase 11 --- Playtesting & Balancing
+# Phase 12 --- Playtesting & Balancing
 
 **Goal:** run the finished, exported build (Phase 10) past players in the
 target age group, and tune existing parameters --- difficulty pacing,

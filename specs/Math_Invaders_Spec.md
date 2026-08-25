@@ -464,3 +464,14 @@ wrong answer, life consumption, attempt counting, and any Game Over
 transition resolve immediately, and only the next question's *display*
 may wait out the brief red-flash feedback interval (~0.18 s) --- never
 the launch, telegraph, or arrival of any bullet.
+
+## 11. Level Configuration & Player Experience
+
+- **Custom Resources:** A `LevelConfig.gd` custom resource centralizes definitions for each level (categories, waves, time limits, attempts, difficulty scaling), replacing hard-coded logic in `LevelManager.gd`.
+- **Mastery and Sequential Unlocking:** Clearing a level with 0 lives lost, 3 times in a row, unlocks the next level. Unlocking must happen sequentially (Level 2 cannot unlock unless Level 1 is unlocked).
+- **Player Level Select:** The Main Menu includes a UI to let players choose any unlocked level to start playing from.
+- **Assumed Full Score:** Skipping a level by starting at a later unlocked level initializes the player's score with the sum of their "personal best" scores for the skipped levels.
+- **Player Name Setup:** Before starting the game, players are prompted to enter their name on the Splash Screen or Main Menu. This name is persisted and displayed on the High Score screen.
+- **Splash Screen:** A startup splash screen featuring the Game Title and Developer Logo fades directly into the Main Menu.
+- **Mistake Review:** At the Game Over screen, a "Review Mistakes" button opens a scrollable panel displaying all wrong answers tracked during that session (Question, Selected Answer, Correct Answer).
+- **Developer Level Select:** An exported setting (`debug_start_level`) allows developers to force-start the game at any level, bypassing unlocking requirements for testing purposes.

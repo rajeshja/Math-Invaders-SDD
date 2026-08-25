@@ -1,4 +1,4 @@
-# Phase 9 --- Effects, Animation & Audio Polish
+# Phase 10 --- Effects, Animation & Audio Polish
 
 **Goal:** layer presentation polish --- destruction animation, parallax
 starfield, damage feedback, button press states, sound, and music --- on
