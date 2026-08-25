@@ -101,6 +101,23 @@ func test_dispatches_decimal_division_strategy() -> void:
 			"decimal_division should dispatch to DecimalDivisionStrategy")
 
 
+func test_dispatches_ratio_proportion_strategy() -> void:
+	var result: Dictionary = generator.generate_question("ratio_proportion", 1)
+	assert_string_contains(result["question_text"], "?",
+			"ratio_proportion should dispatch to RatioProportionStrategy")
+	assert_eq(typeof(result["correct_answer"]), TYPE_INT,
+			"ratio answers ride the int pipeline")
+
+
+func test_dispatches_hcf_lcm_strategy() -> void:
+	var result: Dictionary = generator.generate_question("hcf_lcm", 1)
+	assert_true(result["question_text"].contains("(HCF)") \
+			or result["question_text"].contains("(LCM)"),
+			"hcf_lcm should dispatch to HcfLcmStrategy")
+	assert_eq(typeof(result["correct_answer"]), TYPE_INT,
+			"HCF/LCM answers ride the int pipeline")
+
+
 func test_well_formed_dictionary_shape_for_known_category() -> void:
 	var result: Dictionary = generator.generate_question("integer_addition", 1)
 	assert_true(result.has("question_text"))
@@ -143,6 +160,12 @@ func test_get_categories_includes_decimal_categories() -> void:
 	assert_true(categories.has("decimal_division"), "'decimal_division' should be registered")
 
 
+func test_get_categories_includes_ratio_and_hcf_lcm_categories() -> void:
+	var categories: Array = generator.get_categories()
+	assert_true(categories.has("ratio_proportion"), "'ratio_proportion' should be registered")
+	assert_true(categories.has("hcf_lcm"), "'hcf_lcm' should be registered")
+
+
 func test_get_categories_includes_fraction_categories() -> void:
 	var categories: Array = generator.get_categories()
 	assert_true(categories.has("fraction_addition"), "'fraction_addition' should be registered")
@@ -167,6 +190,8 @@ func test_display_names_map_registered_keys_to_hud_labels() -> void:
 	assert_eq(QuestionGenerator.get_display_name("decimal_subtraction"), "Decimal Subtraction")
 	assert_eq(QuestionGenerator.get_display_name("decimal_multiplication"), "Decimal Multiplication")
 	assert_eq(QuestionGenerator.get_display_name("decimal_division"), "Decimal Division")
+	assert_eq(QuestionGenerator.get_display_name("ratio_proportion"), "Ratio & Proportion")
+	assert_eq(QuestionGenerator.get_display_name("hcf_lcm"), "HCF & LCM")
 
 
 ## Phase 12 FR12.4: unknown keys fall back to String.capitalize().

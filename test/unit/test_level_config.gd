@@ -8,6 +8,7 @@ const LEVEL_PATHS: Array[String] = [
 	"res://resources/levels/level_3.tres",
 	"res://resources/levels/level_4.tres",
 	"res://resources/levels/level_5.tres",
+	"res://resources/levels/level_6.tres",
 ]
 
 
@@ -98,6 +99,19 @@ func test_level_five_debuts_decimals_with_one_decimal_place() -> void:
 
 	assert_eq(config.max_decimal_places, 1,
 			"FR15.8: decimal debut level serves tenths first")
+
+
+## Phase 16 FR16.8: the roster extends with a sixth level hosting the
+## ratio/proportion and HCF/LCM debut waves alongside review waves.
+func test_level_six_hosts_ratio_and_hcf_lcm_debuts() -> void:
+	var config: LevelConfig = load("res://resources/levels/level_6.tres")
+
+	assert_eq(config.level_number, 6)
+	assert_true(config.category_sequence.has("ratio_proportion"))
+	assert_true(config.category_sequence.has("hcf_lcm"))
+	assert_gt(config.time_limit_seconds, 0.0)
+	assert_gt(config.difficulty, 0)
+	assert_eq(config.max_decimal_places, 2, "decimal places rise on later levels")
 
 
 func test_generation_options_expose_procedural_math_knobs() -> void:

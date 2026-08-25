@@ -21,6 +21,7 @@ const LEVEL_RESOURCE_PATHS: Array[String] = [
 	"res://resources/levels/level_3.tres",
 	"res://resources/levels/level_4.tres",
 	"res://resources/levels/level_5.tres",
+	"res://resources/levels/level_6.tres",
 ]
 
 @export_group("Identity")

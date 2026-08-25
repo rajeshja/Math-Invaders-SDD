@@ -26,6 +26,8 @@ const CATEGORY_TEXTURES := {
 	"decimal_subtraction": "res://assets/images/enemies/enemy_ship_decimal_subtraction.png",
 	"decimal_multiplication": "res://assets/images/enemies/enemy_ship_decimal_multiplication.png",
 	"decimal_division": "res://assets/images/enemies/enemy_ship_decimal_division.png",
+	"ratio_proportion": "res://assets/images/enemies/enemy_ship_ratio_proportion.png",
+	"hcf_lcm": "res://assets/images/enemies/enemy_ship_hcf_lcm.png",
 }
 
 ## The math category this enemy belongs to (e.g. "integer_addition").
