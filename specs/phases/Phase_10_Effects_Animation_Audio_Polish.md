@@ -50,7 +50,11 @@ playtesting).
     Setting), the HUD `TimeLabel` pulses red and an optional tick/beep
     plays each second until zero or level clear. Purely presentational;
     must not alter timer behavior or gameplay state.
--   FR9.8 --- Any placeholder images remaining from Spec §7's asset
+-   FR9.8 --- **New UI Polish**: Apply consistent visual and audio polish to the screens introduced in Phase 9:
+    -   **Splash Screen:** Implement a smooth opacity fade-in for the logo/title, a brief hold, and a fade-to-black transition into the Main Menu. Add a welcoming startup audio chime synced with the logo appearance.
+    -   **Level Select Screen:** Visually distinguish locked vs. unlocked levels (e.g., grayscale with padlocks vs. full color). Add a slide-in transition when the menu opens, distinct hover/click sounds for the level buttons, and a celebratory sound effect when a new level is first unlocked.
+    -   **Mistake Review Panel:** Animate the panel opening with a smooth slide-up or scale-in effect over the Game Over screen. Add a mechanical or paper-sliding sound effect when opening/closing, and soft UI tick sounds when scrolling through the list of mistakes.
+-   FR9.9 --- Any placeholder images remaining from Spec §7's asset
     table that weren't already replaced in an earlier phase are swapped
     for final art in this phase (including `enemy_bullet.png` from
     Phase 4).

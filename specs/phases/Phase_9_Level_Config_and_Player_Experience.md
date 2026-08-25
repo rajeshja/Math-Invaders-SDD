@@ -10,9 +10,15 @@
 
 ### Functional Requirements
 
-#### Level Configuration (Custom Resources)
-- FR9.1 --- Introduce a new Godot Custom Resource `LevelConfig.gd` to define a single level. It will store: the level number, categories available, wave sizes, difficulty parameters, time limits, and allowed attempts per question.
-- FR9.2 --- `LevelManager.gd` is updated to load `.tres` files for level configuration, replacing hardcoded rules for level progression.
+#### Level Configuration (Custom Resources & Procedural Math)
+- FR9.1 --- **Migration from Project Settings:** Explicitly migrate level configurations away from the `gameplay/level_time_limit_by_level` and `gameplay/tries_per_question_by_level` Project Setting dictionaries introduced in earlier phases.
+- FR9.2 --- Introduce a new Godot Custom Resource `LevelConfig.gd` to define a single level. It will store: the level number, time limits, and allowed attempts per question.
+- FR9.3 --- **Configurable Procedural Math:** The game will continue to use procedural generation for questions, but it will now be driven by parameters exposed in the `LevelConfig` resource. The resource should expose `@export` variables for:
+  - Active categories to cover (e.g., addition, subtraction, primes, unitary method, ratio and proportions).
+  - Complexity of operations (e.g., max/min operand sizes).
+  - Fraction specific rules (e.g., a toggle for allowing unlike denominators).
+  - Decimal specific rules (e.g., maximum number of places after the decimal point).
+- FR9.4 --- `LevelManager.gd` is updated to load `.tres` files for level configuration, using them to guide the procedural generation rather than hardcoding scaling thresholds in the script.
 
 #### Mastery & Sequential Level Unlocking
 - FR9.3 --- Introduce a Mastery condition: If a player clears a given level without losing a single life, 3 times in a row, they achieve "Mastery" for that level.
@@ -35,9 +41,13 @@
 - FR9.12 --- Add a Splash Screen at game startup containing the Game Title and Developer Logo. It should display for a short duration before fading directly into the Main Menu.
 
 #### Mistake Review System
-- FR9.13 --- The game tracks all incorrect answers provided by the player during the current session (storing the question, selected wrong answer, and correct answer).
-- FR9.14 --- Add a "Review Mistakes" button on the Game Over screen.
-- FR9.15 --- Tapping "Review Mistakes" opens a scrollable panel displaying a list of the tracked mistakes from the session.
+- FR9.15 --- The game tracks incorrect answers provided by the player during the current session (storing the question, selected wrong answer, and correct answer). **This tracking array must be capped at the last 100 mistakes** to prevent memory/performance issues during long play sessions.
+- FR9.16 --- Add a "Review Mistakes" button on the Game Over screen.
+- FR9.17 --- Tapping "Review Mistakes" opens a scrollable panel displaying a list of the tracked mistakes from the session.
+
+#### Play Again Behavior Update
+- FR9.18 --- **Play Again Logic:** Update the "Play Again" button behavior on the Game Over screen (originally defined in Phase 7). Instead of hard-resetting the session back to Level 1, Wave 1, tapping "Play Again" will restart the session at the **same level the user originally started at**.
+- FR9.19 --- Add a "Return to Main Menu" button on the Game Over screen, allowing the player to navigate back to the menu to select a different level.
 
 ### Non-Functional Requirements
 - NFR9.1 --- `LevelConfig` resources must be editable completely within the Godot Inspector, empowering non-programmers to define new levels.

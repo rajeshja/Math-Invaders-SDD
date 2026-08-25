@@ -19,12 +19,8 @@ regression backstop).
 
 -   FR11.1 --- Structured playtesting sessions are conducted with
     players in the target 6--12 age range, per Spec §1.
--   FR11.2 --- Observations are captured against five defined tuning
-    dimensions: question difficulty pacing per level, distractor
-    plausibility, wave length feel, the configured
-    lives/mistake-budget feel, and the level time-limit feel (whether
-    the default waves × 30 s budget --- or any overrides --- produces
-    appropriate pressure without frustrating young players).
+-   FR11.2 --- Observations are captured against tuning dimensions: question difficulty pacing per level, distractor plausibility, wave length feel, lives/mistake-budget feel, and the level time-limit feel based on observations.
+    **All level balancing must be done by directly editing the `LevelConfig.tres` Custom Resources in the Godot Inspector**, rather than tweaking hardcoded math formulas.
 -   FR11.3 --- Difficulty parameters (operand ranges per Spec §5's Stage
     A/B tiers, and/or the level→difficulty formula from Phase 6) are
     adjusted based on playtesting findings, without changing any
