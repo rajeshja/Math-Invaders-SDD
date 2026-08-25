@@ -130,8 +130,9 @@ func _render_score() -> void:
 	_score_label.text = "Score: %d" % _score
 
 
-## category e.g. "subtraction", remaining/total e.g. 6/10 -> renders
-## "Subtraction 6/10 remaining" (Spec §6).
+## category e.g. "integer_subtraction", remaining/total e.g. 6/10 ->
+## renders "Subtraction 6/10 remaining" (Spec §6). Labels resolve through
+## QuestionGenerator's display-name registry (Phase 12 FR12.4).
 func update_wave_progress(category: String, remaining: int, total: int) -> void:
-	var display_category: String = category.capitalize()
+	var display_category: String = QuestionGenerator.get_display_name(category)
 	_wave_progress_label.text = "%s %d/%d remaining" % [display_category, remaining, total]

@@ -1,11 +1,11 @@
-## Division category strategy.
+## Integer division category strategy.
 ##
 ## Per Tech Stack §3 and Phase 3 NFR3.1: picks the DIVISOR and QUOTIENT
 ## first, then derives the dividend = divisor * quotient. This guarantees
 ## the question always resolves to a whole number - it never produces a
 ## fractional expected answer. Value ceiling configurable via
 ## options["max_operand"] (Phase 9).
-class_name DivisionStrategy
+class_name IntegerDivisionStrategy
 extends QuestionStrategy
 
 

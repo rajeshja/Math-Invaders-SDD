@@ -55,7 +55,7 @@ const FORMATION_COLUMN_SPACING: float = 135.0
 ## Default Stage A sequence (Spec §2 Level 1 example / Phase 3 FR3.7).
 ## LevelManager (Phase 6) will be what mutates/extends this per level.
 @export var category_sequence: Array[String] = [
-	"addition", "subtraction", "multiplication", "division"
+	"integer_addition", "integer_subtraction", "integer_multiplication", "integer_division"
 ]
 
 ## Injectable for tests (Phase 3 NFR3.2). Defaults to the real enemy scene.

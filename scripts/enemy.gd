@@ -13,14 +13,14 @@ extends Node2D
 ## approach from Tech Stack §7 (single enemy.tscn/enemy.gd serves every
 ## category - only the Sprite2D texture changes).
 const CATEGORY_TEXTURES := {
-	"addition": "res://assets/images/enemies/enemy_ship_addition.png",
-	"subtraction": "res://assets/images/enemies/enemy_ship_subtraction.png",
-	"multiplication": "res://assets/images/enemies/enemy_ship_multiplication.png",
-	"division": "res://assets/images/enemies/enemy_ship_division.png",
+	"integer_addition": "res://assets/images/enemies/enemy_ship_addition.png",
+	"integer_subtraction": "res://assets/images/enemies/enemy_ship_subtraction.png",
+	"integer_multiplication": "res://assets/images/enemies/enemy_ship_multiplication.png",
+	"integer_division": "res://assets/images/enemies/enemy_ship_division.png",
 	"prime": "res://assets/images/enemies/enemy_ship_prime.png",
 }
 
-## The math category this enemy belongs to (e.g. "addition").
+## The math category this enemy belongs to (e.g. "integer_addition").
 var category: String = ""
 
 ## The question Dictionary this enemy is linked to:

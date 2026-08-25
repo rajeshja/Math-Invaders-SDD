@@ -37,7 +37,7 @@ func test_each_config_supplies_valid_gameplay_parameters() -> void:
 
 func test_base_levels_use_four_category_sequence_and_default_budget() -> void:
 	var expected: Array[String] = [
-		"addition", "subtraction", "multiplication", "division"
+		"integer_addition", "integer_subtraction", "integer_multiplication", "integer_division"
 	]
 	for level in [1, 2, 3, 4]:
 		var config: LevelConfig = load(LEVEL_PATHS[level - 1])
@@ -84,7 +84,7 @@ func test_max_operand_option_overrides_strategy_difficulty_curve() -> void:
 	var pinned := {"max_operand": 5}
 
 	for attempt in range(30):
-		var question: Dictionary = generator.generate_question("addition", 10, pinned)
+		var question: Dictionary = generator.generate_question("integer_addition", 10, pinned)
 		var text: String = question.get("question_text", "")
 		var operands := text.replace("What is ", "").replace("?", "").split(" + ")
 		for operand_text in operands:

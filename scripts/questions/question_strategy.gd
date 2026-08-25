@@ -1,6 +1,6 @@
 ## Base class / interface for all math-category question strategies.
 ##
-## Every concrete strategy (AdditionStrategy, SubtractionStrategy, ...)
+## Every concrete strategy (IntegerAdditionStrategy, IntegerSubtractionStrategy, ...)
 ## extends this and implements generate(difficulty). Strategies are pure
 ## logic with no dependency on the scene tree (Tech Stack §3, §8 / Phase 2
 ## NFR2.1), which is what makes them directly unit-testable with GUT.

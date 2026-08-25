@@ -1,11 +1,11 @@
-## Addition category strategy.
+## Integer addition category strategy.
 ##
 ## Stage A (difficulty 1): 1-2 digit operands.
 ## Stage B (difficulty >= 2): operand range widens toward 2-3 digits, per
 ## Spec §5 "Expanded difficulty". The operand ceiling can also be pinned
 ## explicitly by a LevelConfig resource via options["max_operand"]
 ## (Phase 9 FR9.3/FR9.4), which takes precedence over the curve.
-class_name AdditionStrategy
+class_name IntegerAdditionStrategy
 extends QuestionStrategy
 
 
