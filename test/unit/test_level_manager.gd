@@ -11,7 +11,7 @@ extends GutTest
 const LevelManagerScript = preload("res://scripts/level_manager.gd")
 
 const BASE_SEQUENCE: Array[String] = [
-	"addition", "subtraction", "multiplication", "division"
+	"integer_addition", "integer_subtraction", "integer_multiplication", "integer_division"
 ]
 const TEST_DIR := "user://gut_temp_directory/level_manager_test"
 const TEST_PATH := "user://gut_temp_directory/level_manager_test/profile.json"
@@ -131,7 +131,7 @@ func test_levels_beyond_defined_set_reuse_last_config_and_keep_climbing() -> voi
 
 ## -- Core Phase 6 behavior (unchanged contract) --------------------------------
 
-func test_start_level_hands_base_sequence_then_starts_addition_wave() -> void:
+func test_start_level_hands_base_sequence_then_starts_integer_addition_wave() -> void:
 	level_manager.start_level()
 
 	var sequence_calls := wave_stub.calls_for("set_category_sequence")

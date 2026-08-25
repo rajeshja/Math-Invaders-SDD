@@ -1,9 +1,9 @@
-## Subtraction category strategy.
+## Integer subtraction category strategy.
 ##
-## Mirrors AdditionStrategy's structure (Phase 2 §2.3). Guards against
+## Mirrors IntegerAdditionStrategy's structure (Phase 2 §2.3). Guards against
 ## negative results for the target age group by always picking a >= b.
 ## Operand ceiling configurable via options["max_operand"] (Phase 9).
-class_name SubtractionStrategy
+class_name IntegerSubtractionStrategy
 extends QuestionStrategy
 
 

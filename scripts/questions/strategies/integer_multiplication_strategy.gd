@@ -1,10 +1,10 @@
-## Multiplication category strategy.
+## Integer multiplication category strategy.
 ##
 ## Stage A: small factors (per Build Plan Phase 3 / Tech Stack §3).
-## Registered in question_generator.gd alongside addition/subtraction with
-## no changes required to either of those files (Phase 3 FR3.5).
+## Registered in question_generator.gd alongside integer addition/subtraction
+## with no changes required to either of those files (Phase 3 FR3.5).
 ## Factor ceiling configurable via options["max_operand"] (Phase 9).
-class_name MultiplicationStrategy
+class_name IntegerMultiplicationStrategy
 extends QuestionStrategy
 
 

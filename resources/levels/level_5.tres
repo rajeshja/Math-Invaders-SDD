@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 level_number = 5
-category_sequence = Array[String](["addition", "subtraction", "multiplication", "division", "prime"])
+category_sequence = Array[String](["integer_addition", "integer_subtraction", "integer_multiplication", "integer_division", "prime"])
 difficulty = 5
 max_operand_size = 0
 time_limit_seconds = 150.0

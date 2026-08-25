@@ -5,21 +5,40 @@
 ## (Main.gd, WaveManager.gd) never need to know which concrete strategy is
 ## running - this is the ONLY class they talk to for questions.
 ##
-## Adding a new category (e.g. Phase 8's "prime") means adding one new
-## strategy file and one registration line here - no other call site
-## changes (Phase 2 NFR2.2, Phase 3 FR3.5).
+## This is also the canonical category registry (Phase 12 FR12.4/NFR12.3):
+## adding a category means one strategy file, one registration line in
+## _init(), and one display-name entry in DISPLAY_NAMES - no other call
+## site changes.
 class_name QuestionGenerator
 extends RefCounted
+
+## Player-facing labels per category key, used by the HUD wave-progress
+## line (e.g. "Subtraction 6/10 remaining"). Unknown keys fall back to
+## String.capitalize() via get_display_name() (Phase 12 FR12.4).
+const DISPLAY_NAMES := {
+	"integer_addition": "Addition",
+	"integer_subtraction": "Subtraction",
+	"integer_multiplication": "Multiplication",
+	"integer_division": "Division",
+	"prime": "Prime Numbers",
+}
 
 var _strategies: Dictionary = {}
 
 
 func _init() -> void:
-	_strategies["addition"] = AdditionStrategy.new()
-	_strategies["subtraction"] = SubtractionStrategy.new()
-	_strategies["multiplication"] = MultiplicationStrategy.new()
-	_strategies["division"] = DivisionStrategy.new()
+	_strategies["integer_addition"] = IntegerAdditionStrategy.new()
+	_strategies["integer_subtraction"] = IntegerSubtractionStrategy.new()
+	_strategies["integer_multiplication"] = IntegerMultiplicationStrategy.new()
+	_strategies["integer_division"] = IntegerDivisionStrategy.new()
 	_strategies["prime"] = PrimeStrategy.new()
+
+
+## Returns the display label for a category key: the DISPLAY_NAMES entry
+## when registered, otherwise String.capitalize() for unknown keys
+## (Phase 12 FR12.4).
+static func get_display_name(category: String) -> String:
+	return DISPLAY_NAMES.get(category, category.capitalize())
 
 
 ## Returns the same Dictionary shape as QuestionStrategy.generate():

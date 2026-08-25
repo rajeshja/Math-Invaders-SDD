@@ -21,13 +21,13 @@ func before_each() -> void:
 
 
 func test_wave_start_spawns_exactly_ten_enemies() -> void:
-	wave_manager.start_wave("addition")
+	wave_manager.start_wave("integer_addition")
 	assert_eq(enemies_container.get_child_count(), 10, "start_wave should spawn exactly 10 enemies")
 	assert_eq(wave_manager.enemies_remaining, 10)
 
 
 func test_wave_clear_fires_exactly_when_remaining_hits_zero() -> void:
-	wave_manager.start_wave("addition")
+	wave_manager.start_wave("integer_addition")
 	watch_signals(wave_manager)
 
 	for i in range(9):
@@ -40,19 +40,19 @@ func test_wave_clear_fires_exactly_when_remaining_hits_zero() -> void:
 
 func test_category_sequencing_advances_in_defined_order() -> void:
 	wave_manager.start_first_wave()
-	assert_eq(wave_manager.current_category, "addition")
+	assert_eq(wave_manager.current_category, "integer_addition")
 
 	for i in range(10):
 		wave_manager.on_correct_answer()
-	assert_eq(wave_manager.current_category, "subtraction", "sequence should advance addition -> subtraction")
+	assert_eq(wave_manager.current_category, "integer_subtraction", "sequence should advance addition -> subtraction")
 
 	for i in range(10):
 		wave_manager.on_correct_answer()
-	assert_eq(wave_manager.current_category, "multiplication", "sequence should advance subtraction -> multiplication")
+	assert_eq(wave_manager.current_category, "integer_multiplication", "sequence should advance subtraction -> multiplication")
 
 	for i in range(10):
 		wave_manager.on_correct_answer()
-	assert_eq(wave_manager.current_category, "division", "sequence should advance multiplication -> division")
+	assert_eq(wave_manager.current_category, "integer_division", "sequence should advance multiplication -> division")
 
 
 func test_sequence_does_not_skip_or_repeat_out_of_order() -> void:
@@ -63,11 +63,11 @@ func test_sequence_does_not_skip_or_repeat_out_of_order() -> void:
 		for i in range(10):
 			wave_manager.on_correct_answer()
 		seen_order.append(wave_manager.current_category)
-	assert_eq(seen_order, ["addition", "subtraction", "multiplication", "division"])
+	assert_eq(seen_order, ["integer_addition", "integer_subtraction", "integer_multiplication", "integer_division"])
 
 
 func test_wrong_answer_does_not_move_remove_or_retarget_formation() -> void:
-	wave_manager.start_wave("addition")
+	wave_manager.start_wave("integer_addition")
 	var before_positions := {}
 	for enemy in enemies_container.get_children():
 		before_positions[enemy] = enemy.position
@@ -87,7 +87,7 @@ func test_wrong_answer_does_not_move_remove_or_retarget_formation() -> void:
 
 ## Phase 9 FR9.15: every wrong answer carries Mistake Review details.
 func test_wrong_answer_emits_question_failed_details_for_mistake_review() -> void:
-	wave_manager.start_wave("addition")
+	wave_manager.start_wave("integer_addition")
 	var active = wave_manager.get_active_enemy()
 	var linked: Dictionary = active.linked_question
 	var captured := []
@@ -103,7 +103,7 @@ func test_wrong_answer_emits_question_failed_details_for_mistake_review() -> voi
 
 
 func test_question_failed_defaults_to_no_selection_for_non_ui_callers() -> void:
-	wave_manager.start_wave("addition")
+	wave_manager.start_wave("integer_addition")
 	var captured := []
 	wave_manager.question_failed.connect(func(_question, selected, _correct):
 		captured.append(selected))
@@ -115,7 +115,7 @@ func test_question_failed_defaults_to_no_selection_for_non_ui_callers() -> void:
 
 ## Phase 9 FR9.4: LevelConfig generation options flow into new questions.
 func test_generation_options_are_applied_to_generated_questions() -> void:
-	var sequence: Array[String] = ["addition"]
+	var sequence: Array[String] = ["integer_addition"]
 	wave_manager.set_category_sequence(sequence)
 	wave_manager.set_generation_options({"max_operand": 5})
 	wave_manager.start_first_wave()
@@ -132,7 +132,7 @@ func test_generation_options_are_applied_to_generated_questions() -> void:
 
 
 func test_regenerate_active_question_keeps_same_enemy_and_formation() -> void:
-	wave_manager.start_wave("addition")
+	wave_manager.start_wave("integer_addition")
 	var before_positions := {}
 	for enemy in enemies_container.get_children():
 		before_positions[enemy] = enemy.position
@@ -150,7 +150,7 @@ func test_regenerate_active_question_keeps_same_enemy_and_formation() -> void:
 
 
 func test_active_enemy_is_lowest_on_screen_then_leftmost() -> void:
-	wave_manager.start_wave("addition")
+	wave_manager.start_wave("integer_addition")
 	var enemies: Array = enemies_container.get_children()
 
 	# Force a known layout: enemy A is frontmost (greatest Y), enemy B and
@@ -171,7 +171,7 @@ func test_active_enemy_is_lowest_on_screen_then_leftmost() -> void:
 
 
 func test_formation_spawns_as_inverted_triangle() -> void:
-	wave_manager.start_wave("addition")
+	wave_manager.start_wave("integer_addition")
 	var enemies: Array = enemies_container.get_children()
 
 	var row_y_positions: Array = []
@@ -204,7 +204,7 @@ func test_formation_spawns_as_inverted_triangle() -> void:
 
 
 func test_fresh_set_of_ten_spawns_on_wave_clear() -> void:
-	wave_manager.start_wave("addition")
+	wave_manager.start_wave("integer_addition")
 	var first_wave_ids: Array = []
 	for enemy in enemies_container.get_children():
 		first_wave_ids.append(enemy.get_instance_id())

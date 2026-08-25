@@ -29,7 +29,7 @@ const LEVEL_RESOURCE_PATHS: Array[String] = [
 @export_group("Waves & Categories")
 ## Ordered wave/category sequence for this level.
 @export var category_sequence: Array[String] = [
-	"addition", "subtraction", "multiplication", "division"
+	"integer_addition", "integer_subtraction", "integer_multiplication", "integer_division"
 ]
 
 @export_group("Difficulty")
