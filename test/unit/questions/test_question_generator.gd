@@ -74,6 +74,33 @@ func test_dispatches_fraction_division_to_fraction_division_strategy() -> void:
 	assert_true(result.has("answer_layout"), "stacking data travels with the question")
 
 
+func test_dispatches_decimal_addition_strategy() -> void:
+	var result: Dictionary = generator.generate_question("decimal_addition", 1)
+	assert_string_contains(result["question_text"], "+",
+			"decimal_addition should dispatch to DecimalAdditionStrategy")
+	assert_string_contains(result["question_text"], ".",
+			"decimal questions carry decimal operands")
+	assert_false(result.has("answer_layout"), "decimals render as plain text")
+
+
+func test_dispatches_decimal_subtraction_strategy() -> void:
+	var result: Dictionary = generator.generate_question("decimal_subtraction", 1)
+	assert_string_contains(result["question_text"], "-",
+			"decimal_subtraction should dispatch to DecimalSubtractionStrategy")
+
+
+func test_dispatches_decimal_multiplication_strategy() -> void:
+	var result: Dictionary = generator.generate_question("decimal_multiplication", 1)
+	assert_string_contains(result["question_text"], "x",
+			"decimal_multiplication should dispatch to DecimalMultiplicationStrategy")
+
+
+func test_dispatches_decimal_division_strategy() -> void:
+	var result: Dictionary = generator.generate_question("decimal_division", 1)
+	assert_string_contains(result["question_text"], "÷",
+			"decimal_division should dispatch to DecimalDivisionStrategy")
+
+
 func test_well_formed_dictionary_shape_for_known_category() -> void:
 	var result: Dictionary = generator.generate_question("integer_addition", 1)
 	assert_true(result.has("question_text"))
@@ -108,6 +135,14 @@ func test_get_categories_includes_prime_stage_c_category() -> void:
 	assert_true(categories.has("prime"), "'prime' should be registered in the category map")
 
 
+func test_get_categories_includes_decimal_categories() -> void:
+	var categories: Array = generator.get_categories()
+	assert_true(categories.has("decimal_addition"), "'decimal_addition' should be registered")
+	assert_true(categories.has("decimal_subtraction"), "'decimal_subtraction' should be registered")
+	assert_true(categories.has("decimal_multiplication"), "'decimal_multiplication' should be registered")
+	assert_true(categories.has("decimal_division"), "'decimal_division' should be registered")
+
+
 func test_get_categories_includes_fraction_categories() -> void:
 	var categories: Array = generator.get_categories()
 	assert_true(categories.has("fraction_addition"), "'fraction_addition' should be registered")
@@ -128,6 +163,10 @@ func test_display_names_map_registered_keys_to_hud_labels() -> void:
 	assert_eq(QuestionGenerator.get_display_name("fraction_subtraction"), "Fraction Subtraction")
 	assert_eq(QuestionGenerator.get_display_name("fraction_multiplication"), "Fraction Multiplication")
 	assert_eq(QuestionGenerator.get_display_name("fraction_division"), "Fraction Division")
+	assert_eq(QuestionGenerator.get_display_name("decimal_addition"), "Decimal Addition")
+	assert_eq(QuestionGenerator.get_display_name("decimal_subtraction"), "Decimal Subtraction")
+	assert_eq(QuestionGenerator.get_display_name("decimal_multiplication"), "Decimal Multiplication")
+	assert_eq(QuestionGenerator.get_display_name("decimal_division"), "Decimal Division")
 
 
 ## Phase 12 FR12.4: unknown keys fall back to String.capitalize().

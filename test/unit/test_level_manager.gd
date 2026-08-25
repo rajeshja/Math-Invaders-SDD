@@ -106,13 +106,14 @@ func test_level_three_config_pins_operand_ceiling() -> void:
 	assert_eq(options.get("max_operand"), 50, "FR9.3: inspector-configured complexity")
 
 
-func test_level_five_config_carries_prime_as_fifth_wave_and_budget() -> void:
+func test_level_five_config_carries_prime_then_decimal_waves_and_budget() -> void:
 	_advance_to_level(5)
 
 	var handed: Array = _last_sequence()
-	assert_eq(handed.size(), BASE_SEQUENCE.size() + 1, "prime rides in the .tres sequence")
-	assert_eq(handed.back(), "prime")
-	assert_eq(GameManager.level_time_limit, 150.0, "five-wave budget from the resource")
+	assert_eq(handed[4], "prime", "prime keeps its fifth-wave slot")
+	assert_eq(handed.back(), "decimal_division",
+			"Phase 15 FR15.8: decimal waves close the level")
+	assert_eq(GameManager.level_time_limit, 270.0, "nine-wave budget from the resource")
 
 
 func test_levels_beyond_defined_set_reuse_last_config_and_keep_climbing() -> void:
@@ -222,8 +223,8 @@ func test_reset_and_start_restores_session_start_timer_budget() -> void:
 	_advance_to_level(3)
 	level_manager.reset_and_start()
 
-	assert_eq(GameManager.level_time_limit, 150.0)
-	assert_eq(GameManager.time_remaining, 150.0)
+	assert_eq(GameManager.level_time_limit, 270.0)
+	assert_eq(GameManager.time_remaining, 270.0)
 
 
 func test_reset_and_start_restores_assumed_starting_score() -> void:
