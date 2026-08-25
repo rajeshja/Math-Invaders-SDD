@@ -57,6 +57,23 @@ func test_dispatches_fraction_subtraction_to_fraction_subtraction_strategy() -> 
 	assert_true(result.has("answer_layout"), "stacking data travels with the question")
 
 
+func test_dispatches_fraction_multiplication_to_fraction_multiplication_strategy() -> void:
+	var result: Dictionary = generator.generate_question("fraction_multiplication", 1)
+	assert_eq(result["choices"].size(), 4, "fraction questions keep 4 choices")
+	assert_string_contains(result["question_text"], "x",
+			"fraction_multiplication should dispatch to FractionMultiplicationStrategy")
+	assert_string_contains(result["question_text"], "/",
+			"fraction questions carry fraction operands")
+	assert_true(result.has("answer_layout"), "stacking data travels with the question")
+
+
+func test_dispatches_fraction_division_to_fraction_division_strategy() -> void:
+	var result: Dictionary = generator.generate_question("fraction_division", 1)
+	assert_string_contains(result["question_text"], "÷",
+			"fraction_division should dispatch to FractionDivisionStrategy")
+	assert_true(result.has("answer_layout"), "stacking data travels with the question")
+
+
 func test_well_formed_dictionary_shape_for_known_category() -> void:
 	var result: Dictionary = generator.generate_question("integer_addition", 1)
 	assert_true(result.has("question_text"))
@@ -95,6 +112,8 @@ func test_get_categories_includes_fraction_categories() -> void:
 	var categories: Array = generator.get_categories()
 	assert_true(categories.has("fraction_addition"), "'fraction_addition' should be registered")
 	assert_true(categories.has("fraction_subtraction"), "'fraction_subtraction' should be registered")
+	assert_true(categories.has("fraction_multiplication"), "'fraction_multiplication' should be registered")
+	assert_true(categories.has("fraction_division"), "'fraction_division' should be registered")
 
 
 ## Phase 12 FR12.4 / Phase 13 FR13.6: display-name registry maps every
@@ -107,6 +126,8 @@ func test_display_names_map_registered_keys_to_hud_labels() -> void:
 	assert_eq(QuestionGenerator.get_display_name("prime"), "Prime Numbers")
 	assert_eq(QuestionGenerator.get_display_name("fraction_addition"), "Fraction Addition")
 	assert_eq(QuestionGenerator.get_display_name("fraction_subtraction"), "Fraction Subtraction")
+	assert_eq(QuestionGenerator.get_display_name("fraction_multiplication"), "Fraction Multiplication")
+	assert_eq(QuestionGenerator.get_display_name("fraction_division"), "Fraction Division")
 
 
 ## Phase 12 FR12.4: unknown keys fall back to String.capitalize().
