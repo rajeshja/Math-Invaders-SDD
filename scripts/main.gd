@@ -18,12 +18,16 @@ const QuestionAttemptTrackerScript = preload("res://scripts/question_attempt_tra
 @onready var _hud: Hud = $HUD
 @onready var _question_panel: QuestionPanel = $QuestionPanel
 @onready var _wave_banner: WaveBanner = $WaveBanner
+@onready var _level_complete_banner: WaveBanner = $LevelCompleteBanner
 @onready var _game_over_overlay: GameOverOverlay = $GameOverOverlay
 @onready var _level_manager: LevelManager = $LevelManager
 
 var _current_question: Dictionary = {}
 var _accepting_input: bool = true
 var _attempt_tracker: RefCounted = QuestionAttemptTrackerScript.new()
+## Bumped by restart_session(); lets awaited wrong-answer continuations
+## detect that the session they belonged to is gone (NFR7.4).
+var _session_id: int = 0
 
 
 func _ready() -> void:
@@ -46,6 +50,7 @@ func _ready() -> void:
 	_wave_manager.wrong_answer.connect(_on_enemy_return_fire)
 
 	_question_panel.answer_selected.connect(_on_answer_selected)
+	_game_over_overlay.play_again_pressed.connect(restart_session)
 
 	_level_manager.start_level()
 
@@ -133,6 +138,7 @@ func _on_enemy_return_fire() -> void:
 ## Phase 4 lives system) will hook the same wrong_answer event and fly
 ## fully in parallel - question changes never wait on bullet travel.
 func _resolve_wrong_answer(button: Button) -> void:
+	var session_at_answer := _session_id
 	_question_panel.flash_wrong_answer(button)
 	_wave_manager.on_wrong_answer()
 	GameManager.lose_life()
@@ -144,12 +150,12 @@ func _resolve_wrong_answer(button: Button) -> void:
 
 	if attempt_limit_reached:
 		await _question_panel.wait_wrong_feedback()
-		if GameManager.is_game_over():
+		if session_at_answer != _session_id or GameManager.is_game_over():
 			return
 		_wave_manager.regenerate_active_question()
 	else:
 		await _question_panel.wait_wrong_feedback()
-		if GameManager.is_game_over():
+		if session_at_answer != _session_id or GameManager.is_game_over():
 			return
 		_accepting_input = true
 		_question_panel.set_answer_buttons_enabled(true)
@@ -158,7 +164,38 @@ func _resolve_wrong_answer(button: Button) -> void:
 func _on_game_over() -> void:
 	_accepting_input = false
 	_question_panel.set_answer_buttons_enabled(false)
-	_game_over_overlay.show_game_over(GameManager.score, _game_over_reason_text())
+	# FR7.5: the same listener that swaps in the Game Over screen records the
+	# final score with HighScoreManager; GameManager stays decoupled from it.
+	var new_record: bool = HighScoreManager.save_if_higher(GameManager.score)
+	_game_over_overlay.show_game_over(
+		GameManager.score,
+		_game_over_reason_text(),
+		new_record,
+		HighScoreManager.get_high_score())
+
+
+## Single coordinated restart entry point (FR7.8/FR7.9), called only by the
+## Game Over screen's Play Again button. Stale nodes and banner overlays are
+## cleared BEFORE the fresh Level 1/Wave 1 spawn, all within one call so the
+## two sessions never overlap on screen (NFR7.4). HighScoreManager is
+## deliberately NOT touched here (FR7.10): the persisted value carries
+## forward exactly as save_if_higher() left it.
+func restart_session() -> void:
+	_session_id += 1
+	_game_over_overlay.hide_overlay()
+	_wave_banner.hide_banner()
+	_level_complete_banner.hide_banner()
+	_clear_bullets()
+	_wave_manager.clear_all()
+	_current_question = {}
+	_attempt_tracker.reset_question()
+	GameManager.reset_session()
+	_level_manager.reset_and_start()
+
+
+func _clear_bullets() -> void:
+	for child in _bullets_container.get_children():
+		child.free()
 
 
 ## Maps GameManager's reason enum to the Game Over screen's reason line.

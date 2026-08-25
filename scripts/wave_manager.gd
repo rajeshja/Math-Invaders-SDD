@@ -76,6 +76,20 @@ func _ready() -> void:
 		enemies_container = get_node("../GameWorld/Enemies")
 
 
+## Phase 7 FR7.9: wipes every remaining enemy and all wave bookkeeping so a
+## restarted session starts with no stale nodes or lingering state. Uses
+## free() (not queue_free()) for the same same-frame correctness as
+## _clear_container(): the fresh Wave 1 spawn follows synchronously within
+## Main.restart_session(), before anything renders (NFR7.4).
+func clear_all() -> void:
+	_pending_hit_enemies.clear()
+	_active_enemy = null
+	current_category = ""
+	enemies_remaining = 0
+	_sequence_index = -1
+	_clear_container()
+
+
 ## Starts (or restarts) a wave for the given category: clears any leftover
 ## enemies, spawns a fresh formation of 10, generates a question per
 ## enemy up front, and emits the first question_ready (Phase 3 FR3.2).

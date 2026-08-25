@@ -23,6 +23,13 @@ func show_banner() -> void:
 	_timer.start()
 
 
+## Immediate dismissal used by the session restart path (Phase 7 NFR7.4):
+## no banner from the previous session may outlive it.
+func hide_banner() -> void:
+	_timer.stop()
+	visible = false
+
+
 func _on_timeout() -> void:
 	visible = false
 	finished.emit()

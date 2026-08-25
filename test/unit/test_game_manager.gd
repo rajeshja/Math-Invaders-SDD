@@ -205,3 +205,47 @@ func test_reset_session_restores_time_to_configured_limit_and_clears_reason() ->
 	assert_eq(manager.time_remaining, 90.0)
 	assert_eq(manager.game_state, manager.GameState.PLAYING)
 	assert_eq(manager.last_game_over_reason, manager.GameOverReason.NONE)
+
+
+## -- Phase 7: restart path --------------------------------------------------
+
+func test_reset_session_from_game_over_resets_score_lives_and_state() -> void:
+	ProjectSettings.set_setting(GameConfig.STARTING_LIVES_SETTING, 4)
+	manager.add_score(12)
+	manager.lose_life()
+	manager.lose_life()
+	manager.lose_life()
+	manager.lose_life()
+	assert_true(manager.is_game_over())
+	assert_eq(manager.score, 12)
+
+	manager.reset_session()
+
+	assert_eq(manager.score, 0)
+	assert_eq(manager.lives, 4)
+	assert_eq(manager.game_state, manager.GameState.PLAYING)
+	assert_false(manager.is_game_over())
+
+
+func test_reset_session_from_paused_resets_all_session_state() -> void:
+	manager.add_score(5)
+	manager.lose_life()
+	manager.game_state = manager.GameState.PAUSED
+
+	manager.reset_session()
+
+	assert_eq(manager.score, 0)
+	assert_eq(manager.lives, GameConfig.get_starting_lives())
+	assert_eq(manager.game_state, manager.GameState.PLAYING)
+
+
+func test_reset_session_emits_each_hud_signal_exactly_once() -> void:
+	var fresh: Node = GameManagerScript.new()
+	add_child_autofree(fresh)
+	watch_signals(fresh)
+
+	fresh.reset_session()
+
+	assert_signal_emit_count(fresh, "score_changed", 1)
+	assert_signal_emit_count(fresh, "lives_changed", 1)
+	assert_signal_emit_count(fresh, "time_changed", 1)

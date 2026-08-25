@@ -56,3 +56,14 @@ func on_all_waves_complete() -> void:
 	current_level += 1
 	start_level()
 	_level_clear_in_progress = false
+
+
+## Phase 7 FR7.9: returns the session to a freshly-launched state - Level 1,
+## the Level 1 difficulty, and a rebuilt base category sequence - before
+## spawning Wave 1 via start_level(). The caller (Main.restart_session) is
+## responsible for clearing stale nodes first; HighScoreManager is never
+## touched here (FR7.10).
+func reset_and_start() -> void:
+	current_level = 1
+	_level_clear_in_progress = false
+	start_level()
