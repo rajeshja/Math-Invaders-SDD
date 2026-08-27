@@ -25,8 +25,11 @@ func test_button_stack_fills_the_button() -> void:
 	assert_eq(control.anchor_bottom, 1.0, "fills bottom edge")
 
 
-func test_question_stack_host_expands_horizontally() -> void:
+func test_question_stack_host_spans_and_centers() -> void:
 	var host: Control = panel._question_stack_host
+	var hbox: Control = panel._question_stack_hbox
 
-	assert_ne(host.size_flags_horizontal & Control.SIZE_EXPAND_FILL, 0,
-			"host spans the panel width so segments center")
+	assert_eq(host.anchor_left, 0.0, "host spans the panel width")
+	assert_eq(host.anchor_right, 1.0, "host spans the panel width")
+	assert_eq(hbox.anchor_left, 0.5, "inner stack is anchored to the center")
+	assert_eq(hbox.anchor_right, 0.5, "inner stack is anchored to the center")

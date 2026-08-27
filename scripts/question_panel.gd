@@ -47,8 +47,11 @@ const QUESTION_WHOLE_FONT := 18
 ]
 
 ## Code-built host for stacked question rendering; shares the
-## QuestionLabel's rect and only shows for fraction questions.
-var _question_stack_host: HBoxContainer = null
+## QuestionLabel's rect and only shows for fraction questions. It is a
+## plain Control (not a Container) so it spans the panel width via its
+## anchors; a centered HBoxContainer inside it lays out the segments.
+var _question_stack_host: Control = null
+var _question_stack_hbox: HBoxContainer = null
 
 
 func _ready() -> void:
@@ -171,33 +174,59 @@ func _on_answer_button_pressed(button: Button) -> void:
 ## -- Stacked fraction rendering (Phase 13 FR13.3-FR13.5) -------------------
 
 func _build_question_stack_host() -> void:
-	_question_stack_host = HBoxContainer.new()
-	_question_stack_host.alignment = BoxContainer.ALIGNMENT_CENTER
-	_question_stack_host.add_theme_constant_override("separation", 8)
+	_question_stack_host = Control.new()
 	_question_stack_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_question_stack_host.visible = false
 	_panel.add_child(_question_stack_host)
 	# Mirror the QuestionLabel's rect (anchors_preset top-wide, y 8..88).
-	_question_stack_host.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	_question_stack_host.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# A plain Control (not a Container) honors these anchors and spans the
+	# full panel width, so the inner HBoxContainer can be centered.
+	_question_stack_host.anchor_left = 0.0
+	_question_stack_host.anchor_right = 1.0
+	_question_stack_host.anchor_top = 0.0
+	_question_stack_host.anchor_bottom = 0.0
+	_question_stack_host.offset_left = 0.0
+	_question_stack_host.offset_right = 0.0
 	_question_stack_host.offset_top = 8.0
 	_question_stack_host.offset_bottom = 88.0
-	_question_stack_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	_question_stack_hbox = HBoxContainer.new()
+	_question_stack_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	_question_stack_hbox.add_theme_constant_override("separation", 8)
+	_question_stack_hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_question_stack_host.add_child(_question_stack_hbox)
+	_question_stack_hbox.set_anchors_preset(Control.PRESET_CENTER)
 
 
 func _render_question_segments(segments: Array) -> void:
-	for child in _question_stack_host.get_children():
+	for child in _question_stack_hbox.get_children():
 		child.free()
 	for segment in segments:
 		if segment is Dictionary and segment.has("fraction"):
-			_question_stack_host.add_child(
+			_question_stack_hbox.add_child(
 				_build_fraction_control(segment.fraction, QUESTION_STACK_FONT))
 		else:
 			var label := Label.new()
 			label.text = str(segment.get("text", "")) if segment is Dictionary else str(segment)
 			label.add_theme_font_size_override("font_size", QUESTION_STACK_FONT + 12)
 			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			_question_stack_host.add_child(label)
+			_question_stack_hbox.add_child(label)
+	_center_question_stack()
+
+
+## Centers the inner HBoxContainer within the full-width host. A Container
+## child of a plain Control auto-shrinks to its content, so it is centered
+## explicitly by anchoring it to the host's center (FR20.2).
+func _center_question_stack() -> void:
+	_question_stack_hbox.reset_size()
+	_question_stack_hbox.anchor_left = 0.5
+	_question_stack_hbox.anchor_right = 0.5
+	_question_stack_hbox.anchor_top = 0.5
+	_question_stack_hbox.anchor_bottom = 0.5
+	_question_stack_hbox.offset_left = -_question_stack_hbox.size.x / 2.0
+	_question_stack_hbox.offset_right = _question_stack_hbox.size.x / 2.0
+	_question_stack_hbox.offset_top = -_question_stack_hbox.size.y / 2.0
+	_question_stack_hbox.offset_bottom = _question_stack_hbox.size.y / 2.0
 
 
 ## Builds the centered stacked-fraction control hosted inside an answer
