@@ -36,7 +36,8 @@ The specs, tech stack details, plan and phase details are captured in these fold
 - [Phase 17: Points Per Question Scoring](./specs/phases/Phase_17_Points_Per_Question_Scoring.md) - Pending
 - [Phase 18: Wave Enemy Ship Images](./specs/phases/Phase_18_Wave_Enemy_Ship_Images.md) - Pending
 - [Phase 19: Player Ship Image](./specs/phases/Phase_19_Player_Ship_Image.md) - Pending
-- [Phase 20: Playtesting And Balancing](./specs/phases/Phase_20_Playtesting_And_Balancing.md) - Incomplete
+- [Phase 20: Fraction Question And Answer Layout Fix](./specs/phases/Phase_20_Fraction_Question_Answer_Layout_Fix.md) - Pending
+- [Phase 25: Playtesting And Balancing](./specs/phases/Phase_25_Playtesting_And_Balancing.md) - Incomplete
 
 ## Status
 

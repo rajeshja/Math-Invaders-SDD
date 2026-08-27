@@ -114,7 +114,10 @@ control exactly which math skill is being practiced at any moment.
     enemy is destroyed and removed, visibly shrinking the formation. A
     wrong answer does not move or remove any enemy.
 -   **Question panel:** Anchored to the bottom of the screen, always
-    visible, holding the question text and 4 tappable answer buttons.
+    visible, holding the question text and 4 tappable answer buttons. The
+    question area is sized to fit stacked-fraction questions and is
+    separated from the answer grid so the two never overlap (Phase 20);
+    the panel keeps its fixed height and safe-area insets.
 -   **HUD (top of screen):**
     -   Score
     -   **Level** (new)
@@ -236,7 +239,10 @@ control exactly which math skill is being practiced at any moment.
     above a horizontal bar above denominator --- in both the question
     text and every answer button; mixed numbers show the whole part
     beside the stacked remainder. Inline "a/b" text is acceptable only
-    outside gameplay surfaces (Mistake Review, logs).
+    outside gameplay surfaces (Mistake Review, logs). Stacked fractions
+    must be **centered** in the question row and in every answer button
+    (Phase 20), and the question area must have enough room that it never
+    overlaps the answer buttons.
 
 #### Decimal content rules (Phase 15)
 

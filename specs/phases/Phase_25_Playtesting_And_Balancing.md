@@ -1,9 +1,10 @@
-# Phase 20 --- Playtesting & Balancing
+# Phase 25 --- Playtesting & Balancing
 
-> Renumbering note: this phase was previously numbered Phase 12. The
-> strategy-expansion and level-visual-configuration work now occupies
-> Phases 12--19; playtesting moved to Phase 20 so the build being tested
-> includes that content.
+> Renumbering note: this phase was previously numbered Phase 12, then
+> Phase 20. The strategy-expansion and level-visual-configuration work
+> now occupies Phases 12--19, and the fraction layout fix is Phase 20;
+> playtesting moved to Phase 25 so the build being tested includes that
+> content.
 
 **Goal:** run the finished, exported build (Phases 10--11, extended by
 Phases 12--19) past players in the target age group, and tune existing
@@ -12,7 +13,7 @@ lives/mistake-budget feel, per-level point values, and the new
 fraction/decimal/ratio/HCF-LCM category pacing --- based on what's
 observed, without restructuring the underlying architecture.
 
-**Source docs:** Build Plan §Phase 20, Spec §1 (target audience --- ages
+**Source docs:** Build Plan §Phase 25, Spec §1 (target audience --- ages
 6--12), §5 (educational content progression, distractor & difficulty
 rules), §12 (category naming & answer model), Tech Stack §3
 (per-strategy difficulty scaling), §4 (`WaveManager`/`LevelManager`
@@ -68,7 +69,7 @@ tunables), §9 (full GUT suite as the regression backstop).
 
 -   New features, categories, or platform targets (all prior phases).
 -   Stretch content such as percentages, profiles, or non-math modules
-    (Phase 21).
+    (Phase 26).
 
 ------------------------------------------------------------------------
 

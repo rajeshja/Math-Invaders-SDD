@@ -399,12 +399,15 @@ platform branches in gameplay code).
 3. On a notched device confirm HUD/question-panel clearance (safe-area).
 
 
-## Strategy Expansion & Per-Level Configuration Revision (Phases 12--19, Playtesting → 20)
+## Strategy Expansion & Per-Level Configuration Revision (Phases 12--19, Playtesting → 25)
 
 Requirements batch adding richer question categories and per-level
 configuration. Historical references above to a "Phase 12 Playtesting &
-Balancing" now mean **Phase 20**; the old Phase 13 Stretch section is
-**Phase 21**. Phases 0--11 are implemented and untouched.
+Balancing" now mean **Phase 25**; the old Phase 13 Stretch section is
+**Phase 26**. Phases 0--11 are implemented and untouched. A later
+revision inserted **Phase 20 — Fraction Question & Answer Layout Fix**
+between Phase 19 and playtesting, and renumbered playtesting from
+Phase 20 to Phase 25 (Phases 21--24 reserved for further improvements).
 
 ### 1. Strategy renaming (Phase 12)
 
@@ -456,4 +459,5 @@ only, with safe fallbacks (Spec §13):
 - [ ] Phase 17: `points_per_question` end-to-end.
 - [ ] Phase 18: `wave_enemy_textures` cyclic assignment end-to-end.
 - [ ] Phase 19: `player_ship_texture` end-to-end.
-- [ ] Phase 20: playtest the expanded game; full GUT suite green.
+- [ ] Phase 20: center stacked-fraction questions/answers; enlarge the question area; remove overlap with the answer grid.
+- [ ] Phase 25: playtest the expanded game; full GUT suite green.

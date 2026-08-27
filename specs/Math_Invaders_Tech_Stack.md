@@ -261,7 +261,12 @@ supports non-arithmetic content.
     stacked --- numerator above denominator --- in both the question
     text and the four buttons, preserving touch targets, theme, red
     flash, and safe-area behavior; integer categories keep the plain
-    path.
+    path. *Phase 20:* the stacked-fraction controls are **centered** ---
+    the answer-button fraction fills the button (`PRESET_FULL_RECT`) and
+    the question stack host spans the panel width
+    (`SIZE_EXPAND_FILL` + `ALIGNMENT_CENTER`) --- and the question area
+    is enlarged so it no longer overlaps the answer grid, with the 360px
+    panel height and safe-area insets unchanged.
 
 -   `hud.gd` --- updates score, level, wave-progress, lives, and
     time-remaining displays in response to `GameManager`/`WaveManager`

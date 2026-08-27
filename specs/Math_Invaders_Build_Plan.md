@@ -372,7 +372,25 @@ playable milestone.
 -   **Milestone:** completes the per-level visual/scoring configuration
     trio (17--19). See `specs/phases/Phase_19_Player_Ship_Image.md`.
 
-### Phase 20 --- Playtesting & Balancing
+### Phase 20 --- Fraction Question & Answer Layout Fix
+
+-   Fix stacked-fraction rendering so fraction questions and answer
+    buttons are **centered** (not left-aligned): the stacked-fraction
+    control added to each answer button fills the button and centers its
+    content, and the question stack host spans the panel width and
+    centers its segments.
+-   Redefine the question panel layout to give the question area more
+    vertical space and eliminate the overlap between the question text
+    and the answer buttons (question row 16--76 → 8--88; answer grid
+    moved down so the buttons sit at y 95--335).
+-   Preserve the 360px panel height and the Phase 11 safe-area insets
+    behavior unchanged; the new internal layout stays within the panel.
+-   **Milestone:** fraction questions and answers render centered and
+    readable with no overlap, integer (plain-text) questions unchanged,
+    full GUT suite green. See
+    `specs/phases/Phase_20_Fraction_Question_Answer_Layout_Fix.md`.
+
+### Phase 25 --- Playtesting & Balancing
 
 -   Playtest with target age group; adjust question difficulty pacing
     per level, distractor plausibility, wave length feel, and the
@@ -385,7 +403,7 @@ playable milestone.
 -   **Milestone:** balanced, kid-tested build ready for wider release,
     with the full GUT suite passing.
 
-### Phase 21 --- Stretch / Future Expansion
+### Phase 26 --- Stretch / Future Expansion
 
 -   Additional math concepts as new strategies (percentages;
     fraction-decimal-percent conversions).
@@ -434,7 +452,7 @@ Three related gameplay changes extend Phase 4/5 and ripple forward:
    (`TRAVEL_TIME`), replacing distance-dependent/slow travel.
 
 Phase 6 restarts the timer at each level boundary; Phase 10 adds
-enemy-fire/player-hit sounds and a low-time warning; Phase 20 (renumbered
+enemy-fire/player-hit sounds and a low-time warning; Phase 25 (renumbered
 from 12 --- see the final change note) treats the time budget as a tuning
 dimension.
 
@@ -474,9 +492,9 @@ A new requirements batch extends the question categories and per-level
 configuration, and the roadmap is renumbered to fit it:
 
 1. **Renumbering.** The old **Phase 12 — Playtesting & Balancing** moves
-   to **Phase 20** (its phase doc is now
-   `specs/phases/Phase_20_Playtesting_And_Balancing.md`), and the old
-   Phase 13 Stretch section becomes **Phase 21**. Phases 0–11 are
+   to **Phase 25** (its phase doc is now
+   `specs/phases/Phase_25_Playtesting_And_Balancing.md`), and the old
+   Phase 13 Stretch section becomes **Phase 26**. Phases 0–11 are
    untouched and remain implemented as shipped.
 2. **New Phases 12–16 (question strategies).**
    Phase 12 renames the four core strategies/keys to `integer_*`
@@ -502,8 +520,32 @@ configuration, and the roadmap is renumbered to fit it:
    Spec §13.
 4. **Stretch content moved.** Fractions and factors/multiples-style
    content is now planned work (Phases 13–16); percentages and
-   fraction-decimal-percent conversions remain stretch (Phase 21).
+   fraction-decimal-percent conversions remain stretch (Phase 26).
 
-Playtesting (Phase 20) therefore tunes the whole expanded game:
+Playtesting (Phase 25) therefore tunes the whole expanded game:
 category pacing across integers/fractions/decimals/ratio/HCF-LCM,
 per-level point values, and ship-image variety.
+
+
+## Phase Change Note — Fraction Layout Fix and the Phase 20→25 Renumbering
+
+A rendering fix for stacked fractions is inserted as a new phase, and the
+roadmap is renumbered to make room for further improvements before
+playtesting:
+
+1. **New Phase 20 — Fraction Question & Answer Layout Fix.** Stacked
+   fraction questions and answer buttons were rendering **left-aligned**
+   (the fraction controls were added to plain `Control` parents without
+   anchors, so `ALIGNMENT_CENTER` had no effect), and the question area
+   overlapped the answer buttons. The new phase centers the fraction
+   content in both the question row and every answer button, enlarges the
+   question area, and moves the answer grid down to remove the overlap —
+   while preserving the 360px panel height and Phase 11 safe-area
+   behavior. Normative home: Spec §5 (clear fraction display) and §3
+   (screen layout); Tech Stack §5 (`question_panel.gd`).
+2. **Renumbering.** The old **Phase 20 — Playtesting & Balancing** moves
+   to **Phase 25** (its phase doc is now
+   `specs/phases/Phase_25_Playtesting_And_Balancing.md`), and the old
+   Phase 21 Stretch section becomes **Phase 26**. Phases 0–19 are
+   untouched and remain implemented as shipped. Phases 21–24 are reserved
+   for further improvements and changes before playtesting.
