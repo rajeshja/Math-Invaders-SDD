@@ -177,10 +177,11 @@ func _build_question_stack_host() -> void:
 	_question_stack_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_question_stack_host.visible = false
 	_panel.add_child(_question_stack_host)
-	# Mirror the QuestionLabel's rect (anchors_preset top-wide, y 16..76).
+	# Mirror the QuestionLabel's rect (anchors_preset top-wide, y 8..88).
 	_question_stack_host.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	_question_stack_host.offset_top = 16.0
-	_question_stack_host.offset_bottom = 76.0
+	_question_stack_host.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_question_stack_host.offset_top = 8.0
+	_question_stack_host.offset_bottom = 88.0
 	_question_stack_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
@@ -203,7 +204,9 @@ func _render_question_segments(segments: Array) -> void:
 ## button: [whole] [numerator / bar / denominator], all mouse-transparent
 ## so the parent Button keeps every tap (FR13.4).
 func _build_button_stack(layout: Dictionary) -> Control:
-	return _build_fraction_control(layout, STACK_FONT_LARGE)
+	var control := _build_fraction_control(layout, STACK_FONT_LARGE)
+	control.set_anchors_preset(Control.PRESET_FULL_RECT)
+	return control
 
 
 func _build_fraction_control(layout: Dictionary, base_font_size: int) -> Control:
