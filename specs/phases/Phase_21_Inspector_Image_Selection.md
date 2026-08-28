@@ -1,14 +1,17 @@
 # Phase 21 --- Native Inspector Image Selection (Level Config)
 
-**Goal:** remove the need to hand-type image path Strings into the level
-`.tres` files. The two image fields on `LevelConfig` --- the per-wave
-enemy ship sets (`wave_enemy_textures`, Phase 18) and the per-level
-player ship (`player_ship_texture`, Phase 19) --- currently store raw
-path Strings that must be typed into free-text Inspector fields. This
-phase converts them to native Godot `Texture2D` resource exports so the
-Inspector shows a real image picker (thumbnail preview, drag-and-drop
-from the FileSystem dock, and a file dialog restricted to image files).
-No gameplay, scoring, or timing behavior changes.
+**Goal:** remove the need to hand-type path Strings and category keys
+into the level `.tres` files. The image fields on `LevelConfig` --- the
+per-wave enemy ship sets (`wave_enemy_textures`, Phase 18) and the
+per-level player ship (`player_ship_texture`, Phase 19) --- currently
+store raw path Strings that must be typed into free-text Inspector
+fields, and the wave/category sequence (`category_sequence`) is a
+free-text String array. This phase converts the image fields to native
+Godot `Texture2D` resource exports (real image picker: thumbnail
+preview, drag-and-drop from the FileSystem dock, and a file dialog
+restricted to image files) and constrains `category_sequence` to an
+`@export_enum` dropdown of the canonical categories. No gameplay,
+scoring, or timing behavior changes.
 
 **Source docs:** Build Plan §Phase 18 / §Phase 19, Spec §13 (Visual &
 Scoring Level Configuration --- authoritative), Tech Stack §4
@@ -84,6 +87,24 @@ wiring), Phase 18 FRs 18.1--18.7, Phase 19 FRs 19.1--19.6.
     `Texture2D` constant (`DEFAULT_PLAYER_SHIP_TEXTURE`) so
     `resolved_player_ship_texture()` needs no scene tree or filesystem
     lookup.
+-   FR21.7 --- `LevelConfig.gd` changes `category_sequence` from a
+    free-text `@export var category_sequence: Array[String]` to an
+    enum-constrained export so each element is chosen from a dropdown
+    instead of being typed:
+    `@export_enum("integer_addition", "integer_subtraction",
+    "integer_multiplication", "integer_division", "prime",
+    "fraction_addition", "fraction_subtraction",
+    "fraction_multiplication", "fraction_division", "decimal_addition",
+    "decimal_subtraction", "decimal_multiplication", "decimal_division",
+    "ratio_proportion", "hcf_lcm") var category_sequence: Array[String]`.
+    The enum list is the canonical category registry from
+    `QuestionGenerator.DISPLAY_NAMES` (Phase 12 FR12.4) --- the only
+    categories the game can actually generate.
+-   FR21.8 --- The enum list is kept in sync with the canonical registry:
+    adding a category in `QuestionGenerator` (strategy + `DISPLAY_NAMES`
+    entry) must also add it to the `@export_enum` list, so the dropdown
+    never offers a category the generator cannot dispatch. A test asserts
+    the two lists match (see Testing Plan).
 
 ### Non-Functional Requirements
 
@@ -102,26 +123,28 @@ wiring), Phase 18 FRs 18.1--18.7, Phase 19 FRs 19.1--19.6.
 
 ### Out of Scope
 
--   Non-image `LevelConfig` fields (`category_sequence`, `difficulty`,
+-   Non-image, non-category `LevelConfig` fields (`difficulty`,
     `max_operand_size`, timing, fraction/decimal rules, scoring) ---
-    these are not image selections and keep their current editors.
+    these keep their current editors.
 -   Audio assets, UI theme resources, and the GUT addon `.tres` files.
 -   Adding new image fields or changing the FR18.2 cyclic ordering rule.
 -   A custom editor plugin or drag-and-drop palette (native `Texture2D`
-    exports already provide the picker; no plugin is required).
+    exports and `@export_enum` already provide the pickers; no plugin is
+    required).
 
 ------------------------------------------------------------------------
 
 ## 2. Detailed Implementation Plan
 
-1.  **`LevelConfig.gd`**: change the two field declarations to
+1.  **`LevelConfig.gd`**: change the two image field declarations to
     `Texture2D`-typed exports (FR21.1/FR21.2); replace the
     `DEFAULT_PLAYER_SHIP_TEXTURE` String constant with a preloaded
     `Texture2D` (FR21.6); rewrite `resolved_player_ship_texture()` to
     return the configured texture or the default (dropping the
     `ResourceLoader.exists()`/warning path); rewrite
     `resolved_wave_texture_sets()` to normalize `Array[Texture2D]`
-    per index (FR21.3).
+    per index (FR21.3); constrain `category_sequence` with
+    `@export_enum` listing the canonical registry (FR21.7/FR21.8).
 2.  **`enemy.gd`**: change `setup()`'s override parameter and
     `_apply_override_texture()` to `Texture2D` (FR21.4).
 3.  **`wave_manager.gd`**: rename `_resolved_slot_paths()` →
@@ -164,6 +187,12 @@ default; `apply_ship_texture()` with a valid texture changes the sprite
 and with `null` leaves the prior texture intact (headless-safe using a
 tiny generated `Texture2D`).
 
+**`test_level_config.gd` (category dropdown)** --- the `@export_enum`
+list on `category_sequence` matches the canonical
+`QuestionGenerator.DISPLAY_NAMES` keys exactly (FR21.8), so the dropdown
+can never offer an undispatchable category; every shipped level's
+`category_sequence` entries are all present in that list.
+
 **Regression** --- full prior suite passes unmodified (NFR21.2).
 
 ### Manual Test Checklist
@@ -193,12 +222,20 @@ tiny generated `Texture2D`).
                           (set to null)           default ship; no warning, no
                                                   crash
 
-  6                       Run full GUT suite      Updated tests + full prior
+  6                       Edit a level's          Each `category_sequence`
+                          category sequence       element is a dropdown of the
+                                                  supported categories; no free
+                                                  text; only valid categories
+                                                  can be chosen
+
+  7                       Run full GUT suite      Updated tests + full prior
                                                   suite pass, 0 failures
   -------------------------------------------------------------------------------
 
 **Definition of Done:** every level's enemy and player ship image is
 selectable through a native Godot `Texture2D` picker in the Inspector,
-with no path Strings to type; the FR18.2 cyclic ordering and FR18.3 /
-FR19.2 fallbacks are preserved; shipped `.tres` files use `ExtResource`
-references; and the full GUT suite is green.
+and each `category_sequence` element is chosen from a dropdown of the
+canonical categories --- with no path Strings or category keys to type;
+the FR18.2 cyclic ordering and FR18.3 / FR19.2 fallbacks are preserved;
+shipped `.tres` files use `ExtResource` references; and the full GUT
+suite is green.

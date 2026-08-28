@@ -397,13 +397,17 @@ playable milestone.
     real image picker (preview, drag-and-drop, file dialog): per-wave
     enemy ship sets (`wave_enemy_textures` → `Array[Array[Texture2D]]`)
     and the per-level player ship (`player_ship_texture` → `Texture2D`).
+-   Constrain `category_sequence` to an `@export_enum` dropdown of the
+    canonical categories (from `QuestionGenerator.DISPLAY_NAMES`) so
+    waves are chosen from a list instead of typed as free text.
 -   Consumers (`enemy.gd`, `wave_manager.gd`, `player.gd`, `main.gd`)
     switch from path Strings to `Texture2D`; the FR18.2 cyclic ordering
     and FR18.3/FR19.2 fallbacks are preserved; shipped `.tres` files
     store `ExtResource` texture references.
 -   **Milestone:** every level's enemy and player ship image is
-    selectable from the Inspector with no path typing, full GUT suite
-    green. See `specs/phases/Phase_21_Inspector_Image_Selection.md`.
+    selectable from the Inspector and every wave category is chosen from
+    a dropdown --- no path typing, full GUT suite green. See
+    `specs/phases/Phase_21_Inspector_Image_Selection.md`.
 
 ### Phase 25 --- Playtesting & Balancing
 

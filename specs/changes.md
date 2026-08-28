@@ -462,5 +462,5 @@ only, with safe fallbacks (Spec §13):
 - [ ] Phase 18: `wave_enemy_textures` cyclic assignment end-to-end.
 - [ ] Phase 19: `player_ship_texture` end-to-end.
 - [ ] Phase 20: center stacked-fraction questions/answers; enlarge the question area; remove overlap with the answer grid.
-- [ ] Phase 21: convert `wave_enemy_textures` / `player_ship_texture` to native `Texture2D` Inspector pickers (no path typing).
+- [ ] Phase 21: convert `wave_enemy_textures` / `player_ship_texture` to native `Texture2D` Inspector pickers and `category_sequence` to an `@export_enum` dropdown (no path/category typing).
 - [ ] Phase 25: playtest the expanded game; full GUT suite green.
