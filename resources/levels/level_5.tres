@@ -3,13 +3,43 @@
 [ext_resource type="Script" uid="uid://b6v02c3iv0vkv" path="res://scripts/level_config.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://crsvlwarhrifd" path="res://assets/images/ships/glider-5.png" id="1_yw3bn"]
 [ext_resource type="Script" uid="uid://b5qmpvnwa4vud" path="res://scripts/wave_visual_set.gd" id="3_sxsgq"]
-[ext_resource type="Texture2D" uid="uid://cy8qg7bwtwsoe" path="res://assets/images/enemies/pod-2.png" id="4_sxsgq"]
-[ext_resource type="Texture2D" uid="uid://bh2etwxwvwb5f" path="res://assets/images/enemies/pod-3.png" id="5_ecry0"]
-[ext_resource type="Texture2D" uid="uid://cxkbt64t4pe2x" path="res://assets/images/enemies/pod-4.png" id="6_qu7t1"]
+[ext_resource type="Texture2D" uid="uid://dkhwf6tuds7fx" path="res://assets/images/enemies/glider-4.png" id="4_qu7t1"]
+[ext_resource type="Texture2D" uid="uid://blfl8f3k5td3o" path="res://assets/images/enemies/glider-8.png" id="5_f65rh"]
+[ext_resource type="Texture2D" uid="uid://doe1x7mfhn70c" path="res://assets/images/enemies/glider-12.png" id="6_kg0lv"]
+[ext_resource type="Texture2D" uid="uid://2rafp11ji5yb" path="res://assets/images/enemies/glider-13.png" id="7_2jqfw"]
+[ext_resource type="Texture2D" uid="uid://cspna0p7eu5im" path="res://assets/images/enemies/apex-1.png" id="8_xo7e7"]
+[ext_resource type="Texture2D" uid="uid://d04n1ix1etijy" path="res://assets/images/enemies/apex-4.png" id="9_2jqfw"]
+[ext_resource type="Texture2D" uid="uid://dcmfpmjd4tm8p" path="res://assets/images/enemies/apex-13.png" id="10_xo7e7"]
+[ext_resource type="Texture2D" uid="uid://fql7t32linan" path="res://assets/images/enemies/apex-3.png" id="11_1a0kb"]
 
 [sub_resource type="Resource" id="Resource_ahug5"]
 script = ExtResource("3_sxsgq")
-textures = Array[Texture2D]([ExtResource("4_sxsgq"), ExtResource("5_ecry0"), ExtResource("6_qu7t1")])
+textures = Array[Texture2D]([ExtResource("4_qu7t1"), ExtResource("5_f65rh"), ExtResource("6_kg0lv")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
+
+[sub_resource type="Resource" id="Resource_t0xhj"]
+script = ExtResource("3_sxsgq")
+textures = Array[Texture2D]([ExtResource("6_kg0lv"), ExtResource("7_2jqfw"), ExtResource("5_f65rh")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
+
+[sub_resource type="Resource" id="Resource_ehxvd"]
+script = ExtResource("3_sxsgq")
+textures = Array[Texture2D]([ExtResource("7_2jqfw"), ExtResource("4_qu7t1"), ExtResource("5_f65rh")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
+
+[sub_resource type="Resource" id="Resource_fndxc"]
+script = ExtResource("3_sxsgq")
+textures = Array[Texture2D]([ExtResource("7_2jqfw"), ExtResource("5_f65rh"), ExtResource("8_xo7e7")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
+
+[sub_resource type="Resource" id="Resource_1a0kb"]
+script = ExtResource("3_sxsgq")
+textures = Array[Texture2D]([ExtResource("9_2jqfw"), ExtResource("5_f65rh"), ExtResource("10_xo7e7")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
+
+[sub_resource type="Resource" id="Resource_ixoyp"]
+script = ExtResource("3_sxsgq")
+textures = Array[Texture2D]([ExtResource("11_1a0kb"), ExtResource("8_xo7e7"), ExtResource("7_2jqfw")])
 metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
 
 [resource]
@@ -20,5 +50,5 @@ difficulty = 5
 time_limit_seconds = 270.0
 max_decimal_places = 1
 points_per_question = 3
-wave_enemy_textures = Array[ExtResource("3_sxsgq")]([SubResource("Resource_ahug5")])
+wave_enemy_textures = Array[ExtResource("3_sxsgq")]([SubResource("Resource_ahug5"), SubResource("Resource_t0xhj"), SubResource("Resource_ehxvd"), SubResource("Resource_fndxc"), SubResource("Resource_1a0kb"), SubResource("Resource_ixoyp")])
 player_ship_texture = ExtResource("1_yw3bn")

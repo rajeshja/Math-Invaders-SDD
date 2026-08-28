@@ -6,10 +6,38 @@
 [ext_resource type="Texture2D" uid="uid://l23wcqhku86u" path="res://assets/images/enemies/spectre-2.png" id="4_w5du7"]
 [ext_resource type="Texture2D" uid="uid://4ya1hasgucbf" path="res://assets/images/enemies/spectre-3.png" id="5_sdvim"]
 [ext_resource type="Texture2D" uid="uid://d1xknvqb04gw0" path="res://assets/images/enemies/spectre-4.png" id="6_acmd0"]
+[ext_resource type="Texture2D" uid="uid://cyfqdck5e4jib" path="res://assets/images/enemies/spike-13.png" id="6_hlwmc"]
+[ext_resource type="Texture2D" uid="uid://cine7gbb71jxw" path="res://assets/images/enemies/wraith-1.png" id="7_fe7v5"]
+[ext_resource type="Texture2D" uid="uid://dp1sek8xflyys" path="res://assets/images/enemies/spectre-1.png" id="9_rt4iu"]
 
 [sub_resource type="Resource" id="Resource_kg0lv"]
 script = ExtResource("3_euiwn")
-textures = Array[Texture2D]([ExtResource("4_w5du7"), ExtResource("5_sdvim"), ExtResource("6_acmd0")])
+textures = Array[Texture2D]([ExtResource("4_w5du7"), ExtResource("5_sdvim")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
+
+[sub_resource type="Resource" id="Resource_ixoyp"]
+script = ExtResource("3_euiwn")
+textures = Array[Texture2D]([ExtResource("6_hlwmc"), ExtResource("4_w5du7")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
+
+[sub_resource type="Resource" id="Resource_ahyl4"]
+script = ExtResource("3_euiwn")
+textures = Array[Texture2D]([ExtResource("5_sdvim"), ExtResource("6_hlwmc")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
+
+[sub_resource type="Resource" id="Resource_1vc3y"]
+script = ExtResource("3_euiwn")
+textures = Array[Texture2D]([ExtResource("4_w5du7"), ExtResource("7_fe7v5"), ExtResource("6_acmd0")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
+
+[sub_resource type="Resource" id="Resource_otmed"]
+script = ExtResource("3_euiwn")
+textures = Array[Texture2D]([ExtResource("4_w5du7"), ExtResource("6_acmd0")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
+
+[sub_resource type="Resource" id="Resource_4egbq"]
+script = ExtResource("3_euiwn")
+textures = Array[Texture2D]([ExtResource("9_rt4iu"), ExtResource("4_w5du7"), ExtResource("5_sdvim")])
 metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
 
 [resource]
@@ -21,5 +49,5 @@ time_limit_seconds = 240.0
 allow_unlike_denominators = true
 max_decimal_places = 2
 points_per_question = 3
-wave_enemy_textures = Array[ExtResource("3_euiwn")]([SubResource("Resource_kg0lv")])
+wave_enemy_textures = Array[ExtResource("3_euiwn")]([SubResource("Resource_kg0lv"), SubResource("Resource_ixoyp"), SubResource("Resource_ahyl4"), SubResource("Resource_1vc3y"), SubResource("Resource_otmed"), SubResource("Resource_4egbq")])
 player_ship_texture = ExtResource("1_sgo0n")

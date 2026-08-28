@@ -5,12 +5,29 @@
 [ext_resource type="Script" uid="uid://b5qmpvnwa4vud" path="res://scripts/wave_visual_set.gd" id="1_wvs"]
 [ext_resource type="Texture2D" uid="uid://cus64pr674ujd" path="res://assets/images/enemies/borg-1.png" id="4_8dpr2"]
 [ext_resource type="Texture2D" uid="uid://j276ixyptriy" path="res://assets/images/enemies/borg-2.png" id="5_rpy2t"]
+[ext_resource type="Texture2D" uid="uid://bhbqp4r1kx6d3" path="res://assets/images/enemies/borg-3.png" id="6_2hak1"]
+[ext_resource type="Texture2D" uid="uid://g7fwldls2whu" path="res://assets/images/enemies/borg-4.png" id="7_7blc3"]
 
 [sub_resource type="Resource" id="WaveVisualSet_1"]
 script = ExtResource("1_wvs")
 textures = Array[Texture2D]([ExtResource("4_8dpr2"), ExtResource("5_rpy2t")])
 
+[sub_resource type="Resource" id="Resource_euiwn"]
+script = ExtResource("1_wvs")
+textures = Array[Texture2D]([ExtResource("5_rpy2t"), ExtResource("6_2hak1")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
+
+[sub_resource type="Resource" id="Resource_w5du7"]
+script = ExtResource("1_wvs")
+textures = Array[Texture2D]([ExtResource("6_2hak1"), ExtResource("7_7blc3")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
+
+[sub_resource type="Resource" id="Resource_sdvim"]
+script = ExtResource("1_wvs")
+textures = Array[Texture2D]([ExtResource("7_7blc3"), ExtResource("4_8dpr2")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
+
 [resource]
 script = ExtResource("1")
-wave_enemy_textures = Array[ExtResource("1_wvs")]([SubResource("WaveVisualSet_1")])
+wave_enemy_textures = Array[ExtResource("1_wvs")]([SubResource("WaveVisualSet_1"), SubResource("Resource_euiwn"), SubResource("Resource_w5du7"), SubResource("Resource_sdvim")])
 player_ship_texture = ExtResource("1_8dpr2")
