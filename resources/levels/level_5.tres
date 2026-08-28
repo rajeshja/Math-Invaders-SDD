@@ -2,6 +2,15 @@
 
 [ext_resource type="Script" uid="uid://b6v02c3iv0vkv" path="res://scripts/level_config.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://crsvlwarhrifd" path="res://assets/images/ships/glider-5.png" id="1_yw3bn"]
+[ext_resource type="Script" uid="uid://b5qmpvnwa4vud" path="res://scripts/wave_visual_set.gd" id="3_sxsgq"]
+[ext_resource type="Texture2D" uid="uid://cy8qg7bwtwsoe" path="res://assets/images/enemies/pod-2.png" id="4_sxsgq"]
+[ext_resource type="Texture2D" uid="uid://bh2etwxwvwb5f" path="res://assets/images/enemies/pod-3.png" id="5_ecry0"]
+[ext_resource type="Texture2D" uid="uid://cxkbt64t4pe2x" path="res://assets/images/enemies/pod-4.png" id="6_qu7t1"]
+
+[sub_resource type="Resource" id="Resource_ahug5"]
+script = ExtResource("3_sxsgq")
+textures = Array[Texture2D]([ExtResource("4_sxsgq"), ExtResource("5_ecry0"), ExtResource("6_qu7t1")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
 
 [resource]
 script = ExtResource("1")
@@ -11,4 +20,5 @@ difficulty = 5
 time_limit_seconds = 270.0
 max_decimal_places = 1
 points_per_question = 3
+wave_enemy_textures = Array[ExtResource("3_sxsgq")]([SubResource("Resource_ahug5")])
 player_ship_texture = ExtResource("1_yw3bn")

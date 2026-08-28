@@ -2,6 +2,14 @@
 
 [ext_resource type="Script" uid="uid://b6v02c3iv0vkv" path="res://scripts/level_config.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://bw7hv33qjqdp2" path="res://assets/images/ships/blaster-5.png" id="1_hrksf"]
+[ext_resource type="Script" uid="uid://b5qmpvnwa4vud" path="res://scripts/wave_visual_set.gd" id="3_575p4"]
+[ext_resource type="Texture2D" uid="uid://cx1b201fm8njb" path="res://assets/images/enemies/wraith-3.png" id="4_kbucj"]
+[ext_resource type="Texture2D" uid="uid://bi7crclk0ykot" path="res://assets/images/enemies/pod-1.png" id="5_od1oh"]
+
+[sub_resource type="Resource" id="Resource_sdtqw"]
+script = ExtResource("3_575p4")
+textures = Array[Texture2D]([ExtResource("4_kbucj"), ExtResource("5_od1oh")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
 
 [resource]
 script = ExtResource("1")
@@ -12,4 +20,5 @@ max_operand_size = 70
 time_limit_seconds = 200.0
 allow_unlike_denominators = true
 points_per_question = 2
+wave_enemy_textures = Array[ExtResource("3_575p4")]([SubResource("Resource_sdtqw")])
 player_ship_texture = ExtResource("1_hrksf")

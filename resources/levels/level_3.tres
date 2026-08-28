@@ -2,6 +2,14 @@
 
 [ext_resource type="Script" uid="uid://b6v02c3iv0vkv" path="res://scripts/level_config.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://bw7hv33qjqdp2" path="res://assets/images/ships/blaster-5.png" id="1_onuep"]
+[ext_resource type="Script" uid="uid://b5qmpvnwa4vud" path="res://scripts/wave_visual_set.gd" id="3_bl7rf"]
+[ext_resource type="Texture2D" uid="uid://cine7gbb71jxw" path="res://assets/images/enemies/wraith-1.png" id="4_dbnjb"]
+[ext_resource type="Texture2D" uid="uid://d18ry6bi173ty" path="res://assets/images/enemies/wraith-4.png" id="5_bl7rf"]
+
+[sub_resource type="Resource" id="Resource_a8y0u"]
+script = ExtResource("3_bl7rf")
+textures = Array[Texture2D]([ExtResource("4_dbnjb"), ExtResource("5_bl7rf")])
+metadata/_custom_type_script = "uid://b5qmpvnwa4vud"
 
 [resource]
 script = ExtResource("1")
@@ -11,4 +19,5 @@ difficulty = 3
 max_operand_size = 50
 time_limit_seconds = 160.0
 points_per_question = 2
+wave_enemy_textures = Array[ExtResource("3_bl7rf")]([SubResource("Resource_a8y0u")])
 player_ship_texture = ExtResource("1_onuep")
