@@ -244,10 +244,11 @@ func test_fresh_set_of_ten_spawns_on_wave_clear() -> void:
 
 ## -- Phase 18: per-wave enemy texture sets ------------------------------------
 
-const SHIP1 := "res://assets/images/enemies/ship1.png"
-const SHIP2 := "res://assets/images/enemies/ship2.png"
-const SHIP3 := "res://assets/images/enemies/ship3.png"
-const DEFAULT_ADDITION_TEX := "res://assets/images/enemies/enemy_ship_addition.png"
+const SHIP1_TEX: Texture2D = preload("res://assets/images/enemies/ship1.png")
+const SHIP2_TEX: Texture2D = preload("res://assets/images/enemies/ship2.png")
+const SHIP3_TEX: Texture2D = preload("res://assets/images/enemies/ship3.png")
+const DEFAULT_ADDITION_TEX: Texture2D = preload("res://assets/images/enemies/enemy_ship_addition.png")
+const DEFAULT_SUBTRACTION_TEX: Texture2D = preload("res://assets/images/enemies/enemy_ship_subtraction.png")
 
 
 func _spawned_texture_paths() -> Array:
@@ -268,21 +269,24 @@ func _texture_sequence(sequence: Array, sets: Array) -> void:
 
 
 func test_three_image_set_cycles_in_formation_order() -> void:
-	_texture_sequence(["integer_addition"], [[SHIP1, SHIP2, SHIP3]])
+	_texture_sequence(["integer_addition"], [[SHIP1_TEX, SHIP2_TEX, SHIP3_TEX]])
 
 	var expected := [
-		SHIP1, SHIP2, SHIP3, SHIP1, SHIP2, SHIP3, SHIP1, SHIP2, SHIP3, SHIP1,
+		SHIP1_TEX.resource_path, SHIP2_TEX.resource_path, SHIP3_TEX.resource_path,
+		SHIP1_TEX.resource_path, SHIP2_TEX.resource_path, SHIP3_TEX.resource_path,
+		SHIP1_TEX.resource_path, SHIP2_TEX.resource_path, SHIP3_TEX.resource_path,
+		SHIP1_TEX.resource_path,
 	]
 	assert_eq(_spawned_texture_paths(), expected,
 			"FR18.2: slot k uses set element k %% set size")
 
 
 func test_single_image_set_applies_to_all_ten() -> void:
-	_texture_sequence(["integer_addition"], [[SHIP2]])
+	_texture_sequence(["integer_addition"], [[SHIP2_TEX]])
 
 	var expected := []
 	for i in range(10):
-		expected.append(SHIP2)
+		expected.append(SHIP2_TEX.resource_path)
 	assert_eq(_spawned_texture_paths(), expected, "FR18.6: one-image sets repeat")
 
 
@@ -291,7 +295,7 @@ func test_empty_set_uses_category_default_for_all_ten() -> void:
 
 	var expected := []
 	for i in range(10):
-		expected.append(DEFAULT_ADDITION_TEX)
+		expected.append(DEFAULT_ADDITION_TEX.resource_path)
 	assert_eq(_spawned_texture_paths(), expected,
 			"FR18.3: empty sets keep the category sprite")
 
@@ -301,32 +305,31 @@ func test_no_sets_at_all_matches_phase_17_behavior() -> void:
 
 	var expected := []
 	for i in range(10):
-		expected.append(DEFAULT_ADDITION_TEX)
+		expected.append(DEFAULT_ADDITION_TEX.resource_path)
 	assert_eq(_spawned_texture_paths(), expected,
 			"NFR18.2: unset overrides are byte-identical to prior behavior")
 
 
-func test_missing_path_warns_once_and_falls_back_per_slot() -> void:
-	var bogus := "res://assets/images/enemies/no_such_ship.png"
-	_texture_sequence(["integer_addition"], [[SHIP1, bogus]])
+func test_malformed_entries_fall_back_to_category_default_per_slot() -> void:
+	# A non-Texture2D entry is dropped to null, so that slot keeps the
+	# category default (Phase 21 FR21.4) - never a crash.
+	_texture_sequence(["integer_addition"], [[SHIP1_TEX, "not_a_texture"]])
 
 	var paths := _spawned_texture_paths()
-	# Slots cycle a 2-set: even slots SHIP1, odd slots fallback default.
 	for k in range(paths.size()):
 		if k % 2 == 0:
-			assert_eq(paths[k], SHIP1, "valid slots keep their image")
+			assert_eq(paths[k], SHIP1_TEX.resource_path, "valid slots keep their image")
 		else:
-			assert_eq(paths[k], DEFAULT_ADDITION_TEX,
-					"bogus slot falls back to the category default")
-	assert_push_warning("no_such_ship", "one warning per missing path per wave")
+			assert_eq(paths[k], DEFAULT_ADDITION_TEX.resource_path,
+					"malformed slot falls back to the category default")
 
 
 func test_advancing_waves_pick_the_next_index_set() -> void:
 	_texture_sequence(
 			["integer_addition", "integer_subtraction"],
-			[[SHIP1, SHIP2], [SHIP3]])
+			[[SHIP1_TEX, SHIP2_TEX], [SHIP3_TEX]])
 
-	assert_eq(_spawned_texture_paths()[0], SHIP1,
+	assert_eq(_spawned_texture_paths()[0], SHIP1_TEX.resource_path,
 			"wave 1 uses the first set's cycle")
 	for i in range(10):
 		wave_manager.on_correct_answer()
@@ -334,14 +337,15 @@ func test_advancing_waves_pick_the_next_index_set() -> void:
 	assert_eq(wave_manager.current_category, "integer_subtraction")
 	var second_wave := _spawned_texture_paths()
 	for path in second_wave:
-		assert_eq(path, SHIP3, "wave 2 uses the second index's single-image set")
+		assert_eq(path, SHIP3_TEX.resource_path,
+				"wave 2 uses the second index's single-image set")
 
 
 func test_clear_all_resets_stored_sets() -> void:
-	_texture_sequence(["integer_addition"], [[SHIP1]])
+	_texture_sequence(["integer_addition"], [[SHIP1_TEX]])
 	wave_manager.clear_all()
 	wave_manager.start_wave("integer_subtraction")
 
 	for path in _spawned_texture_paths():
-		assert_eq(path, "res://assets/images/enemies/enemy_ship_subtraction.png",
+		assert_eq(path, DEFAULT_SUBTRACTION_TEX.resource_path,
 			"cleared sessions cannot leak the previous level's art")

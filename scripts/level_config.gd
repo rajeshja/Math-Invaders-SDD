@@ -28,8 +28,15 @@ const LEVEL_RESOURCE_PATHS: Array[String] = [
 @export var level_number: int = 1
 
 @export_group("Waves & Categories")
-## Ordered wave/category sequence for this level.
-@export var category_sequence: Array[String] = [
+## Ordered wave/category sequence for this level. Each element is chosen
+## from a dropdown of the canonical categories (Phase 21 FR21.7), kept in
+## sync with QuestionGenerator.DISPLAY_NAMES (FR21.8).
+@export_enum(
+	"integer_addition", "integer_subtraction", "integer_multiplication", "integer_division",
+	"prime", "fraction_addition", "fraction_subtraction", "fraction_multiplication",
+	"fraction_division", "decimal_addition", "decimal_subtraction", "decimal_multiplication",
+	"decimal_division", "ratio_proportion", "hcf_lcm"
+) var category_sequence: Array[String] = [
 	"integer_addition", "integer_subtraction", "integer_multiplication", "integer_division"
 ]
 
@@ -65,49 +72,45 @@ const LEVEL_RESOURCE_PATHS: Array[String] = [
 
 @export_group("Wave Visuals")
 ## Per-wave enemy image overrides (Phase 18 FR18.1), index-aligned with
-## category_sequence: element i lists texture path Strings for the wave at
+## category_sequence: element i lists Texture2D images for the wave at
 ## category_sequence[i]. Within a wave, spawn slot k uses element
 ## k % set.size() (cycling). Empty outer array / empty elements mean "use
-## the category default sprite".
+## the category default sprite". Each inner element is edited through a
+## native texture picker (Phase 21 FR21.2). The outer array is untyped
+## because Godot does not support nested typed collections
+## (Array[Array[Texture2D]]); each inner element is an Array[Texture2D].
 @export var wave_enemy_textures: Array = []
 
-## Player ship image override (Phase 19 FR19.1): empty string keeps the
-## default assets/images/ships/player_ship.png; a configured path must
-## exist or the default is used with a one-time warning (FR19.2).
-@export var player_ship_texture: String = ""
+## Player ship image override (Phase 19 FR19.1): null keeps the default
+## ship; a configured texture is used as-is (Phase 21 FR21.1). Edited
+## through a native texture picker with preview.
+@export var player_ship_texture: Texture2D = null
 
-const DEFAULT_PLAYER_SHIP_TEXTURE := "res://assets/images/ships/player_ship.png"
-
-## One-time warning guard shared across configs so a bad authored path
-## logs once per session instead of at every resolution (FR19.2).
-static var _warned_missing_player_ship := false
+## Preloaded default player ship (Phase 21 FR21.6): resolution needs no
+## scene tree or filesystem lookup.
+const DEFAULT_PLAYER_SHIP_TEXTURE: Texture2D = preload("res://assets/images/ships/player_ship.png")
 
 
-## Resolution rule (Phase 19 FR19.2): empty or missing paths fall back to
-## the default ship texture; only genuinely missing configured paths warn,
-## and only once. Unit-testable without the scene tree (NFR19.3).
-func resolved_player_ship_texture() -> String:
-	if player_ship_texture.is_empty():
-		return DEFAULT_PLAYER_SHIP_TEXTURE
-	if ResourceLoader.exists(player_ship_texture):
-		return player_ship_texture
-	if not _warned_missing_player_ship:
-		_warned_missing_player_ship = true
-		push_warning("LevelConfig: player ship '%s' is missing; using the default ship." % player_ship_texture)
-	return DEFAULT_PLAYER_SHIP_TEXTURE
+## Resolution rule (Phase 19 FR19.2 / Phase 21 FR21.3): a configured texture
+## is returned as-is; null falls back to the default ship. Because a
+## Texture2D is either a valid loaded resource or null, no path-existence
+## check or warning is needed. Unit-testable without the scene tree
+## (NFR21.3).
+func resolved_player_ship_texture() -> Texture2D:
+	return player_ship_texture if player_ship_texture != null else DEFAULT_PLAYER_SHIP_TEXTURE
 
 
-## Normalized per-index texture sets (FR18.1): one Array[String] per wave,
-## empty when unset; malformed elements (non-String entries, non-Array
-## elements) are tolerated by being dropped, so bad authored data can
-## never crash spawning.
+## Normalized per-index texture sets (FR18.1 / Phase 21 FR21.3): one
+## Array[Texture2D] per wave, empty when unset; malformed elements
+## (non-Texture2D entries, non-Array elements) are tolerated by being
+## dropped, so bad authored data can never crash spawning.
 func resolved_wave_texture_sets() -> Array:
 	var sets: Array = []
 	for i in range(category_sequence.size()):
-		var normalized: Array[String] = []
+		var normalized: Array[Texture2D] = []
 		if i < wave_enemy_textures.size() and wave_enemy_textures[i] is Array:
 			for entry in wave_enemy_textures[i]:
-				if entry is String and not (entry as String).is_empty():
+				if entry is Texture2D:
 					normalized.append(entry)
 		sets.append(normalized)
 	return sets

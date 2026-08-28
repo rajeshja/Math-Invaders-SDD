@@ -1,11 +1,11 @@
-## Player ship texture application tests (Phase 19): apply_ship_texture
-## swaps only the sprite texture; invalid paths leave the prior texture
-## intact (FR19.4/NFR19.1).
+## Player ship texture application tests (Phase 19/21): apply_ship_texture
+## swaps only the sprite texture; a null texture leaves the prior texture
+## intact (FR19.4/NFR19.1/FR21.4).
 extends GutTest
 
 const PlayerScene := preload("res://scenes/player.tscn")
-const DEFAULT_SHIP := "res://assets/images/ships/player_ship.png"
-const VARIANT_SHIP := "res://assets/images/ships/player_ship_alt.png"
+const DEFAULT_SHIP_TEX: Texture2D = preload("res://assets/images/ships/player_ship.png")
+const VARIANT_SHIP_TEX: Texture2D = preload("res://assets/images/ships/player_ship_alt.png")
 
 var player: Node
 
@@ -20,26 +20,18 @@ func _sprite_texture_path() -> String:
 
 
 func test_valid_texture_swaps_only_the_sprite() -> void:
-	assert_eq(_sprite_texture_path(), DEFAULT_SHIP,
+	assert_eq(_sprite_texture_path(), DEFAULT_SHIP_TEX.resource_path,
 			"scene default matches the documented default ship")
 
-	player.apply_ship_texture(VARIANT_SHIP)
+	player.apply_ship_texture(VARIANT_SHIP_TEX)
 
-	assert_eq(_sprite_texture_path(), VARIANT_SHIP,
+	assert_eq(_sprite_texture_path(), VARIANT_SHIP_TEX.resource_path,
 			"a valid variant replaces the sprite texture")
 
 
-func test_bogus_path_leaves_prior_texture_intact() -> void:
-	player.apply_ship_texture(VARIANT_SHIP)
-	player.apply_ship_texture("res://assets/images/ships/no_such_ship.png")
+func test_null_texture_leaves_prior_texture_intact() -> void:
+	player.apply_ship_texture(VARIANT_SHIP_TEX)
+	player.apply_ship_texture(null)
 
-	assert_eq(_sprite_texture_path(), VARIANT_SHIP,
-			"invalid overrides never blank the ship")
-
-
-func test_empty_path_is_a_no_op() -> void:
-	player.apply_ship_texture(VARIANT_SHIP)
-	player.apply_ship_texture("")
-
-	assert_eq(_sprite_texture_path(), VARIANT_SHIP,
-			"empty overrides change nothing (FR18.5-style contract)")
+	assert_eq(_sprite_texture_path(), VARIANT_SHIP_TEX.resource_path,
+			"null overrides never blank the ship")

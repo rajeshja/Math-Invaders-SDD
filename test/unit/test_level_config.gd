@@ -11,6 +11,12 @@ const LEVEL_PATHS: Array[String] = [
 	"res://resources/levels/level_6.tres",
 ]
 
+const SHIP1_TEX: Texture2D = preload("res://assets/images/enemies/ship1.png")
+const SHIP2_TEX: Texture2D = preload("res://assets/images/enemies/ship2.png")
+const SHIP3_TEX: Texture2D = preload("res://assets/images/enemies/ship3.png")
+const DEFAULT_SHIP_TEX: Texture2D = preload("res://assets/images/ships/player_ship.png")
+const VARIANT_SHIP_TEX: Texture2D = preload("res://assets/images/ships/player_ship_alt.png")
+
 
 func test_every_registered_level_resource_loads_as_level_config() -> void:
 	for path in LevelConfig.LEVEL_RESOURCE_PATHS:
@@ -175,11 +181,11 @@ func test_wave_enemy_textures_default_empty_and_align() -> void:
 func test_wave_enemy_textures_partial_configuration_pads_with_empty() -> void:
 	var config := LevelConfig.new()
 	config.category_sequence = ["a", "b", "c"] as Array[String]
-	config.wave_enemy_textures = [["res://x.png"]]
+	config.wave_enemy_textures = [[SHIP1_TEX]]
 
 	var sets: Array = config.resolved_wave_texture_sets()
 	assert_eq(sets[0].size(), 1)
-	assert_eq(str(sets[0][0]), "res://x.png")
+	assert_eq(sets[0][0], SHIP1_TEX)
 	assert_eq(sets[1].size(), 0, "unconfigured later waves stay default")
 	assert_eq(sets[2].size(), 0)
 
@@ -189,14 +195,14 @@ func test_wave_enemy_textures_tolerates_malformed_elements() -> void:
 	config.category_sequence = ["a", "b", "c"] as Array[String]
 	config.wave_enemy_textures = [
 		"not_an_array",                       # whole element malformed
-		["res://ok.png", 42, "", null],       # mixed junk entries
+		[SHIP1_TEX, 42, "", null],            # mixed junk entries
 		{"dict": true},
 	]
 
 	var sets: Array = config.resolved_wave_texture_sets()
 	assert_eq(sets[0].size(), 0, "non-array elements resolve empty")
-	assert_eq(sets[1].size(), 1, "only valid non-empty strings survive")
-	assert_eq(str(sets[1][0]), "res://ok.png")
+	assert_eq(sets[1].size(), 1, "only valid Texture2D entries survive")
+	assert_eq(sets[1][0], SHIP1_TEX)
 	assert_eq(sets[2].size(), 0)
 
 
@@ -206,53 +212,32 @@ func test_level_one_ships_the_three_image_demo() -> void:
 			"FR18.7: Wave 1 demonstrates the three-image set")
 	var wave_one_set: Array = level_one.wave_enemy_textures[0]
 	assert_eq(wave_one_set.size(), 3)
-	for path in wave_one_set:
-		assert_true(ResourceLoader.exists(str(path)),
-				"demo placeholder art exists (%s)" % str(path))
+	for texture in wave_one_set:
+		assert_is(texture, Texture2D, "demo placeholder art is a Texture2D")
 
 
 ## -- Phase 19: player ship resolution -----------------------------------------
 
 func test_player_ship_resolution_defaults_without_warning() -> void:
 	var config := LevelConfig.new()
-	assert_eq(config.player_ship_texture, "", "default is empty (FR19.1)")
+	assert_null(config.player_ship_texture, "default is null (FR21.1)")
 	assert_eq(config.resolved_player_ship_texture(),
 			LevelConfig.DEFAULT_PLAYER_SHIP_TEXTURE,
-			"empty selection keeps the default ship")
+			"null selection keeps the default ship")
 
 
-func test_player_ship_resolution_returns_valid_configured_path() -> void:
+func test_player_ship_resolution_returns_valid_configured_texture() -> void:
 	var config := LevelConfig.new()
-	config.player_ship_texture = "res://assets/images/ships/player_ship.png"
-	assert_eq(config.resolved_player_ship_texture(),
-			"res://assets/images/ships/player_ship.png",
-			"valid configured paths pass through")
-
-
-func test_player_ship_missing_path_falls_back_and_warns_once() -> void:
-	LevelConfig._warned_missing_player_ship = false
-	var config := LevelConfig.new()
-	config.player_ship_texture = "res://assets/images/ships/no_such_ship.png"
-
-	assert_eq(config.resolved_player_ship_texture(),
-			LevelConfig.DEFAULT_PLAYER_SHIP_TEXTURE,
-			"missing paths fall back to the default")
-	assert_push_warning("no_such_ship", "missing configured ships warn once")
-
-	# Further resolutions stay defaulted but never re-warn.
-	assert_eq(config.resolved_player_ship_texture(),
-			LevelConfig.DEFAULT_PLAYER_SHIP_TEXTURE)
-
-	LevelConfig._warned_missing_player_ship = false
+	config.player_ship_texture = DEFAULT_SHIP_TEX
+	assert_eq(config.resolved_player_ship_texture(), DEFAULT_SHIP_TEX,
+			"valid configured textures pass through")
 
 
 func test_level_two_ships_the_variant_demo() -> void:
 	var level_two: LevelConfig = load(LEVEL_PATHS[1])
-	assert_eq(level_two.player_ship_texture,
-			"res://assets/images/ships/player_ship_alt.png",
+	assert_is(level_two.player_ship_texture, Texture2D,
 			"FR19.6: Level 2 demonstrates a variant ship")
-	assert_eq(level_two.resolved_player_ship_texture(),
-			"res://assets/images/ships/player_ship_alt.png")
+	assert_eq(level_two.resolved_player_ship_texture(), VARIANT_SHIP_TEX)
 
 
 ## FR9.3/NFR9.1: fraction and decimal rules must be Inspector-editable
@@ -276,3 +261,32 @@ func test_max_operand_option_overrides_strategy_difficulty_curve() -> void:
 		for operand_text in operands:
 			assert_lte(int(operand_text.strip_edges()), 5,
 				"pinned ceiling beats the difficulty curve")
+
+
+## Phase 21 FR21.8: the @export_enum dropdown on category_sequence must
+## match the canonical QuestionGenerator.DISPLAY_NAMES registry exactly, so
+## the Inspector can never offer a category the generator cannot dispatch.
+func test_category_sequence_enum_matches_canonical_registry() -> void:
+	var script: Script = load("res://scripts/level_config.gd")
+	var enum_list: Array = []
+	for prop in script.get_script_property_list():
+		if prop.name == "category_sequence":
+			# hint_string is "<element_type>:<comma-separated enum values>".
+			var hint: String = String(prop.hint_string)
+			var values: String = hint.substr(hint.find(":") + 1) if hint.contains(":") else hint
+			enum_list = values.split(",")
+			break
+	enum_list.sort()
+	var canonical: Array = QuestionGenerator.DISPLAY_NAMES.keys()
+	canonical.sort()
+	assert_eq(enum_list, canonical,
+			"FR21.8: the dropdown never offers an undispatchable category")
+
+
+func test_every_shipped_level_category_is_in_the_canonical_registry() -> void:
+	var canonical: Array = QuestionGenerator.DISPLAY_NAMES.keys()
+	for path in LEVEL_PATHS:
+		var config: LevelConfig = load(path)
+		for category in config.category_sequence:
+			assert_has(canonical, category,
+					"%s uses a dispatchable category (%s)" % [path, category])

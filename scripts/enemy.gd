@@ -63,12 +63,12 @@ func _ready() -> void:
 ## Sets category + linked question and swaps the sprite texture for the
 ## category (Phase 2 FR2.7 / Phase 3 FR3.6). `texture_override`
 ## (Phase 18 FR18.5) applies AFTER the category default so configured
-## per-wave images win; empty overrides change nothing.
-func setup(p_category: String, p_question: Dictionary, texture_override: String = "") -> void:
+## per-wave images win; null overrides change nothing (Phase 21 FR21.4).
+func setup(p_category: String, p_question: Dictionary, texture_override: Texture2D = null) -> void:
 	category = p_category
 	linked_question = p_question
 	_apply_category_texture()
-	if texture_override != "":
+	if texture_override != null:
 		_apply_override_texture(texture_override)
 
 
@@ -82,11 +82,10 @@ func _apply_category_texture() -> void:
 		_sprite.texture = load(path)
 
 
-func _apply_override_texture(path: String) -> void:
+func _apply_override_texture(texture: Texture2D) -> void:
 	if _sprite == null:
 		return
-	if ResourceLoader.exists(path):
-		_sprite.texture = load(path)
+	_sprite.texture = texture
 
 
 ## Destroys this enemy instance. Bullet-travel-then-destroy timing is

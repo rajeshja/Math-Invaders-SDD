@@ -136,7 +136,7 @@ func start_wave(category: String, wave_difficulty: int = -1) -> void:
 	_pending_hit_enemies.clear()
 	enemies_per_wave = GameConfig.get_enemies_per_wave()
 
-	var slot_overrides := _resolved_slot_paths(_texture_set_for_current_index())
+	var slot_overrides := _resolved_slot_textures(_texture_set_for_current_index())
 
 	for k in range(enemies_per_wave):
 		var enemy := enemy_scene.instantiate()
@@ -145,7 +145,7 @@ func start_wave(category: String, wave_difficulty: int = -1) -> void:
 		var question: Dictionary = question_generator.generate_question(category, difficulty, generation_options)
 		if enemy.has_method("setup"):
 			enemy.setup(category, question,
-					slot_overrides[k] if k < slot_overrides.size() else "")
+					slot_overrides[k] if k < slot_overrides.size() else null)
 
 	enemies_remaining = enemies_per_wave
 	wave_progress_updated.emit(current_category, enemies_remaining, enemies_per_wave)
@@ -162,24 +162,19 @@ func _texture_set_for_current_index() -> Array:
 	return element if element is Array else []
 
 
-## Resolves one path per spawn slot via the FR18.2 modulo rule, with the
+## Resolves one texture per spawn slot via the FR18.2 modulo rule, with the
 ## FR18.3 fallbacks: missing/empty entries fall back to the category
-## default (empty string), warning ONCE per unique bad path per wave.
-func _resolved_slot_paths(texture_set: Array) -> Array[String]:
-	var paths: Array[String] = []
+## default (null, so enemy.setup applies no override). Non-Texture2D
+## entries are dropped to null so bad authored data can never crash
+## spawning (Phase 21 FR21.4).
+func _resolved_slot_textures(texture_set: Array) -> Array[Texture2D]:
+	var textures: Array[Texture2D] = []
 	if texture_set.is_empty():
-		return paths
-	var warned := {}
+		return textures
 	for k in range(GameConfig.get_enemies_per_wave()):
 		var raw: Variant = texture_set[k % texture_set.size()]
-		var path := str(raw)
-		if path != "" and not ResourceLoader.exists(path):
-			if not warned.has(path):
-				warned[path] = true
-				push_warning("WaveManager: wave texture '%s' is missing; using the category default for those slots." % path)
-			path = ""
-		paths.append(path)
-	return paths
+		textures.append(raw if raw is Texture2D else null)
+	return textures
 
 
 ## Starts the first wave of the configured category_sequence. Convenience
