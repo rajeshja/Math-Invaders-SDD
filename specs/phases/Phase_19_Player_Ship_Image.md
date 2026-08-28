@@ -43,8 +43,8 @@ patterns reused).
     within one session as levels advance); returning to the Main Menu
     and starting another level applies that level's choice.
 -   FR19.6 --- Level authoring: at least one shipped level demonstrates
-    the feature with a real-or-placeholder variant; remaining levels
-    stay empty until art is supplied.
+    the feature with a real-or-placeholder variant; later levels may
+    carry their own custom ships.
 
 ### Non-Functional Requirements
 
@@ -103,11 +103,11 @@ texture intact (headless-safe using a tiny generated Texture2D).
   \#                      Scenario                Expected Result
   ----------------------- ----------------------- -------------------------------
   1                       Configure Level 2 with  Starting/advancing into Level 2
-                          a variant ship          shows the variant; Level 1
+                          a fighter ship         shows the fighter; Level 1
                                                   keeps the default ship
 
   2                       Fire and take hits      Muzzle position, fire flash,
-                          with the variant        hit flash, and bullets behave
+                          with the fighter        hit flash, and bullets behave
                           equipped                identically to the default ship
 
   3                       Game Over → Play Again  The session-start level's ship

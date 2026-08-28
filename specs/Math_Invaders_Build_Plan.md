@@ -532,8 +532,8 @@ configuration, and the roadmap is renumbered to fit it:
 3. **New Phases 17–19 (per-level configuration).** Phase 17 adds
    `points_per_question` per level (default 1). Phase 18 adds
    per-wave enemy image sets assigned cyclically by spawn slot
-   (`slot k → set[k mod set.size()]`; 10 slots / 3 images renders
-   ship1, ship2, ship3, ship1, … exactly). Phase 19 adds a per-level
+   (`slot k → set[k mod set.size()]`; 10 slots / 2 images renders
+   borg-1, borg-2, borg-1, borg-2, … exactly). Phase 19 adds a per-level
    player ship image. All live in `LevelConfig` resources; all are
    presentation/scoring only with safe fallbacks. Normative home:
    Spec §13.

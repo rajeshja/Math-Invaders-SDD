@@ -83,8 +83,8 @@ FR13.1/FR13.2 (answer-value model being reused).
     `enemy_ship_decimal_division.png` (96×96,
     placeholder-acceptable) are added under `assets/images/enemies/`
     and wired into `enemy.gd`'s texture map.
--   FR15.8 --- Level authoring: a level's `.tres` gains the four decimal
-    waves (recommended: Level 5), with `max_decimal_places = 1` on their
+-   FR15.8 --- Level authoring: a level's `.tres` gains decimal waves
+    (recommended: Level 5), with `max_decimal_places = 1` on their
     debut level rising on later levels. Final pacing/tuning belongs to
     Phase 20.
 

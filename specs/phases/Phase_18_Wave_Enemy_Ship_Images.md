@@ -3,8 +3,9 @@
 **Goal:** let each level configure which enemy ship images its waves
 use, per wave. When a wave is given multiple images, all 10 enemies of
 that wave use them **in order, cycling** --- e.g., a Wave 1 set of
-`ship1.png, ship2.png, ship3.png` renders the formation as
-`ship1, ship2, ship3, ship1, 2, 3, ship1, 2, 3, ship1`. When no set is
+`borg-1.png, borg-2.png` renders the formation as
+`borg-1, borg-2, borg-1, borg-2, borg-1, borg-2, borg-1, borg-2,
+borg-1, borg-2`. When no set is
 configured, the existing category sprite (`enemy_ship_addition.png`,
 etc.) is used exactly as today.
 
@@ -24,16 +25,16 @@ texture-swap mechanism this phase extends).
     `wave_enemy_textures: Array = []`, index-aligned with
     `category_sequence`: element `i` configures the images for the wave
     at `category_sequence[i]`. Each element is an Array of texture path
-    Strings (e.g., `["res://assets/images/enemies/ship1.png", ...]`);
+    Strings (e.g., `["res://assets/images/enemies/borg-1.png", ...]`);
     an empty element (or an empty outer array) means "no override" for
     that wave.
 -   FR18.2 --- **Ordering rule (authoritative, mirrors Spec §13):**
     within a configured wave, spawn slot `k` (0-based,
     `k < enemies_per_wave`) uses element `textures[k %
     textures.size()]` of that wave's set. With 10 enemies and a
-    3-image set this produces exactly:
-    `ship1, ship2, ship3, ship1, ship2, ship3, ship1, ship2, ship3,
-    ship1`. Slot order is the existing formation layout order (the
+    2-image set this produces exactly:
+    `borg-1, borg-2, borg-1, borg-2, borg-1, borg-2, borg-1, borg-2,
+    borg-1, borg-2`. Slot order is the existing formation layout order (the
     same index fed to `_formation_position`), so the pattern reads
     left-to-right, top-to-bottom across the triangle.
 -   FR18.3 --- Fallbacks are safe and non-crashing: a missing/empty set
@@ -58,9 +59,9 @@ texture-swap mechanism this phase extends).
     in one level may use completely different sets --- all supported by
     the modulo rule with zero special-casing.
 -   FR18.7 --- Level authoring: at least one shipped level `.tres`
-    demonstrates the feature (recommended: Level 1 Wave 1 uses the
-    user's exact three-image example); other levels keep empty arrays
-    until art is supplied. Placeholders follow Spec §7's
+    demonstrates the feature (recommended: Level 1 Wave 1 uses a
+    two-image set); later levels may carry their own per-wave sets.
+    Placeholders follow Spec §7's
     same-dimension placeholder rule.
 
 ### Non-Functional Requirements
@@ -118,7 +119,7 @@ alignment helper returns per-index sets including out-of-range indices →
 empty; malformed elements tolerated without crashing.
 
 **`test_wave_manager.gd` (extended)** --- using a recording enemy
-double: a 3-image set on a 10-enemy wave assigns textures in the exact
+double: a 2-image set on a 10-enemy wave assigns textures in the exact
 FR18.2 cyclic order (assert the full 10-element sequence); a 1-image set
 assigns it to all 10; an empty set assigns the category default to all
 10; a nonexistent path slot falls back to the default while other slots
@@ -133,8 +134,8 @@ set; `clear_all()` + restart uses the fresh session's sets.
   \#                      Scenario                Expected Result
   ----------------------- ----------------------- -------------------------------
   1                       Configure Level 1       The 10 ships render exactly in
-                          Wave 1 with ship1/2/3   the order ship1, 2, 3, 1, 2, 3,
-                          per FR18.2              1, 2, 3, 1 reading
+                          Wave 1 with borg-1/2    the order borg-1, 2, 1, 2, 1, 2,
+                          per FR18.2              1, 2, 1, 2 reading
                                                   left-to-right/top-to-bottom
 
   2                       Leave Wave 2            Wave 2 shows the standard

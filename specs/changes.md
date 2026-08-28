@@ -445,9 +445,9 @@ only, with safe fallbacks (Spec §13):
 - `points_per_question` (default 1, clamped ≥ 1) --- points awarded per
   correct answer in that level.
 - `wave_enemy_textures` --- index-aligned with `category_sequence`;
-  spawn slot `k` uses `set[k % set.size()]` (10 slots / 3 images renders
-  ship1, ship2, ship3, ship1, ship2, ship3, ship1, ship2, ship3,
-  ship1). Empty sets keep the category sprite.
+  spawn slot `k` uses `set[k % set.size()]` (10 slots / 2 images renders
+  borg-1, borg-2, borg-1, borg-2, borg-1, borg-2, borg-1, borg-2,
+  borg-1, borg-2). Empty sets keep the category sprite.
 - `player_ship_texture` (empty = default `player_ship.png`) applied at
   every level start, transition, and Play Again.
 

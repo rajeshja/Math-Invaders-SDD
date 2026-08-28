@@ -81,8 +81,9 @@ wiring), Phase 18 FRs 18.1--18.7, Phase 19 FRs 19.1--19.6.
     ```
     wave_enemy_textures = [Array[Texture2D]([ExtResource("2"), ExtResource("3"), ExtResource("4")])]
     ```
-    Level 1 keeps its three-image Wave 1 demo (FR18.7) and Level 2 keeps
-    its variant ship demo (FR19.6); all other levels stay unset.
+    Level 1 keeps its two-image Wave 1 demo (FR18.7) and Level 2 keeps
+    its fighter ship demo (FR19.6); later levels carry their own custom
+    ship and wave art.
 -   FR21.6 --- The default player ship is exposed as a preloaded
     `Texture2D` constant (`DEFAULT_PLAYER_SHIP_TEXTURE`) so
     `resolved_player_ship_texture()` needs no scene tree or filesystem
@@ -155,9 +156,9 @@ wiring), Phase 18 FRs 18.1--18.7, Phase 19 FRs 19.1--19.6.
     `Texture2D` (FR21.4).
 5.  **`main.gd`**: update the `_on_level_changed()` call site to pass the
     resolved `Texture2D` (FR21.4).
-6.  **Authoring**: re-save `level_1.tres` and `level_2.tres` with
-    `ExtResource` texture references (FR21.5); leave the other levels
-    unset.
+6.  **Authoring**: re-save the level `.tres` files with `ExtResource`
+    texture references (FR21.5): Level 1's two-image Wave 1 demo, Level
+    2's fighter ship, and each later level's custom ship + wave art.
 7.  **GUT tests** alongside steps 1--5 (see Testing Plan).
 
 ------------------------------------------------------------------------
@@ -171,8 +172,8 @@ empty; `resolved_player_ship_texture()` returns the default texture when
 unset and the configured texture when set; `resolved_wave_texture_sets()`
 returns per-index `Array[Texture2D]` including out-of-range indices →
 empty; malformed elements (non-`Texture2D` entries, non-Array elements)
-tolerated without crashing; Level 1's demo set holds three non-null
-`Texture2D` values; Level 2's ship resolves to the variant texture.
+tolerated without crashing; Level 1's demo set holds two non-null
+`Texture2D` values; Level 2's ship resolves to the fighter texture.
 
 **`test_wave_manager.gd` (updated)** --- using a recording enemy double
 with `Texture2D` values: a 3-texture set on a 10-enemy wave assigns
@@ -202,11 +203,11 @@ can never offer an undispatchable category; every shipped level's
   ----------------------- ----------------------- -------------------------------
   1                       Open Level 1 in the     `wave_enemy_textures` shows a
                           Inspector               texture picker (preview) for
-                                                  each of the three Wave 1
+                                                  each of the two Wave 1
                                                   images; no free-text path field
 
   2                       Open Level 2 in the     `player_ship_texture` shows a
-                          Inspector               texture picker with the variant
+                          Inspector               texture picker with the fighter
                                                   ship preview; unset levels show
                                                   an empty picker
 

@@ -110,10 +110,10 @@ func test_level_five_config_carries_prime_then_decimal_waves_and_budget() -> voi
 	_advance_to_level(5)
 
 	var handed: Array = _last_sequence()
-	assert_eq(handed[4], "prime", "prime keeps its fifth-wave slot")
-	assert_eq(handed.back(), "decimal_division",
+	assert_eq(handed[3], "prime", "prime keeps its fourth-wave slot")
+	assert_eq(handed.back(), "decimal_subtraction",
 			"Phase 15 FR15.8: decimal waves close the level")
-	assert_eq(GameManager.level_time_limit, 270.0, "nine-wave budget from the resource")
+	assert_eq(GameManager.level_time_limit, 270.0, "six-wave budget from the resource")
 
 
 func test_levels_beyond_defined_set_reuse_last_config_and_keep_climbing() -> void:

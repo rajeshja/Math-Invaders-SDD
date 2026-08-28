@@ -16,6 +16,7 @@ const SHIP2_TEX: Texture2D = preload("res://assets/images/enemies/ship2.png")
 const SHIP3_TEX: Texture2D = preload("res://assets/images/enemies/ship3.png")
 const DEFAULT_SHIP_TEX: Texture2D = preload("res://assets/images/ships/player_ship.png")
 const VARIANT_SHIP_TEX: Texture2D = preload("res://assets/images/ships/player_ship_alt.png")
+const FIGHTER_SHIP_TEX: Texture2D = preload("res://assets/images/ships/fighter-1.png")
 
 
 func test_every_registered_level_resource_loads_as_level_config() -> void:
@@ -42,22 +43,17 @@ func test_each_config_supplies_valid_gameplay_parameters() -> void:
 		assert_false(config.category_sequence.is_empty(), "%s defines waves" % path)
 
 
-func test_levels_one_two_and_four_keep_base_integer_rotation_budget() -> void:
+func test_levels_one_and_two_keep_base_integer_rotation_budget() -> void:
 	var expected: Array[String] = [
 		"integer_addition", "integer_subtraction", "integer_multiplication", "integer_division"
 	]
-	# Levels 1-2 stay pure-integer on the base budget; level 4 grew fraction
-	# waves (see the dedicated tests below) but keeps them appended after
-	# the unchanged integer rotation.
+	# Levels 1-2 stay pure-integer on the base budget; later levels grow
+	# fraction/decimal waves (see the dedicated tests below).
 	for level in [1, 2]:
 		var config: LevelConfig = load(LEVEL_PATHS[level - 1])
 		assert_eq(config.category_sequence, expected,
 			"level %d keeps the Phase 6 four-category rotation" % level)
 		assert_eq(config.time_limit_seconds, 120.0)
-
-	var level_four: LevelConfig = load(LEVEL_PATHS[3])
-	assert_eq(level_four.category_sequence.slice(0, 4), expected,
-			"level 4 keeps the integer rotation up front")
 
 
 ## Phase 13 FR13.11: Level 3 debuts the fraction categories appended after
@@ -65,9 +61,9 @@ func test_levels_one_two_and_four_keep_base_integer_rotation_budget() -> void:
 func test_level_three_debuts_fraction_waves_with_unlike_denominators_gated_off() -> void:
 	var config: LevelConfig = load(LEVEL_PATHS[2])
 
-	assert_eq(config.category_sequence.size(), 6)
-	assert_eq(config.category_sequence[4], "fraction_addition")
-	assert_eq(config.category_sequence[5], "fraction_subtraction")
+	assert_eq(config.category_sequence.size(), 4)
+	assert_eq(config.category_sequence[2], "fraction_addition")
+	assert_eq(config.category_sequence[3], "fraction_subtraction")
 	assert_false(config.allow_unlike_denominators,
 			"debut level serves Tier 1/2 like-denominator content first")
 	assert_gt(config.time_limit_seconds, 120.0,
@@ -77,8 +73,8 @@ func test_level_three_debuts_fraction_waves_with_unlike_denominators_gated_off()
 func test_level_four_enables_unlike_denominators_for_fraction_waves() -> void:
 	var config: LevelConfig = load("res://resources/levels/level_4.tres")
 
-	assert_eq(config.category_sequence[4], "fraction_addition")
-	assert_eq(config.category_sequence[5], "fraction_subtraction")
+	assert_eq(config.category_sequence[1], "fraction_addition")
+	assert_eq(config.category_sequence[2], "fraction_subtraction")
 	assert_true(config.allow_unlike_denominators,
 			"a later level turns unlike denominators on")
 
@@ -91,13 +87,13 @@ func test_level_five_keeps_prime_once_then_appends_decimal_waves() -> void:
 		if category == "prime":
 			prime_count += 1
 	assert_eq(prime_count, 1)
-	# Phase 15 FR15.8: the four decimal waves ride after the original five.
-	assert_eq(config.category_sequence.size(), 9)
-	assert_eq(config.category_sequence[4], "prime")
-	assert_eq(config.category_sequence[5], "decimal_addition")
-	assert_eq(config.category_sequence.back(), "decimal_division")
+	# Phase 15 FR15.8: the decimal waves ride after the fraction/prime waves.
+	assert_eq(config.category_sequence.size(), 6)
+	assert_eq(config.category_sequence[3], "prime")
+	assert_eq(config.category_sequence[4], "decimal_addition")
+	assert_eq(config.category_sequence.back(), "decimal_subtraction")
 	assert_eq(config.time_limit_seconds, 270.0,
-			"nine waves extend the budget from the five-wave baseline")
+			"six waves extend the budget from the four-wave baseline")
 
 
 func test_level_five_debuts_decimals_with_one_decimal_place() -> void:
@@ -206,12 +202,12 @@ func test_wave_enemy_textures_typed_array_enforces_valid_entries() -> void:
 	assert_eq(sets[2].size(), 0)
 
 
-func test_level_one_ships_the_three_image_demo() -> void:
+func test_level_one_ships_the_two_image_demo() -> void:
 	var level_one: LevelConfig = load(LEVEL_PATHS[0])
 	assert_eq(level_one.wave_enemy_textures.size(), 1,
-			"FR18.7: Wave 1 demonstrates the three-image set")
+			"FR18.7: Wave 1 demonstrates the two-image set")
 	var wave_one_set: WaveVisualSet = level_one.wave_enemy_textures[0]
-	assert_eq(wave_one_set.textures.size(), 3)
+	assert_eq(wave_one_set.textures.size(), 2)
 	for texture in wave_one_set.textures:
 		assert_is(texture, Texture2D, "demo placeholder art is a Texture2D")
 
@@ -233,11 +229,11 @@ func test_player_ship_resolution_returns_valid_configured_texture() -> void:
 			"valid configured textures pass through")
 
 
-func test_level_two_ships_the_variant_demo() -> void:
+func test_level_two_ships_the_fighter_demo() -> void:
 	var level_two: LevelConfig = load(LEVEL_PATHS[1])
 	assert_is(level_two.player_ship_texture, Texture2D,
-			"FR19.6: Level 2 demonstrates a variant ship")
-	assert_eq(level_two.resolved_player_ship_texture(), VARIANT_SHIP_TEX)
+			"FR19.6: Level 2 demonstrates a custom ship")
+	assert_eq(level_two.resolved_player_ship_texture(), FIGHTER_SHIP_TEX)
 
 
 ## FR9.3/NFR9.1: fraction and decimal rules must be Inspector-editable

@@ -649,10 +649,10 @@ difficulty, lives, or timing.
   paths). Empty element = use that wave's category sprite as before.
 - **Ordering rule:** within a configured wave, spawn slot *k*
   (0-based formation order) uses `textures[k % textures.size()]`.
-  Example --- Level 1 Wave 1 configured with `ship1.png`, `ship2.png`,
-  `ship3.png` renders its 10 enemies exactly as:
-  `ship1, ship2, ship3, ship1, ship2, ship3, ship1, ship2, ship3,
-  ship1`.
+  Example --- Level 1 Wave 1 configured with `borg-1.png`, `borg-2.png`
+  renders its 10 enemies exactly as:
+  `borg-1, borg-2, borg-1, borg-2, borg-1, borg-2, borg-1, borg-2,
+  borg-1, borg-2`.
 - A set of one image repeats it for all 10; duplicate entries are
   allowed; different waves may use entirely different sets.
 - Missing/invalid paths warn once per wave and fall back to the
