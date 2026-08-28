@@ -408,6 +408,8 @@ Balancing" now mean **Phase 25**; the old Phase 13 Stretch section is
 revision inserted **Phase 20 — Fraction Question & Answer Layout Fix**
 between Phase 19 and playtesting, and renumbered playtesting from
 Phase 20 to Phase 25 (Phases 21--24 reserved for further improvements).
+A later revision assigned **Phase 21 — Native Inspector Image Selection**
+(Phases 22--24 remain reserved).
 
 ### 1. Strategy renaming (Phase 12)
 
@@ -460,4 +462,5 @@ only, with safe fallbacks (Spec §13):
 - [ ] Phase 18: `wave_enemy_textures` cyclic assignment end-to-end.
 - [ ] Phase 19: `player_ship_texture` end-to-end.
 - [ ] Phase 20: center stacked-fraction questions/answers; enlarge the question area; remove overlap with the answer grid.
+- [ ] Phase 21: convert `wave_enemy_textures` / `player_ship_texture` to native `Texture2D` Inspector pickers (no path typing).
 - [ ] Phase 25: playtest the expanded game; full GUT suite green.
