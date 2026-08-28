@@ -59,8 +59,8 @@ texture-swap mechanism this phase extends).
     in one level may use completely different sets --- all supported by
     the modulo rule with zero special-casing.
 -   FR18.7 --- Level authoring: at least one shipped level `.tres`
-    demonstrates the feature (recommended: Level 1 Wave 1 uses a
-    two-image set); later levels may carry their own per-wave sets.
+    demonstrates the feature (recommended: Level 1 Wave 1 uses 4
+    two-image sets).
     Placeholders follow Spec §7's
     same-dimension placeholder rule.
 

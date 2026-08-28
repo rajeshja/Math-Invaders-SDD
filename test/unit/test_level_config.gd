@@ -204,7 +204,7 @@ func test_wave_enemy_textures_typed_array_enforces_valid_entries() -> void:
 
 func test_level_one_ships_the_two_image_demo() -> void:
 	var level_one: LevelConfig = load(LEVEL_PATHS[0])
-	assert_eq(level_one.wave_enemy_textures.size(), 1,
+	assert_eq(level_one.wave_enemy_textures.size(), 4,
 			"FR18.7: Wave 1 demonstrates the two-image set")
 	var wave_one_set: WaveVisualSet = level_one.wave_enemy_textures[0]
 	assert_eq(wave_one_set.textures.size(), 2)
