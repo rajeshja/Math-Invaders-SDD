@@ -464,3 +464,28 @@ only, with safe fallbacks (Spec §13):
 - [ ] Phase 20: center stacked-fraction questions/answers; enlarge the question area; remove overlap with the answer grid.
 - [ ] Phase 21: convert `wave_enemy_textures` / `player_ship_texture` to native `Texture2D` Inspector pickers and `category_sequence` to an `@export_enum` dropdown (no path/category typing).
 - [ ] Phase 25: playtest the expanded game; full GUT suite green.
+
+## Presentation Fixes Revision (Starfield Direction & Lives Placement)
+
+Two presentational fixes (no gameplay state/logic changes; NFR9.1 applies):
+
+1. **Starfield scroll direction.** The parallax starfield
+   (`StarfieldScroll.gd`, Phase 10 FR9.2) must scroll **downward** --- the
+   region offset decreases over time so stars stream past the camera
+   toward the bottom of the screen, matching the player ship's
+   forward/upward motion. The original implementation scrolled upward,
+   which made the ships look like they were flying backward.
+   - Normative home: Spec §2 "Background"; Tech Stack §7; Phase 10 FR9.2.
+   - Code: `scripts/starfield_scroll.gd` (`_advance` uses
+     `fposmod(offset - speed * delta, TEXTURE_HEIGHT)`).
+
+2. **Lives display placement.** The HUD's `LivesDisplay` (repeated
+   `life_icon.png` mini-ships) sits in the **bottom-left** corner of the
+   screen, clear of the enemy formation. It must never overlap the top
+   row of the inverted-triangle formation (the original top-right
+   placement overlapped the top-row enemies at 720×1280). On mobile it
+   insets away from the left rounded corner and the home-indicator region
+   instead of the top notch.
+   - Normative home: Spec §2 "HUD" and §6; Tech Stack §2/§7.
+   - Code: `scenes/hud.tscn` (`LivesDisplay` at bottom-left) and
+     `scripts/hud.gd` (`_apply_safe_area`).

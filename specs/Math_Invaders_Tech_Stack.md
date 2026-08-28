@@ -412,7 +412,11 @@ the project.
 -   `Background` node uses `background_space.png` as a full-screen
     `TextureRect`/`Sprite2D`, with `starfield_overlay.png` layered above
     it (optionally animated via a slow `AnimationPlayer` scroll or
-    `Sprite2D` offset tween for parallax).
+    `Sprite2D` offset tween for parallax). The starfield must scroll
+    **downward** (decreasing region offset) so the stars stream past the
+    camera toward the bottom of the screen, matching the player ship's
+    forward/upward motion; scrolling upward makes the ships look like they
+    are flying backward.
 
 ### Import Settings
 

@@ -6,6 +6,11 @@
 ## repeat enabled), which loops seamlessly without any sprite juggling.
 ## Two layers at different speeds + opacities give the parallax feel.
 ## Purely presentational.
+##
+## The region offset DECREASES over time so the starfield appears to
+## stream DOWNWARD past the camera, matching the player ship's forward
+## (upward) motion. Scrolling the other way makes the ships look like
+## they are flying backward.
 class_name StarfieldScroll
 extends Node2D
 
@@ -30,6 +35,6 @@ func _process(delta: float) -> void:
 func _advance(layer: Sprite2D, offset: float, speed: float, delta: float) -> float:
 	if layer == null or layer.texture == null:
 		return offset
-	offset = fposmod(offset + speed * delta, TEXTURE_HEIGHT)
+	offset = fposmod(offset - speed * delta, TEXTURE_HEIGHT)
 	layer.region_rect = Rect2(0, offset, TEXTURE_WIDTH, TEXTURE_HEIGHT)
 	return offset

@@ -100,7 +100,10 @@ control exactly which math skill is being practiced at any moment.
     └──────────────────────────────┘
 
 -   **Background:** Near-black / dark navy scene with a sparse,
-    slowly-parallaxing starfield.
+    slowly-parallaxing starfield. The starfield scrolls **downward**
+    (stars stream past the camera toward the bottom of the screen),
+    matching the player ship's forward/upward motion; scrolling the
+    other way makes the ships look like they are flying backward.
 -   **Player ship:** Fixed horizontal position near the bottom, above
     the question panel; visually fires when a correct answer is chosen.
 -   **Enemies:** All 10 enemies for the current wave spawn together at
@@ -121,7 +124,10 @@ control exactly which math skill is being practiced at any moment.
 -   **HUD (top of screen):**
     -   Score
     -   **Level** (new)
-    -   **Lives**
+    -   **Lives** --- rendered as repeated `life_icon.png` mini-ships in
+        the **bottom-left** corner of the screen, clear of the enemy
+        formation (the top row of the inverted triangle must never
+        overlap the lives display)
     -   **Time remaining in the level** (new)
     -   **Current wave category + enemies remaining in the wave** (e.g.,
         "Subtraction 6/10 remaining") (new)
@@ -271,7 +277,9 @@ top of screen 2. **Level** --- current level number 3. **Wave category +
 enemies remaining** --- e.g., "Multiplication 7/10 remaining", so the
 player knows what skill they're practicing and can see, both in the HUD
 text and in the shrinking enemy formation, how far through the current
-wave they are 4. **Lives** --- remaining lives 5. **Time remaining** ---
+wave they are 4. **Lives** --- remaining lives, shown as repeated
+`life_icon.png` mini-ships in the **bottom-left** corner of the screen
+(never overlapping the enemy formation) 5. **Time remaining** ---
 the current level's countdown, always matching
 `GameManager.time_remaining`. Wrong-answer feedback is shown on the tapped
 answer button by a brief red flash plus the active enemy firing a bullet at

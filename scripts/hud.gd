@@ -36,14 +36,16 @@ func _ready() -> void:
 ## Phase 11 FR10.4: on mobile devices, shift the top HUD out of notch /
 ## rounded-corner / camera-cut regions so it is never obscured. No-op on
 ## desktop (SafeArea returns zero insets there), keeping editor behavior
-## unchanged.
+## unchanged. LivesDisplay is the exception: it sits at the bottom-left
+## (clear of the enemy formation), so it insets away from the left rounded
+## corner and the home-indicator region instead of the top notch.
 func _apply_safe_area() -> void:
 	var insets := SafeArea.get_canvas_insets(self)
 	if insets.left == 0.0 and insets.top == 0.0 \
 			and insets.right == 0.0 and insets.bottom == 0.0:
 		return
 	for child in get_children():
-		if child is Control:
+		if child is Control and child != _lives_display:
 			child.offset_top += insets.top
 			child.offset_bottom += insets.top
 	_score_label.offset_left += insets.left
@@ -52,8 +54,10 @@ func _apply_safe_area() -> void:
 	_wave_progress_label.offset_right -= insets.right
 	_level_label.offset_left -= insets.right
 	_level_label.offset_right -= insets.right
-	_lives_display.offset_left -= insets.right
-	_lives_display.offset_right -= insets.right
+	_lives_display.offset_left += insets.left
+	_lives_display.offset_right += insets.left
+	_lives_display.offset_top -= insets.bottom
+	_lives_display.offset_bottom -= insets.bottom
 
 
 func _process(_delta: float) -> void:

@@ -27,7 +27,10 @@ playtesting).
     behavior used since Phase 1.
 -   FR9.2 --- The static background from Phase 1 is replaced by
     `starfield_overlay.png` layered above `background_space.png`,
-    animated with a slow scroll/parallax effect, per Tech Stack §7.
+    animated with a slow scroll/parallax effect, per Tech Stack §7. The
+    starfield scrolls **downward** (stars stream toward the bottom of
+    the screen) so the ships appear to fly forward; scrolling upward
+    makes them look like they are flying backward.
 -   FR9.3 --- Taking damage from a wrong answer (i.e.,
     `GameManager.take_damage()` firing, per Phase 4) triggers a
     screen-shake and/or flash visual effect. The enemy-fire animation,
