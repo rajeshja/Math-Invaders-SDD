@@ -181,7 +181,9 @@ func test_wave_enemy_textures_default_empty_and_align() -> void:
 func test_wave_enemy_textures_partial_configuration_pads_with_empty() -> void:
 	var config := LevelConfig.new()
 	config.category_sequence = ["a", "b", "c"] as Array[String]
-	config.wave_enemy_textures = [[SHIP1_TEX]]
+	var set := WaveVisualSet.new()
+	set.textures = [SHIP1_TEX]
+	config.wave_enemy_textures = [set]
 
 	var sets: Array = config.resolved_wave_texture_sets()
 	assert_eq(sets[0].size(), 1)
@@ -190,19 +192,17 @@ func test_wave_enemy_textures_partial_configuration_pads_with_empty() -> void:
 	assert_eq(sets[2].size(), 0)
 
 
-func test_wave_enemy_textures_tolerates_malformed_elements() -> void:
+func test_wave_enemy_textures_typed_array_enforces_valid_entries() -> void:
 	var config := LevelConfig.new()
 	config.category_sequence = ["a", "b", "c"] as Array[String]
-	config.wave_enemy_textures = [
-		"not_an_array",                       # whole element malformed
-		[SHIP1_TEX, 42, "", null],            # mixed junk entries
-		{"dict": true},
-	]
+	var set := WaveVisualSet.new()
+	set.textures = [SHIP1_TEX]
+	config.wave_enemy_textures = [set]
 
 	var sets: Array = config.resolved_wave_texture_sets()
-	assert_eq(sets[0].size(), 0, "non-array elements resolve empty")
-	assert_eq(sets[1].size(), 1, "only valid Texture2D entries survive")
-	assert_eq(sets[1][0], SHIP1_TEX)
+	assert_eq(sets[0].size(), 1, "valid Texture2D entries survive")
+	assert_eq(sets[0][0], SHIP1_TEX)
+	assert_eq(sets[1].size(), 0, "unconfigured later waves stay default")
 	assert_eq(sets[2].size(), 0)
 
 
@@ -210,9 +210,9 @@ func test_level_one_ships_the_three_image_demo() -> void:
 	var level_one: LevelConfig = load(LEVEL_PATHS[0])
 	assert_eq(level_one.wave_enemy_textures.size(), 1,
 			"FR18.7: Wave 1 demonstrates the three-image set")
-	var wave_one_set: Array = level_one.wave_enemy_textures[0]
-	assert_eq(wave_one_set.size(), 3)
-	for texture in wave_one_set:
+	var wave_one_set: WaveVisualSet = level_one.wave_enemy_textures[0]
+	assert_eq(wave_one_set.textures.size(), 3)
+	for texture in wave_one_set.textures:
 		assert_is(texture, Texture2D, "demo placeholder art is a Texture2D")
 
 

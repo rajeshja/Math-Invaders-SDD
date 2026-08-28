@@ -7,5 +7,4 @@
 script = ExtResource("1")
 level_number = 2
 difficulty = 2
-wave_enemy_textures = [null, null, null, null]
 player_ship_texture = ExtResource("1_or7n4")

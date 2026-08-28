@@ -72,14 +72,14 @@ const LEVEL_RESOURCE_PATHS: Array[String] = [
 
 @export_group("Wave Visuals")
 ## Per-wave enemy image overrides (Phase 18 FR18.1), index-aligned with
-## category_sequence: element i lists Texture2D images for the wave at
+## category_sequence: element i is a WaveVisualSet for the wave at
 ## category_sequence[i]. Within a wave, spawn slot k uses element
-## k % set.size() (cycling). Empty outer array / empty elements mean "use
-## the category default sprite". Each inner element is edited through a
-## native texture picker (Phase 21 FR21.2). The outer array is untyped
-## because Godot does not support nested typed collections
-## (Array[Array[Texture2D]]); each inner element is an Array[Texture2D].
-@export var wave_enemy_textures: Array = []
+## k % set.textures.size() (cycling). Empty outer array / empty set
+## textures mean "use the category default sprite". Each set is edited
+## through a native texture picker (Phase 21 FR21.2). A custom Resource
+## (not Array[Array[Texture2D]]) is used because Godot does not support
+## nested typed collections.
+@export var wave_enemy_textures: Array[WaveVisualSet] = []
 
 ## Player ship image override (Phase 19 FR19.1): null keeps the default
 ## ship; a configured texture is used as-is (Phase 21 FR21.1). Edited
@@ -102,14 +102,14 @@ func resolved_player_ship_texture() -> Texture2D:
 
 ## Normalized per-index texture sets (FR18.1 / Phase 21 FR21.3): one
 ## Array[Texture2D] per wave, empty when unset; malformed elements
-## (non-Texture2D entries, non-Array elements) are tolerated by being
-## dropped, so bad authored data can never crash spawning.
+## (non-Texture2D entries, non-WaveVisualSet elements) are tolerated by
+## being dropped, so bad authored data can never crash spawning.
 func resolved_wave_texture_sets() -> Array:
 	var sets: Array = []
 	for i in range(category_sequence.size()):
 		var normalized: Array[Texture2D] = []
-		if i < wave_enemy_textures.size() and wave_enemy_textures[i] is Array:
-			for entry in wave_enemy_textures[i]:
+		if i < wave_enemy_textures.size() and wave_enemy_textures[i] is WaveVisualSet:
+			for entry in wave_enemy_textures[i].textures:
 				if entry is Texture2D:
 					normalized.append(entry)
 		sets.append(normalized)
