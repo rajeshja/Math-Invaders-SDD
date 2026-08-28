@@ -17,7 +17,7 @@
 
 [node name="Main" type="Node2D" unique_id=1380769716]
 script = ExtResource("1")
-debug_start_level = 3
+debug_start_level = 2
 
 [node name="Background" type="Node2D" parent="." unique_id=1898497113]
 script = ExtResource("11")

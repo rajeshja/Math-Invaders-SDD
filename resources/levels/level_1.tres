@@ -1,10 +1,8 @@
 [gd_resource type="Resource" script_class="LevelConfig" format=3 uid="uid://1bhebifar4wk"]
 
 [ext_resource type="Script" uid="uid://b6v02c3iv0vkv" path="res://scripts/level_config.gd" id="1"]
-[ext_resource type="Texture2D" uid="uid://lwhehu3ru0el" path="res://assets/images/enemies/ship1.png" id="2"]
-[ext_resource type="Texture2D" uid="uid://c13d6dgkkrgbi" path="res://assets/images/enemies/ship2.png" id="3"]
-[ext_resource type="Texture2D" uid="uid://bns7m2jx3dw6y" path="res://assets/images/enemies/ship3.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://chlk3bs2qnw8" path="res://assets/images/ships/fighter-1.png" id="1_8dpr2"]
 
 [resource]
 script = ExtResource("1")
-wave_enemy_textures = [Array[Texture2D]([ExtResource("2"), ExtResource("3"), ExtResource("4")])]
+player_ship_texture = ExtResource("1_8dpr2")

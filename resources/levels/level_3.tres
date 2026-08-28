@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="LevelConfig" format=3 uid="uid://dvbt6kyg83ssk"]
 
 [ext_resource type="Script" uid="uid://b6v02c3iv0vkv" path="res://scripts/level_config.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://bw7hv33qjqdp2" path="res://assets/images/ships/blaster-5.png" id="1_onuep"]
 
 [resource]
 script = ExtResource("1")
@@ -10,3 +11,4 @@ difficulty = 3
 max_operand_size = 50
 time_limit_seconds = 160.0
 points_per_question = 2
+player_ship_texture = ExtResource("1_onuep")
