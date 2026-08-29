@@ -249,3 +249,49 @@ func test_reset_session_emits_each_hud_signal_exactly_once() -> void:
 	assert_signal_emit_count(fresh, "score_changed", 1)
 	assert_signal_emit_count(fresh, "lives_changed", 1)
 	assert_signal_emit_count(fresh, "time_changed", 1)
+
+
+## -- Phase 24: wave-transition timer freeze -----------------------------------
+
+func test_tick_is_a_noop_while_transitioning() -> void:
+	manager.start_level_timer(120.0)
+	manager.set_transition_active(true)
+
+	manager.tick(10.0)
+
+	assert_eq(manager.time_remaining, 120.0,
+			"FR24.5: the level timer must not tick during a wave transition")
+	assert_false(manager.is_game_over())
+
+
+func test_timer_resumes_after_transition_ends() -> void:
+	manager.start_level_timer(120.0)
+	manager.set_transition_active(true)
+	manager.tick(10.0)
+	assert_eq(manager.time_remaining, 120.0)
+
+	manager.set_transition_active(false)
+	manager.tick(10.0)
+
+	assert_eq(manager.time_remaining, 110.0,
+			"the timer resumes exactly when the transition clears")
+
+
+func test_time_remaining_unchanged_across_a_simulated_transition() -> void:
+	manager.start_level_timer(120.0)
+	manager.set_transition_active(true)
+	# Simulate the full pause + 4-row arrival.
+	manager.tick(2.0)
+	manager.tick(2.0)
+	manager.set_transition_active(false)
+
+	assert_eq(manager.time_remaining, 120.0,
+			"time_remaining is unchanged across the entire transition")
+
+
+func test_reset_session_clears_the_transition_flag() -> void:
+	manager.set_transition_active(true)
+	manager.reset_session()
+
+	assert_false(manager.transitioning,
+			"a fresh session must not inherit a frozen timer")

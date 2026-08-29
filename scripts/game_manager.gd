@@ -34,6 +34,11 @@ var time_remaining: float = 0.0
 var game_state: GameState = GameState.PLAYING
 var last_game_over_reason: GameOverReason = GameOverReason.NONE
 
+## Phase 24 FR24.5: while true, tick() is a no-op so the level timer is
+## frozen for the entire wave transition (pause + row-by-row arrival).
+## Driven by WaveManager via set_transition_active().
+var transitioning: bool = false
+
 ## Phase 9 hand-off from the Main Menu (FR9.6): the level the player chose
 ## to start at, consumed (and reset to 0) by Main.gd when the game scene
 ## loads. 0 means "no explicit selection - start at Level 1".
@@ -55,6 +60,7 @@ func reset_session(starting_score: int = 0) -> void:
 	time_remaining = level_time_limit
 	game_state = GameState.PLAYING
 	last_game_over_reason = GameOverReason.NONE
+	transitioning = false
 	score_changed.emit(score)
 	lives_changed.emit(lives)
 	time_changed.emit(time_remaining)
@@ -66,7 +72,16 @@ func start_level_timer(limit: float) -> void:
 	time_changed.emit(time_remaining)
 
 
+## Phase 24 FR24.5: freezes/resumes the level timer around a wave
+## transition. While active, tick() returns early so time_remaining is
+## unchanged across the pause and the arrival animation.
+func set_transition_active(active: bool) -> void:
+	transitioning = active
+
+
 func tick(delta: float) -> void:
+	if transitioning:
+		return
 	if game_state != GameState.PLAYING:
 		return
 	if time_remaining <= 0.0:

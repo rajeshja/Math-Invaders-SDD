@@ -20,6 +20,21 @@ func before_each() -> void:
 	wave_manager.enemy_scene = partial_double(EnemyScene)
 
 
+## Phase 24: drives a wave-clear transition to completion - the configured
+## completion pause, then the full 4-row arrival. Mirrors what the game's
+## _process() does frame by frame, but deterministically (NFR24.1).
+func _complete_transition() -> void:
+	wave_manager.tick(GameConfig.get_wave_complete_pause_seconds() + 0.001)
+	wave_manager.tick(
+			WaveManagerScript.ROW_ARRIVAL_SECONDS * WaveManagerScript.FORMATION_ROW_COUNTS.size())
+
+
+## Phase 24: advances a transition through its completion pause only, so the
+## next wave has spawned but its rows have not yet arrived.
+func _complete_pause_only() -> void:
+	wave_manager.tick(GameConfig.get_wave_complete_pause_seconds() + 0.001)
+
+
 func test_wave_start_spawns_exactly_ten_enemies() -> void:
 	wave_manager.start_wave("integer_addition")
 	assert_eq(enemies_container.get_child_count(), 10, "start_wave should spawn exactly 10 enemies")
@@ -44,14 +59,17 @@ func test_category_sequencing_advances_in_defined_order() -> void:
 
 	for i in range(10):
 		wave_manager.on_correct_answer()
+	_complete_transition()
 	assert_eq(wave_manager.current_category, "integer_subtraction", "sequence should advance addition -> subtraction")
 
 	for i in range(10):
 		wave_manager.on_correct_answer()
+	_complete_transition()
 	assert_eq(wave_manager.current_category, "integer_multiplication", "sequence should advance subtraction -> multiplication")
 
 	for i in range(10):
 		wave_manager.on_correct_answer()
+	_complete_transition()
 	assert_eq(wave_manager.current_category, "integer_division", "sequence should advance multiplication -> division")
 
 
@@ -62,6 +80,7 @@ func test_sequence_does_not_skip_or_repeat_out_of_order() -> void:
 	for wave_index in range(3):
 		for i in range(10):
 			wave_manager.on_correct_answer()
+		_complete_transition()
 		seen_order.append(wave_manager.current_category)
 	assert_eq(seen_order, ["integer_addition", "integer_subtraction", "integer_multiplication", "integer_division"])
 
@@ -232,6 +251,7 @@ func test_fresh_set_of_ten_spawns_on_wave_clear() -> void:
 
 	for i in range(10):
 		wave_manager.on_correct_answer()
+	_complete_transition()
 
 	assert_eq(enemies_container.get_child_count(), 10, "a fresh set of 10 should spawn after wave clear")
 	var second_wave_ids: Array = []
@@ -333,6 +353,7 @@ func test_advancing_waves_pick_the_next_index_set() -> void:
 			"wave 1 uses the first set's cycle")
 	for i in range(10):
 		wave_manager.on_correct_answer()
+	_complete_transition()
 
 	assert_eq(wave_manager.current_category, "integer_subtraction")
 	var second_wave := _spawned_texture_paths()
@@ -349,3 +370,124 @@ func test_clear_all_resets_stored_sets() -> void:
 	for path in _spawned_texture_paths():
 		assert_eq(path, DEFAULT_SUBTRACTION_TEX.resource_path,
 			"cleared sessions cannot leak the previous level's art")
+
+
+## -- Phase 24: wave transition & row-by-row arrival --------------------------
+
+func _visible_count() -> int:
+	var count := 0
+	for enemy in enemies_container.get_children():
+		if enemy.modulate.a >= 1.0:
+			count += 1
+	return count
+
+
+func _clear_wave() -> void:
+	for i in range(10):
+		wave_manager.on_correct_answer()
+
+
+func test_wave_clear_freezes_timer_and_enters_pausing_state() -> void:
+	wave_manager.start_wave("integer_addition")
+	_clear_wave()
+
+	assert_true(GameManager.transitioning,
+			"FR24.5: the level timer must be frozen during the transition")
+	assert_eq(wave_manager._transition_state, wave_manager.TransitionState.PAUSING,
+			"a cleared wave enters the completion-pause state first")
+
+
+func test_transition_waits_configured_pause_before_spawning_next_wave() -> void:
+	wave_manager.start_first_wave()
+	_clear_wave()
+	var pause: float = GameConfig.get_wave_complete_pause_seconds()
+
+	wave_manager.tick(pause - 0.1)
+	assert_eq(wave_manager.current_category, "integer_addition",
+			"the next wave must not spawn before the pause elapses")
+	assert_eq(enemies_container.get_child_count(), 0,
+			"no enemies exist during the pause")
+
+	wave_manager.tick(0.2)
+	assert_eq(wave_manager.current_category, "integer_subtraction",
+			"the next wave spawns once the pause elapses")
+	assert_eq(enemies_container.get_child_count(), 10)
+
+
+func test_rows_arrive_in_order_with_row_arrival_seconds_spacing() -> void:
+	wave_manager.start_wave("integer_addition")
+	_clear_wave()
+	_complete_pause_only()
+
+	assert_eq(_visible_count(), 0, "all enemies are hidden when the arrival begins")
+
+	wave_manager.tick(WaveManagerScript.ROW_ARRIVAL_SECONDS)
+	assert_eq(_visible_count(), 4, "row 0 (the 4-wide back row) arrives first")
+
+	wave_manager.tick(WaveManagerScript.ROW_ARRIVAL_SECONDS)
+	assert_eq(_visible_count(), 7, "row 1 (3-wide) arrives second")
+
+	wave_manager.tick(WaveManagerScript.ROW_ARRIVAL_SECONDS)
+	assert_eq(_visible_count(), 9, "row 2 (2-wide) arrives third")
+
+	wave_manager.tick(WaveManagerScript.ROW_ARRIVAL_SECONDS)
+	assert_eq(_visible_count(), 10, "row 3 (the single tip) arrives last")
+
+
+func test_first_question_not_emitted_until_arrival_completes() -> void:
+	wave_manager.start_wave("integer_addition")
+	_clear_wave()
+	_complete_pause_only()
+	watch_signals(wave_manager)
+
+	wave_manager.tick(WaveManagerScript.ROW_ARRIVAL_SECONDS * 3)
+	assert_signal_not_emitted(wave_manager, "question_ready",
+			"FR24.4: no question may appear before every row has arrived")
+
+	wave_manager.tick(WaveManagerScript.ROW_ARRIVAL_SECONDS)
+	assert_signal_emit_count(wave_manager, "question_ready", 1,
+			"the first question fires exactly when the arrival completes")
+	assert_false(GameManager.transitioning,
+			"FR24.5: the timer resumes with the first question")
+
+
+func test_session_start_arrival_has_no_completion_pause() -> void:
+	wave_manager.start_first_wave()
+
+	assert_eq(wave_manager._transition_state, wave_manager.TransitionState.ARRIVING,
+			"FR24.7: a fresh session skips the completion pause")
+	assert_true(GameManager.transitioning,
+			"the timer is still frozen for the arrival itself")
+
+	wave_manager.tick(WaveManagerScript.ROW_ARRIVAL_SECONDS * WaveManagerScript.FORMATION_ROW_COUNTS.size())
+	assert_eq(_visible_count(), 10, "all rows arrive")
+	assert_false(GameManager.transitioning, "the timer resumes after the arrival")
+	assert_eq(wave_manager._transition_state, wave_manager.TransitionState.NONE)
+
+
+func test_transition_works_for_custom_enemies_per_wave() -> void:
+	ProjectSettings.set_setting(GameConfig.ENEMIES_PER_WAVE_SETTING, 5)
+	wave_manager.start_first_wave()
+	for i in range(5):
+		wave_manager.on_correct_answer()
+	_complete_transition()
+
+	assert_eq(wave_manager.current_category, "integer_subtraction")
+	assert_eq(enemies_container.get_child_count(), 5,
+			"custom wave sizes flow through the transition")
+	assert_eq(_visible_count(), 5,
+			"overflow enemies belong to the last row and still arrive")
+	assert_false(GameManager.transitioning)
+	ProjectSettings.set_setting(GameConfig.ENEMIES_PER_WAVE_SETTING, GameConfig.DEFAULT_ENEMIES_PER_WAVE)
+
+
+func test_clear_all_aborts_an_in_progress_transition() -> void:
+	wave_manager.start_wave("integer_addition")
+	_clear_wave()
+	assert_true(GameManager.transitioning)
+
+	wave_manager.clear_all()
+
+	assert_eq(wave_manager._transition_state, wave_manager.TransitionState.NONE)
+	assert_false(GameManager.transitioning,
+			"a restarted session must not inherit a frozen timer")

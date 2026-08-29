@@ -53,6 +53,20 @@ const FORMATION_TOP_Y: float = 160.0
 const FORMATION_ROW_SPACING: float = 130.0
 const FORMATION_COLUMN_SPACING: float = 135.0
 
+## Phase 24 FR24.3: seconds between each formation row's arrival during
+## the row-by-row spawn animation. The standard 4-row formation therefore
+## takes 4 * 0.5 = 2 s total.
+const ROW_ARRIVAL_SECONDS := 0.5
+
+## Phase 24: the wave-transition state machine. NONE = no transition in
+## progress; PAUSING = waiting out wave_complete_pause_seconds with no
+## question shown; ARRIVING = revealing the next wave's rows one at a time.
+enum TransitionState {
+	NONE,
+	PAUSING,
+	ARRIVING,
+}
+
 ## Default Stage A sequence (Spec §2 Level 1 example / Phase 3 FR3.7).
 ## LevelManager (Phase 6) will be what mutates/extends this per level.
 @export var category_sequence: Array[String] = [
@@ -82,10 +96,51 @@ var _sequence_index: int = -1
 var _active_enemy: Node = null
 var _pending_hit_enemies: Array[Node] = []
 
+## Phase 24 transition bookkeeping (see TransitionState).
+var _transition_state: TransitionState = TransitionState.NONE
+var _transition_elapsed: float = 0.0
+var _transition_pause_seconds: float = 0.0
+var _transition_next_category: String = ""
+var _transition_row_index: int = 0
+
 
 func _ready() -> void:
 	if enemies_container == null and has_node("../GameWorld/Enemies"):
 		enemies_container = get_node("../GameWorld/Enemies")
+
+
+## Phase 24 FR24.2/FR24.3: advances the wave-transition state machine each
+## frame. The level timer is frozen for the whole sequence (GameManager
+## tick() returns early while transitioning), so this runs independently of
+## GameManager's clock.
+func _process(delta: float) -> void:
+	tick(delta)
+
+
+## Phase 24: deterministic, wall-clock-free driver for the transition state
+## machine (NFR24.1). Tests call this directly with controlled deltas; the
+## game drives it from _process(). A no-op when no transition is active.
+func tick(delta: float) -> void:
+	if _transition_state == TransitionState.NONE:
+		return
+	if delta <= 0.0:
+		return
+	_transition_elapsed += delta
+	match _transition_state:
+		TransitionState.PAUSING:
+			if _transition_elapsed >= _transition_pause_seconds:
+				_spawn_wave(_transition_next_category)
+				_transition_state = TransitionState.ARRIVING
+				_transition_elapsed = 0.0
+				_transition_row_index = 0
+		TransitionState.ARRIVING:
+			var revealed_count := int(_transition_elapsed / ROW_ARRIVAL_SECONDS)
+			while _transition_row_index < revealed_count \
+					and _transition_row_index < FORMATION_ROW_COUNTS.size():
+				_reveal_row(_transition_row_index)
+				_transition_row_index += 1
+			if _transition_row_index >= FORMATION_ROW_COUNTS.size():
+				_finish_transition()
 
 
 ## Phase 7 FR7.9: wipes every remaining enemy and all wave bookkeeping so a
@@ -102,6 +157,12 @@ func clear_all() -> void:
 	# Phase 18 FR18.4: a restarted session must not leak the previous
 	# level's art; start_level() re-forwards fresh sets anyway.
 	wave_texture_sets = []
+	# Phase 24: a restarted session must not carry a half-finished
+	# transition into the fresh spawn (NFR7.4).
+	_transition_state = TransitionState.NONE
+	_transition_elapsed = 0.0
+	_transition_row_index = 0
+	GameManager.set_transition_active(false)
 	_clear_container()
 
 
@@ -131,26 +192,8 @@ func set_wave_texture_sets(sets: Array) -> void:
 func start_wave(category: String, wave_difficulty: int = -1) -> void:
 	if wave_difficulty >= 1:
 		difficulty = wave_difficulty
-	current_category = category
-	_clear_container()
-	_pending_hit_enemies.clear()
-	enemies_per_wave = GameConfig.get_enemies_per_wave()
-
-	var slot_overrides := _resolved_slot_textures(_texture_set_for_current_index())
-
-	for k in range(enemies_per_wave):
-		var enemy := enemy_scene.instantiate()
-		enemies_container.add_child(enemy)
-		enemy.position = _formation_position(k)
-		var question: Dictionary = question_generator.generate_question(category, difficulty, generation_options)
-		if enemy.has_method("setup"):
-			enemy.setup(category, question,
-					slot_overrides[k] if k < slot_overrides.size() else null)
-
-	enemies_remaining = enemies_per_wave
-	wave_progress_updated.emit(current_category, enemies_remaining, enemies_per_wave)
-	_active_enemy = get_active_enemy()
-	_emit_active_question()
+	_spawn_wave(category)
+	_begin_arrival()
 
 
 ## The texture set aligned to the SAME sequence index used for category
@@ -276,6 +319,10 @@ func regenerate_active_question() -> void:
 
 ## -- Internal -------------------------------------------------------------
 
+## Phase 24 FR24.2/FR24.3: a cleared wave no longer spawns the next one
+## synchronously. It emits wave_cleared, then runs the transition sequence
+## (pause -> spawn next wave -> row-by-row arrival -> first question) via
+## the state machine, freezing the level timer for the whole sequence.
 func _on_wave_clear() -> void:
 	wave_cleared.emit(current_category)
 	_sequence_index += 1
@@ -283,7 +330,75 @@ func _on_wave_clear() -> void:
 		level_cleared.emit()
 		all_waves_complete.emit()
 		return
-	start_wave(category_sequence[_sequence_index])
+	_begin_transition(category_sequence[_sequence_index])
+
+
+## Spawns the formation for `category` hidden (modulate.a = 0) at its final
+## formation positions, generates each enemy's question up front, and sets
+## the active enemy. Does NOT emit the first question - that waits for the
+## arrival sequence (FR24.4). Shared by start_wave() (session start / Play
+## Again, no pause) and the transition's PAUSING -> ARRIVING hand-off.
+func _spawn_wave(category: String) -> void:
+	current_category = category
+	_clear_container()
+	_pending_hit_enemies.clear()
+	enemies_per_wave = GameConfig.get_enemies_per_wave()
+
+	var slot_overrides := _resolved_slot_textures(_texture_set_for_current_index())
+
+	for k in range(enemies_per_wave):
+		var enemy := enemy_scene.instantiate()
+		enemies_container.add_child(enemy)
+		enemy.position = _formation_position(k)
+		enemy.set_meta("formation_row", _formation_row_for_index(k))
+		enemy.modulate.a = 0.0
+		var question: Dictionary = question_generator.generate_question(category, difficulty, generation_options)
+		if enemy.has_method("setup"):
+			enemy.setup(category, question,
+					slot_overrides[k] if k < slot_overrides.size() else null)
+
+	enemies_remaining = enemies_per_wave
+	wave_progress_updated.emit(current_category, enemies_remaining, enemies_per_wave)
+	_active_enemy = get_active_enemy()
+
+
+## Phase 24 FR24.7: starts the row-by-row arrival for a freshly spawned
+## wave with NO completion pause (session start / Play Again / level
+## advance). The timer is frozen for the arrival and resumes with the
+## first question (FR24.5).
+func _begin_arrival() -> void:
+	_transition_state = TransitionState.ARRIVING
+	_transition_elapsed = 0.0
+	_transition_row_index = 0
+	GameManager.set_transition_active(true)
+
+
+## Phase 24 FR24.2: starts the full wave-clear transition: freeze the
+## timer, wait out the configured pause, then spawn + arrive the next wave.
+func _begin_transition(category: String) -> void:
+	_transition_next_category = category
+	_transition_state = TransitionState.PAUSING
+	_transition_elapsed = 0.0
+	_transition_pause_seconds = GameConfig.get_wave_complete_pause_seconds()
+	GameManager.set_transition_active(true)
+
+
+## Phase 24 FR24.3: makes every enemy in `row` visible. Rows arrive
+## top-to-bottom (row 0 = the 4-wide back row, row 3 = the single tip).
+func _reveal_row(row: int) -> void:
+	if enemies_container == null:
+		return
+	for enemy in enemies_container.get_children():
+		if int(enemy.get_meta("formation_row", -1)) == row:
+			enemy.modulate.a = 1.0
+
+
+## Phase 24 FR24.4/FR24.5: the arrival is complete - unfreeze the timer and
+## emit the new wave's first question.
+func _finish_transition() -> void:
+	_transition_state = TransitionState.NONE
+	GameManager.set_transition_active(false)
+	_emit_active_question()
 
 
 func _emit_active_question() -> void:
@@ -340,3 +455,15 @@ func _formation_position(index: int) -> Vector2:
 	var x: float = FORMATION_CENTER_X - row_width / 2.0 + remaining * FORMATION_COLUMN_SPACING
 	var y: float = FORMATION_TOP_Y + row * FORMATION_ROW_SPACING
 	return Vector2(x, y)
+
+
+## The formation row (0..3, top to bottom) that spawn slot `index` belongs
+## to. Overflow enemies beyond the defined rows belong to the last row
+## (Phase 24 NFR24.3), matching _formation_position()'s overflow rule.
+func _formation_row_for_index(index: int) -> int:
+	var remaining: int = index
+	var row: int = 0
+	while row < FORMATION_ROW_COUNTS.size() - 1 and remaining >= FORMATION_ROW_COUNTS[row]:
+		remaining -= FORMATION_ROW_COUNTS[row]
+		row += 1
+	return row

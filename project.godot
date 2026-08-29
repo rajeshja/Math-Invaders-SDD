@@ -40,6 +40,7 @@ enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 starting_lives=3
 enemies_per_wave=10
 tries_per_question=1
+wave_complete_pause_seconds=2.0
 
 [rendering]
 

@@ -5,42 +5,50 @@ func after_each() -> void:
 	ProjectSettings.set_setting(GameConfig.STARTING_LIVES_SETTING, GameConfig.DEFAULT_STARTING_LIVES)
 	ProjectSettings.set_setting(GameConfig.ENEMIES_PER_WAVE_SETTING, GameConfig.DEFAULT_ENEMIES_PER_WAVE)
 	ProjectSettings.set_setting(GameConfig.TRIES_PER_QUESTION_SETTING, GameConfig.DEFAULT_TRIES_PER_QUESTION)
+	ProjectSettings.set_setting(GameConfig.WAVE_COMPLETE_PAUSE_SETTING, GameConfig.DEFAULT_WAVE_COMPLETE_PAUSE)
 
 
 func test_returns_default_gameplay_values() -> void:
 	assert_eq(GameConfig.get_starting_lives(), 3)
 	assert_eq(GameConfig.get_enemies_per_wave(), 10)
 	assert_eq(GameConfig.get_tries_per_question(), 1)
+	assert_eq(GameConfig.get_wave_complete_pause_seconds(), 2.0)
 
 
 func test_missing_settings_fall_back_to_documented_defaults() -> void:
 	ProjectSettings.clear(GameConfig.STARTING_LIVES_SETTING)
 	ProjectSettings.clear(GameConfig.ENEMIES_PER_WAVE_SETTING)
 	ProjectSettings.clear(GameConfig.TRIES_PER_QUESTION_SETTING)
+	ProjectSettings.clear(GameConfig.WAVE_COMPLETE_PAUSE_SETTING)
 
 	assert_eq(GameConfig.get_starting_lives(), 3)
 	assert_eq(GameConfig.get_enemies_per_wave(), 10)
 	assert_eq(GameConfig.get_tries_per_question(), 1)
+	assert_eq(GameConfig.get_wave_complete_pause_seconds(), 2.0)
 
 
 func test_invalid_settings_fall_back_to_documented_defaults() -> void:
 	ProjectSettings.set_setting(GameConfig.STARTING_LIVES_SETTING, 0)
 	ProjectSettings.set_setting(GameConfig.ENEMIES_PER_WAVE_SETTING, -5)
 	ProjectSettings.set_setting(GameConfig.TRIES_PER_QUESTION_SETTING, "not-a-number")
+	ProjectSettings.set_setting(GameConfig.WAVE_COMPLETE_PAUSE_SETTING, -3.0)
 
 	assert_eq(GameConfig.get_starting_lives(), 3)
 	assert_eq(GameConfig.get_enemies_per_wave(), 10)
 	assert_eq(GameConfig.get_tries_per_question(), 1)
+	assert_eq(GameConfig.get_wave_complete_pause_seconds(), 2.0)
 
 
 func test_configured_values_are_returned_unchanged_when_valid() -> void:
 	ProjectSettings.set_setting(GameConfig.STARTING_LIVES_SETTING, 5)
 	ProjectSettings.set_setting(GameConfig.ENEMIES_PER_WAVE_SETTING, 12)
 	ProjectSettings.set_setting(GameConfig.TRIES_PER_QUESTION_SETTING, 2)
+	ProjectSettings.set_setting(GameConfig.WAVE_COMPLETE_PAUSE_SETTING, 5.0)
 
 	assert_eq(GameConfig.get_starting_lives(), 5)
 	assert_eq(GameConfig.get_enemies_per_wave(), 12)
 	assert_eq(GameConfig.get_tries_per_question(), 2)
+	assert_eq(GameConfig.get_wave_complete_pause_seconds(), 5.0)
 
 
 ## Phase 9 FR9.1: per-level dictionaries were migrated away - they are no

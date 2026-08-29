@@ -13,17 +13,22 @@ extends Node
 const STARTING_LIVES_SETTING := "gameplay/starting_lives"
 const ENEMIES_PER_WAVE_SETTING := "gameplay/enemies_per_wave"
 const TRIES_PER_QUESTION_SETTING := "gameplay/tries_per_question"
+## Phase 24 FR24.1: how long the level timer freezes after a wave clears
+## before the next wave's arrival animation begins.
+const WAVE_COMPLETE_PAUSE_SETTING := "gameplay/wave_complete_pause_seconds"
 
 const DEFAULT_STARTING_LIVES := 3
 const DEFAULT_ENEMIES_PER_WAVE := 10
 ## Global fallback attempt count; per-level values come from LevelConfig.
 const DEFAULT_TRIES_PER_QUESTION := 1
+const DEFAULT_WAVE_COMPLETE_PAUSE := 2.0
 
 
 func _ready() -> void:
 	_ensure_setting(STARTING_LIVES_SETTING, DEFAULT_STARTING_LIVES, TYPE_INT)
 	_ensure_setting(ENEMIES_PER_WAVE_SETTING, DEFAULT_ENEMIES_PER_WAVE, TYPE_INT)
 	_ensure_setting(TRIES_PER_QUESTION_SETTING, DEFAULT_TRIES_PER_QUESTION, TYPE_INT)
+	_ensure_setting(WAVE_COMPLETE_PAUSE_SETTING, DEFAULT_WAVE_COMPLETE_PAUSE, TYPE_FLOAT)
 
 
 func get_starting_lives() -> int:
@@ -36,6 +41,16 @@ func get_enemies_per_wave() -> int:
 
 func get_tries_per_question() -> int:
 	return _get_positive_int_setting(TRIES_PER_QUESTION_SETTING, DEFAULT_TRIES_PER_QUESTION)
+
+
+## Phase 24 FR24.1: the wave-complete pause in seconds, clamped to >= 0.
+## Missing or invalid (non-numeric / negative) values fall back to the
+## documented default rather than clamping (Phase 4 FR4.2 pattern).
+func get_wave_complete_pause_seconds() -> float:
+	var value: float = float(ProjectSettings.get_setting(WAVE_COMPLETE_PAUSE_SETTING, DEFAULT_WAVE_COMPLETE_PAUSE))
+	if value < 0.0:
+		return DEFAULT_WAVE_COMPLETE_PAUSE
+	return value
 
 
 func _get_positive_int_setting(path: String, default_value: int) -> int:
