@@ -58,6 +58,17 @@ const FORMATION_COLUMN_SPACING: float = 135.0
 ## takes 4 * 0.5 = 2 s total.
 const ROW_ARRIVAL_SECONDS := 0.5
 
+## Phase 26 FR26.1: enemies start this far above the top edge of the frame
+## (y = 0) before flying into formation.
+const FLIGHT_START_Y := -220.0
+## Phase 26 FR26.2: seconds each enemy's flight into formation takes. With
+## ROW_ARRIVAL_SECONDS row spacing, the standard 4-row formation still
+## takes 3 * 0.5 + 0.5 = 2 s total (NFR26.3 / Phase 24 FR24.3).
+const FLIGHT_SECONDS := 0.5
+## Phase 26 FR26.2: horizontal offset of the bezier control point, which
+## bends each enemy's path into a banking fighter-jet curve.
+const FLIGHT_CURVE_STRENGTH := 90.0
+
 ## Phase 24: the wave-transition state machine. NONE = no transition in
 ## progress; PAUSING = waiting out wave_complete_pause_seconds with no
 ## question shown; ARRIVING = revealing the next wave's rows one at a time.
@@ -117,9 +128,9 @@ func _process(delta: float) -> void:
 	tick(delta)
 
 
-## Phase 24: deterministic, wall-clock-free driver for the transition state
-## machine (NFR24.1). Tests call this directly with controlled deltas; the
-## game drives it from _process(). A no-op when no transition is active.
+## Phase 24/26: deterministic, wall-clock-free driver for the transition
+## state machine (NFR24.1). Tests call this directly with controlled deltas;
+## the game drives it from _process(). A no-op when no transition is active.
 func tick(delta: float) -> void:
 	if _transition_state == TransitionState.NONE:
 		return
@@ -134,12 +145,14 @@ func tick(delta: float) -> void:
 				_transition_elapsed = 0.0
 				_transition_row_index = 0
 		TransitionState.ARRIVING:
-			var revealed_count := int(_transition_elapsed / ROW_ARRIVAL_SECONDS)
-			while _transition_row_index < revealed_count \
-					and _transition_row_index < FORMATION_ROW_COUNTS.size():
-				_reveal_row(_transition_row_index)
-				_transition_row_index += 1
-			if _transition_row_index >= FORMATION_ROW_COUNTS.size():
+			# Phase 26 FR26.3: rows fly bottom-to-top on a fixed schedule
+			# (tip row 3 first, back row 0 last); the transition tracks how
+			# many rows have started flying.
+			var launched_count := int(_transition_elapsed / ROW_ARRIVAL_SECONDS)
+			_transition_row_index = maxi(_transition_row_index, launched_count)
+			_update_flight_positions()
+			# FR26.4: the first question waits for every flight to complete.
+			if _transition_row_index >= FORMATION_ROW_COUNTS.size() and _all_flights_complete():
 				_finish_transition()
 
 
@@ -333,11 +346,12 @@ func _on_wave_clear() -> void:
 	_begin_transition(category_sequence[_sequence_index])
 
 
-## Spawns the formation for `category` hidden (modulate.a = 0) at its final
-## formation positions, generates each enemy's question up front, and sets
-## the active enemy. Does NOT emit the first question - that waits for the
-## arrival sequence (FR24.4). Shared by start_wave() (session start / Play
-## Again, no pause) and the transition's PAUSING -> ARRIVING hand-off.
+## Spawns the formation for `category` off-screen above the top edge of the
+## frame (Phase 26 FR26.1), generates each enemy's question up front, and
+## sets the active enemy. Does NOT emit the first question - that waits for
+## the flight-in arrival to complete (FR24.4/FR26.4). Shared by start_wave()
+## (session start / Play Again, no pause) and the transition's
+## PAUSING -> ARRIVING hand-off.
 func _spawn_wave(category: String) -> void:
 	current_category = category
 	_clear_container()
@@ -349,9 +363,19 @@ func _spawn_wave(category: String) -> void:
 	for k in range(enemies_per_wave):
 		var enemy := enemy_scene.instantiate()
 		enemies_container.add_child(enemy)
-		enemy.position = _formation_position(k)
-		enemy.set_meta("formation_row", _formation_row_for_index(k))
-		enemy.modulate.a = 0.0
+		var formation_pos := _formation_position(k)
+		var flight_start := _flight_start_position(k, formation_pos)
+		var row := _formation_row_for_index(k)
+		enemy.position = flight_start
+		enemy.set_meta("formation_row", row)
+		enemy.set_meta("formation_pos", formation_pos)
+		enemy.set_meta("flight_start", flight_start)
+		enemy.set_meta("flight_control", _flight_control_position(k, formation_pos))
+		# Phase 26 FR26.3: each row's flight starts on a fixed schedule - the
+		# tip row (3) at t=0, then 2, 1, and the back row (0) last.
+		enemy.set_meta("flight_launch_time",
+				(FORMATION_ROW_COUNTS.size() - 1 - row) * ROW_ARRIVAL_SECONDS)
+		enemy.modulate.a = 1.0
 		var question: Dictionary = question_generator.generate_question(category, difficulty, generation_options)
 		if enemy.has_method("setup"):
 			enemy.setup(category, question,
@@ -383,21 +407,66 @@ func _begin_transition(category: String) -> void:
 	GameManager.set_transition_active(true)
 
 
-## Phase 24 FR24.3: makes every enemy in `row` visible. Rows arrive
-## top-to-bottom (row 0 = the 4-wide back row, row 3 = the single tip).
-func _reveal_row(row: int) -> void:
+## Phase 26 FR26.2: advances every enemy along its bezier flight path based
+## on how long ago its row's scheduled launch time passed. Enemies whose
+## flight has not started yet stay at their off-screen start position.
+func _update_flight_positions() -> void:
 	if enemies_container == null:
 		return
 	for enemy in enemies_container.get_children():
-		if int(enemy.get_meta("formation_row", -1)) == row:
-			enemy.modulate.a = 1.0
+		var launch_time: float = enemy.get_meta("flight_launch_time", 0.0)
+		var progress := clampf((_transition_elapsed - launch_time) / FLIGHT_SECONDS, 0.0, 1.0)
+		enemy.position = _bezier_point(
+				enemy.get_meta("flight_start"),
+				enemy.get_meta("flight_control"),
+				enemy.get_meta("formation_pos"),
+				progress)
 
 
-## Phase 24 FR24.4/FR24.5: the arrival is complete - unfreeze the timer and
-## emit the new wave's first question.
+## Phase 26 FR26.4: true once every enemy's flight has finished (progress
+## reached 1.0), i.e. every enemy is at its formation position.
+func _all_flights_complete() -> bool:
+	if enemies_container == null:
+		return true
+	for enemy in enemies_container.get_children():
+		var launch_time: float = enemy.get_meta("flight_launch_time", 0.0)
+		if _transition_elapsed - launch_time < FLIGHT_SECONDS:
+			return false
+	return true
+
+
+## Phase 26 FR26.1: the off-screen start point for spawn slot `index` -
+## directly above the formation slot with a small deterministic X spread so
+## the ships do not all come from a single point.
+func _flight_start_position(index: int, formation_pos: Vector2) -> Vector2:
+	var x_jitter := ((index % 5) - 2) * 40.0
+	return Vector2(formation_pos.x + x_jitter, FLIGHT_START_Y)
+
+
+## Phase 26 FR26.2: the bezier control point for spawn slot `index`. It sits
+## at the vertical midpoint and is pushed horizontally away from the
+## formation's center axis, bending the path into a banking curve.
+func _flight_control_position(index: int, formation_pos: Vector2) -> Vector2:
+	var direction := signf(formation_pos.x - FORMATION_CENTER_X)
+	if direction == 0.0:
+		direction = 1.0
+	return Vector2(formation_pos.x + direction * FLIGHT_CURVE_STRENGTH,
+			(FLIGHT_START_Y + formation_pos.y) * 0.5)
+
+
+## Quadratic bezier point at parameter t in [0, 1].
+func _bezier_point(start: Vector2, control: Vector2, end: Vector2, t: float) -> Vector2:
+	var u := 1.0 - t
+	return u * u * start + 2.0 * u * t * control + t * t * end
+
+
+## Phase 24 FR24.4/FR24.5 / Phase 26 FR26.4: the arrival is complete -
+## unfreeze the timer, re-select the active enemy from the settled
+## formation, and emit the new wave's first question.
 func _finish_transition() -> void:
 	_transition_state = TransitionState.NONE
 	GameManager.set_transition_active(false)
+	_active_enemy = get_active_enemy()
 	_emit_active_question()
 
 

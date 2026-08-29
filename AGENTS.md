@@ -39,14 +39,15 @@ The specs, tech stack details, plan and phase details are captured in these fold
 - [Phase 20: Fraction Question And Answer Layout Fix](./specs/phases/Phase_20_Fraction_Question_Answer_Layout_Fix.md) - Pending
 - [Phase 21: Inspector Image Selection](./specs/phases/Phase_21_Inspector_Image_Selection.md) - Pending
 - [Phase 22: Player Profiles](./specs/phases/Phase_22_Player_Profiles.md) - Complete
-- [Phase 23: Profile View And High Score Leaderboard](./specs/phases/Phase_23_Profile_View_And_High_Score_Leaderboard.md) - Pending
-- [Phase 24: Wave Transition Animation And Timer Pause](./specs/phases/Phase_24_Wave_Transition_Animation_And_Timer_Pause.md) - Pending
-- [Phase 25: Points Bonus And Penalty](./specs/phases/Phase_25_Points_Bonus_And_Penalty.md) - Pending
+- [Phase 23: Profile View And High Score Leaderboard](./specs/phases/Phase_23_Profile_View_And_High_Score_Leaderboard.md) - Complete
+- [Phase 24: Wave Transition Animation And Timer Pause](./specs/phases/Phase_24_Wave_Transition_Animation_And_Timer_Pause.md) - Complete
+- [Phase 25: Points Bonus And Penalty](./specs/phases/Phase_25_Points_Bonus_And_Penalty.md) - Complete
+- [Phase 26: Wave Arrival Flight Animation](./specs/phases/Phase_26_Wave_Arrival_Flight_Animation.md) - Complete
 - [Phase 30: Playtesting And Balancing](./specs/phases/Phase_30_Playtesting_And_Balancing.md) - Incomplete
 
 ## Status
 
-The code has been implemented up to Phase 11.
+The code has been implemented up to Phase 26.
 
 ## Godot Executable paths
 

@@ -27,8 +27,8 @@ Spec §2 (wave/level structure), Spec §10 (level time limit), Tech Stack §4
 -   FR24.3 --- After the pause, the next wave's enemies spawn and animate
     into formation **one row at a time**. Each row takes
     `WaveManager.ROW_ARRIVAL_SECONDS` (0.5 s); the standard 4-row
-    formation takes 2 s total. Rows arrive top-to-bottom (4, then 3, then
-    2, then 1).
+    formation takes 2 s total. Rows arrive bottom-to-top (3, then 2, then
+    1, then 0) as a curved flight-in animation (Phase 26 FR26.3).
 -   FR24.4 --- The first question of the new wave is not shown until every
     row has arrived.
 -   FR24.5 --- The level timer is paused for the **entire** wave

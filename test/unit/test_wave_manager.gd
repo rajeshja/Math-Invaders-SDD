@@ -212,6 +212,9 @@ func test_active_enemy_is_lowest_on_screen_then_leftmost() -> void:
 
 func test_formation_spawns_as_inverted_triangle() -> void:
 	wave_manager.start_wave("integer_addition")
+	# Phase 26: complete the flight-in so enemies settle at their formation
+	# positions before inspecting the layout.
+	wave_manager.tick(WaveManagerScript.ROW_ARRIVAL_SECONDS * WaveManagerScript.FORMATION_ROW_COUNTS.size())
 	var enemies: Array = enemies_container.get_children()
 
 	var row_y_positions: Array = []
@@ -372,14 +375,34 @@ func test_clear_all_resets_stored_sets() -> void:
 			"cleared sessions cannot leak the previous level's art")
 
 
-## -- Phase 24: wave transition & row-by-row arrival --------------------------
+## -- Phase 24/26: wave transition & flight-in arrival --------------------------
 
-func _visible_count() -> int:
+## Phase 26: number of enemies whose flight has started (progress > 0).
+func _flying_count() -> int:
 	var count := 0
 	for enemy in enemies_container.get_children():
-		if enemy.modulate.a >= 1.0:
+		var launch_time: float = enemy.get_meta("flight_launch_time")
+		if wave_manager._transition_elapsed - launch_time > 0.0:
 			count += 1
 	return count
+
+
+## Phase 26: number of enemies in `row` whose flight has started.
+func _flying_count_in_row(row: int) -> int:
+	var count := 0
+	for enemy in enemies_container.get_children():
+		if int(enemy.get_meta("formation_row")) == row \
+				and wave_manager._transition_elapsed - float(enemy.get_meta("flight_launch_time")) > 0.0:
+			count += 1
+	return count
+
+
+## Phase 26: true when every enemy sits at its exact formation position.
+func _all_at_formation_positions() -> bool:
+	for enemy in enemies_container.get_children():
+		if enemy.position.distance_to(enemy.get_meta("formation_pos")) > 0.01:
+			return false
+	return true
 
 
 func _clear_wave() -> void:
@@ -419,19 +442,23 @@ func test_rows_arrive_in_order_with_row_arrival_seconds_spacing() -> void:
 	_clear_wave()
 	_complete_pause_only()
 
-	assert_eq(_visible_count(), 0, "all enemies are hidden when the arrival begins")
+	assert_eq(_flying_count(), 0, "no rows have started flying when the arrival begins")
 
 	wave_manager.tick(WaveManagerScript.ROW_ARRIVAL_SECONDS)
-	assert_eq(_visible_count(), 4, "row 0 (the 4-wide back row) arrives first")
+	assert_eq(_flying_count_in_row(3), 1, "FR26.3: the bottom tip row flies first")
+	assert_eq(_flying_count(), 1)
 
 	wave_manager.tick(WaveManagerScript.ROW_ARRIVAL_SECONDS)
-	assert_eq(_visible_count(), 7, "row 1 (3-wide) arrives second")
+	assert_eq(_flying_count_in_row(2), 2, "the 2-wide row flies second")
+	assert_eq(_flying_count(), 3)
 
 	wave_manager.tick(WaveManagerScript.ROW_ARRIVAL_SECONDS)
-	assert_eq(_visible_count(), 9, "row 2 (2-wide) arrives third")
+	assert_eq(_flying_count_in_row(1), 3, "the 3-wide row flies third")
+	assert_eq(_flying_count(), 6)
 
 	wave_manager.tick(WaveManagerScript.ROW_ARRIVAL_SECONDS)
-	assert_eq(_visible_count(), 10, "row 3 (the single tip) arrives last")
+	assert_eq(_flying_count_in_row(0), 4, "the 4-wide back row flies last")
+	assert_eq(_flying_count(), 10)
 
 
 func test_first_question_not_emitted_until_arrival_completes() -> void:
@@ -460,7 +487,7 @@ func test_session_start_arrival_has_no_completion_pause() -> void:
 			"the timer is still frozen for the arrival itself")
 
 	wave_manager.tick(WaveManagerScript.ROW_ARRIVAL_SECONDS * WaveManagerScript.FORMATION_ROW_COUNTS.size())
-	assert_eq(_visible_count(), 10, "all rows arrive")
+	assert_true(_all_at_formation_positions(), "all enemies settle at their formation positions")
 	assert_false(GameManager.transitioning, "the timer resumes after the arrival")
 	assert_eq(wave_manager._transition_state, wave_manager.TransitionState.NONE)
 
@@ -475,8 +502,8 @@ func test_transition_works_for_custom_enemies_per_wave() -> void:
 	assert_eq(wave_manager.current_category, "integer_subtraction")
 	assert_eq(enemies_container.get_child_count(), 5,
 			"custom wave sizes flow through the transition")
-	assert_eq(_visible_count(), 5,
-			"overflow enemies belong to the last row and still arrive")
+	assert_true(_all_at_formation_positions(),
+			"overflow enemies belong to the last row and still fly in")
 	assert_false(GameManager.transitioning)
 	ProjectSettings.set_setting(GameConfig.ENEMIES_PER_WAVE_SETTING, GameConfig.DEFAULT_ENEMIES_PER_WAVE)
 
@@ -491,3 +518,46 @@ func test_clear_all_aborts_an_in_progress_transition() -> void:
 	assert_eq(wave_manager._transition_state, wave_manager.TransitionState.NONE)
 	assert_false(GameManager.transitioning,
 			"a restarted session must not inherit a frozen timer")
+
+
+## -- Phase 26: flight-in animation ----------------------------------------------
+
+func test_enemies_start_above_the_top_edge_of_the_frame() -> void:
+	wave_manager.start_wave("integer_addition")
+
+	for enemy in enemies_container.get_children():
+		assert_lt(enemy.position.y, 0.0,
+				"FR26.1: enemies spawn off-screen above the top edge")
+		assert_eq(enemy.modulate.a, 1.0, "enemies are visible as they fly in")
+
+
+func test_flight_path_is_curved() -> void:
+	wave_manager.start_wave("integer_addition")
+	_clear_wave()
+	_complete_pause_only()
+
+	# Sample the tip row mid-flight: it launches at t=0 and its 0.5 s flight
+	# is half done at elapsed 0.25.
+	wave_manager.tick(WaveManagerScript.ROW_ARRIVAL_SECONDS * 0.5)
+	var tip: Node = null
+	for enemy in enemies_container.get_children():
+		if int(enemy.get_meta("formation_row")) == 3:
+			tip = enemy
+	var start: Vector2 = tip.get_meta("flight_start")
+	var control: Vector2 = tip.get_meta("flight_control")
+	var end: Vector2 = tip.get_meta("formation_pos")
+	assert_ne(control.x, lerpf(start.x, end.x, 0.5),
+			"FR26.2: the bezier control point is offset from the straight line")
+	var straight_mid := start.lerp(end, 0.5)
+	assert_ne(tip.position, straight_mid,
+			"FR26.2: mid-flight the enemy banks off the straight line")
+
+
+func test_enemies_end_at_their_exact_formation_positions() -> void:
+	wave_manager.start_wave("integer_addition")
+	_clear_wave()
+	_complete_transition()
+
+	assert_true(_all_at_formation_positions(),
+			"FR26.4: every enemy settles at its exact formation position")
+	assert_eq(wave_manager._transition_state, wave_manager.TransitionState.NONE)
