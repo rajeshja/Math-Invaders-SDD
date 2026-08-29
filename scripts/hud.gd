@@ -5,7 +5,7 @@
 class_name Hud
 extends CanvasLayer
 
-const LIFE_ICON: Texture2D = preload("res://assets/images/ui/life_icon.png")
+const LIFE_ICON: Texture2D = preload("res://assets/images/ui/heart_icon.png")
 
 ## Phase 10 FR9.7: when time_remaining drops to this many seconds or less,
 ## TimeLabel pulses red with a per-second tick. A code constant (NOT a
