@@ -1,10 +1,12 @@
-# Phase 25 --- Playtesting & Balancing
+# Phase 30 --- Playtesting & Balancing
 
 > Renumbering note: this phase was previously numbered Phase 12, then
-> Phase 20. The strategy-expansion and level-visual-configuration work
-> now occupies Phases 12--19, and the fraction layout fix is Phase 20;
-> playtesting moved to Phase 25 so the build being tested includes that
-> content.
+> Phase 20, then Phase 25. The strategy-expansion and level-visual-
+> configuration work now occupies Phases 12--19, the fraction layout fix
+> is Phase 20, the profile/leaderboard work is Phase 23, the wave
+> transition animation is Phase 24, and the points bonus/penalty is
+> Phase 25; playtesting moved to Phase 30 so the build being tested
+> includes that content.
 
 **Goal:** run the finished, exported build (Phases 10--11, extended by
 Phases 12--19) past players in the target age group, and tune existing
@@ -13,7 +15,7 @@ lives/mistake-budget feel, per-level point values, and the new
 fraction/decimal/ratio/HCF-LCM category pacing --- based on what's
 observed, without restructuring the underlying architecture.
 
-**Source docs:** Build Plan §Phase 25, Spec §1 (target audience --- ages
+**Source docs:** Build Plan §Phase 30, Spec §1 (target audience --- ages
 6--12), §5 (educational content progression, distractor & difficulty
 rules), §12 (category naming & answer model), Tech Stack §3
 (per-strategy difficulty scaling), §4 (`WaveManager`/`LevelManager`
@@ -25,41 +27,41 @@ tunables), §9 (full GUT suite as the regression backstop).
 
 ### Functional Requirements
 
--   FR20.1 --- Structured playtesting sessions are conducted with
+-   FR30.1 --- Structured playtesting sessions are conducted with
     players in the target 6--12 age range, per Spec §1.
--   FR20.2 --- Observations are captured against tuning dimensions:
+-   FR30.2 --- Observations are captured against tuning dimensions:
     question difficulty pacing per level, distractor plausibility, wave
     length feel, lives/mistake-budget feel, the level time-limit feel,
     the per-level `points_per_question` values introduced in Phase 17,
     and the pacing of the fraction/decimal/ratio/HCF-LCM waves
     introduced in Phases 13--16.
     **All level balancing must be done by directly editing the `LevelConfig.tres` Custom Resources in the Godot Inspector**, rather than tweaking hardcoded math formulas.
--   FR20.3 --- Difficulty parameters (operand ranges per Spec §5's Stage
+-   FR30.3 --- Difficulty parameters (operand ranges per Spec §5's Stage
     A/B tiers, LevelConfig `difficulty`/`max_operand_size`,
     `allow_unlike_denominators`, and `max_decimal_places`) are adjusted
     based on playtesting findings, without changing any strategy's
     `generate(difficulty, options)` interface/contract.
--   FR20.4 --- Distractor-generation logic in one or more strategies is
+-   FR30.4 --- Distractor-generation logic in one or more strategies is
     revisited if playtesting surfaces confusing or implausible wrong
     answers, while preserving the "no duplicates, no nonsensical values"
     rule from Spec §5 --- including the value-equality rule for
     fraction/decimal choices (Spec §12): no choice may ever be
     value-equal to the correct answer or to another choice.
--   FR20.5 --- Bugs found during playtesting are triaged, fixed, and
+-   FR30.5 --- Bugs found during playtesting are triaged, fixed, and
     re-verified.
--   FR20.6 --- The full GUT suite is re-run after every round of
+-   FR30.6 --- The full GUT suite is re-run after every round of
     balancing changes, to catch regressions in difficulty scaling,
     distractor generation, or wave/level logic before the next
     playtesting round.
 
 ### Non-Functional Requirements
 
--   NFR20.1 --- Balancing changes stay within the existing architecture
+-   NFR30.1 --- Balancing changes stay within the existing architecture
     (tunable parameters/constants within strategies, `WaveManager`,
     `LevelManager`, `LevelConfig` resources, and project settings) ---
     this is a tuning phase, not a redesign phase; no new classes,
     signals, or structural changes are introduced.
--   NFR20.2 --- Any balancing change that touches strategy, wave, or
+-   NFR30.2 --- Any balancing change that touches strategy, wave, or
     level logic must have its corresponding existing GUT coverage (from
     Phases 2, 3, 6, 8, and 12--19) re-validated as passing before the
     change is considered done --- tuning changes are never shipped
@@ -69,7 +71,7 @@ tunables), §9 (full GUT suite as the regression backstop).
 
 -   New features, categories, or platform targets (all prior phases).
 -   Stretch content such as percentages, profiles, or non-math modules
-    (Phase 26).
+    (Phase 31).
 
 ------------------------------------------------------------------------
 
@@ -119,7 +121,7 @@ tunables), §9 (full GUT suite as the regression backstop).
         `player_ship_texture` selections (Phases 18--19) purely for
         presentation; image selection never affects difficulty.
 4.  **Re-run the full GUT suite** after each round of changes, before
-    the next playtesting round, per FR20.6/NFR20.2.
+    the next playtesting round, per FR30.6/NFR30.2.
 5.  **Triage and fix bugs** surfaced during sessions (crashes, HUD/state
     desyncs, incorrect or duplicate distractors, malformed stacked
     fraction rendering, etc.), verifying each fix both manually and

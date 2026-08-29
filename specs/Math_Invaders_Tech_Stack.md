@@ -198,9 +198,12 @@ supports non-arithmetic content.
         emits/handles a single wrong-answer event, and keeps the same
         active question selected so it can be retried. `WaveManager`
         must not implement enemy descent as a wrong-answer penalty.
-    -   **On wave clear (0 enemies remaining):** triggers "Wave
-        Complete," then spawns a **fresh set of 10 enemies** for the
-        next category in the sequence.
+-   **On wave clear (0 enemies remaining):** triggers "Wave
+        Complete," then runs the wave-transition sequence (Phase 24): the
+        level timer pauses for `wave_complete_pause_seconds`, the next
+        wave's enemies spawn and **arrive one row at a time**
+        (`ROW_ARRIVAL_SECONDS` = 0.5 s per row), and the first question is
+        emitted only after every row has arrived.
     -   **On level clear (all waves in the sequence complete):** signals
         `LevelManager.gd` to advance the level.
 -   `LevelManager.gd` --- tracks the current level number, raises the
@@ -214,6 +217,11 @@ supports non-arithmetic content.
     image sets (Phase 18), and player ship selection (Phase 19) from the
     same `LevelConfig` resources --- all per-level tuning stays in
     Inspector-editable resources rather than Project Settings.
+    *Phase 25 Update:* at level completion `LevelManager` applies the
+    early-finish bonus (`floor(time_remaining / bonus_seconds_per_point)`)
+    and the lives-lost penalty (`lives_lost ×
+    lives_lost_penalty_points`) to the level's score (clamped ≥ 0) before
+    recording the personal best and updating the running total.
 
 ------------------------------------------------------------------------
 
@@ -228,7 +236,9 @@ supports non-arithmetic content.
     `lives_changed`, `time_changed`, and
     `game_over` signals; the signal fires exactly once per game end,
     whichever cause (lives at zero or time at zero) triggers it first. There is no health pool in the current gameplay
-    model.
+    model. *Phase 24:* a `transitioning` flag (set via
+    `set_transition_active()`) freezes `tick()` during wave transitions,
+    so the level timer pauses for the entire transition sequence.
 -   `HighScoreManager.gd` --- reads/writes persisted high score
     (JSON/`ConfigFile` in `user://`). *Phase 23:* the single device-wide
     high score becomes the top entry of a **top-5 leaderboard** of
@@ -301,6 +311,14 @@ in Godot Project Settings. The current required settings are:
     seconds granted per wave when computing a level's default time limit.
 -   `gameplay/level_time_limit_by_level` --- Dictionary, default `{}`;
     optional level-number → positive-seconds total time-limit overrides.
+-   `gameplay/wave_complete_pause_seconds` --- float, default `2.0`,
+    minimum `0`; seconds the level timer pauses after a wave is cleared
+    before the next wave's enemies arrive (Phase 24).
+-   `gameplay/bonus_seconds_per_point` --- float, default `5.0`, minimum
+    `1`; seconds of remaining level time per early-finish bonus point
+    (Phase 25).
+-   `gameplay/lives_lost_penalty_points` --- integer, default `1`, minimum
+    `0`; points deducted per life lost during a level (Phase 25).
 
 `GameConfig.gd` exposes `get_tries_per_question(level)` which returns the
 level override when present and valid, otherwise the global setting. This is
@@ -308,7 +326,10 @@ the only supported access path for the effective attempt count. It likewise
 exposes `get_seconds_per_wave()` and
 `get_level_time_limit(level, wave_count)` (override when valid, otherwise
 `wave_count × seconds_per_wave`) as the only supported access path for the
-effective level time limit.
+effective level time limit. *Phases 24--25:* it also exposes
+`get_wave_complete_pause_seconds()`, `get_bonus_seconds_per_point()`, and
+`get_lives_lost_penalty_points()` as the only supported access paths for
+those game-wide values.
 
 The authoritative access path is `GameConfig.gd` (autoload/helper).
 `GameManager` reads the configured starting-lives value through

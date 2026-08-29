@@ -463,7 +463,7 @@ only, with safe fallbacks (Spec §13):
 - [ ] Phase 19: `player_ship_texture` end-to-end.
 - [ ] Phase 20: center stacked-fraction questions/answers; enlarge the question area; remove overlap with the answer grid.
 - [ ] Phase 21: convert `wave_enemy_textures` / `player_ship_texture` to native `Texture2D` Inspector pickers and `category_sequence` to an `@export_enum` dropdown (no path/category typing).
-- [ ] Phase 25: playtest the expanded game; full GUT suite green.
+- [ ] Phase 30: playtest the expanded game; full GUT suite green.
 
 ## Presentation Fixes Revision (Starfield Direction & Lives Placement)
 
@@ -495,7 +495,7 @@ Two presentational fixes (no gameplay state/logic changes; NFR9.1 applies):
 
 A new requirements batch adds a top-5 leaderboard, a per-player Profile
 View, and Game Over medal celebrations. No renumbering: Phase 23 slots
-into the reserved 21--24 range before playtesting (Phase 25). Phases 0--22
+into the reserved 21--24 range before playtesting (Phase 30). Phases 0--22
 are untouched and remain as shipped.
 
 ### 1. Device-wide top-5 leaderboard
@@ -542,3 +542,50 @@ are untouched and remain as shipped.
 - [ ] `MainMenu`: leaderboard table + Profile View.
 - [ ] Extend `test_high_score_manager.gd` / `test_save_data.gd`; full GUT
       suite green.
+
+
+## Wave Transition & Scoring Revision, and the Phase 25→30 Renumbering
+
+Two new phases add wave-transition timing/animation and per-level scoring
+adjustments, and playtesting moves to make room. No renumbering of
+Phases 0--23: the old **Phase 25 — Playtesting & Balancing** becomes
+**Phase 30** (its phase doc is now
+`specs/phases/Phase_30_Playtesting_And_Balancing.md`), and the old
+Phase 26 Stretch section becomes **Phase 31**. Phases 26--29 are reserved
+for further improvements before playtesting.
+
+### 1. Wave Transition Animation & Timer Pause (Phase 24)
+
+- New game-wide setting `gameplay/wave_complete_pause_seconds` (Float,
+  default `2.0`, minimum `0`), read through `GameConfig`.
+- When a wave is cleared, the level timer pauses and no question is shown
+  for `wave_complete_pause_seconds`.
+- After the pause, the next wave's enemies arrive **one row at a time**
+  (`ROW_ARRIVAL_SECONDS` = 0.5 s per row; 4 rows = 2 s), top-to-bottom,
+  before the first question appears.
+- The level timer is paused for the **entire** transition (pause +
+  arrival) and resumes with the new wave's first question. The arrival
+  animation also plays at session start and on Play Again (no pause).
+- `GameManager` gains a `transitioning` flag that freezes `tick()`.
+
+### 2. Points Bonus And Penalty (Phase 25)
+
+- New game-wide settings `gameplay/bonus_seconds_per_point` (Float,
+  default `5.0`, minimum `1`) and `gameplay/lives_lost_penalty_points`
+  (Integer, default `1`, minimum `0`), read through `GameConfig`.
+- At level completion: `level_score = max(0, earned + bonus - penalty)`,
+  where `bonus = floor(time_remaining / bonus_seconds_per_point)` and
+  `penalty = lives_lost × lives_lost_penalty_points`.
+- The adjusted `level_score` is recorded as the personal best and added
+  to the running total (never below 0). Incomplete (game-over) levels
+  apply neither.
+
+### Checklist
+
+- [ ] Phase 24: `GameConfig.get_wave_complete_pause_seconds()`; `GameManager`
+      `transitioning` flag; `WaveManager` row-by-row arrival + transition
+      sequence; tests.
+- [ ] Phase 25: `GameConfig` bonus/penalty getters; `LevelManager`
+      level-completion adjustment; tests.
+- [ ] Phase 30: playtest the expanded game (including Phases 24--25
+      timing/scoring); full GUT suite green.

@@ -464,20 +464,65 @@ playable milestone.
     finishes --- with the full GUT suite green. See
     `specs/phases/Phase_23_Profile_View_And_High_Score_Leaderboard.md`.
 
-### Phase 25 --- Playtesting & Balancing
+### Phase 24 --- Wave Transition Animation & Timer Pause
+
+-   When a wave is cleared, the level timer **pauses** for a configurable
+    `gameplay/wave_complete_pause_seconds` (default `2.0`, game-wide) and
+    no question is shown during the pause.
+-   After the pause, the next wave's enemies **arrive one row at a time**:
+    each formation row animates into place over `ROW_ARRIVAL_SECONDS`
+    (0.5 s per row; 4 rows = 2 s for the standard formation). The first
+    question of the new wave is not shown until every row has arrived.
+-   The level timer is paused for the **entire** wave transition (pause +
+    arrival) and resumes when the new wave's first question is shown.
+-   The "Wave Complete!" banner still shows during the transition; the
+    arrival animation is presentational (enemies are not answerable until
+    all rows have arrived).
+-   **Testing:** extend `test_game_manager.gd` (timer frozen during
+    transitions) and `test_wave_manager.gd` (row-by-row arrival sequencing,
+    no question before the transition ends); full prior suite stays green.
+-   **Milestone:** wave transitions give the player a 2-second breather
+    plus a row-by-row enemy arrival reveal, with the timer frozen
+    throughout --- covered by passing GUT tests. See
+    `specs/phases/Phase_24_Wave_Transition_Animation_And_Timer_Pause.md`.
+
+### Phase 25 --- Points Bonus And Penalty
+
+-   **Early-finish bonus:** completing a level with time to spare awards
+    `floor(time_remaining / bonus_seconds_per_point)` bonus points
+    (default 1 point per full 5 seconds remaining;
+    `gameplay/bonus_seconds_per_point`, game-wide).
+-   **Lives-lost penalty:** each life lost during a level deducts
+    `lives_lost_penalty_points` (default 1 point per life;
+    `gameplay/lives_lost_penalty_points`, game-wide) from that level's
+    score at level completion.
+-   Both adjustments are applied at level completion to the level's
+    earned score (correct answers × `points_per_question` + bonus −
+    penalty), clamped to ≥ 0, before the personal best is recorded and
+    the running total is updated.
+-   **Testing:** extend `test_level_manager.gd` (bonus/penalty math,
+    clamping, personal-best recording) and `test_game_config.gd` (new
+    settings + fallbacks); full prior suite stays green.
+-   **Milestone:** finishing a level early is rewarded and losing lives
+    costs points, with the scoring math covered by passing GUT tests. See
+    `specs/phases/Phase_25_Points_Bonus_And_Penalty.md`.
+
+### Phase 30 --- Playtesting & Balancing
 
 -   Playtest with target age group; adjust question difficulty pacing
     per level, distractor plausibility, wave length feel, and the
     level time-limit feel based on observations --- now spanning ALL
     categories (integers, fractions, decimals, ratio/HCF-LCM) plus the
-    per-level point values and ship-image selections.
+    per-level point values, ship-image selections, the wave-transition
+    pause/arrival timing (Phase 24), and the bonus/penalty rates
+    (Phase 25).
 -   Fix bugs found during testing; run the full GUT suite after
     balancing changes to catch regressions in difficulty scaling,
     distractor generation, and wave/level logic.
 -   **Milestone:** balanced, kid-tested build ready for wider release,
     with the full GUT suite passing.
 
-### Phase 26 --- Stretch / Future Expansion
+### Phase 31 --- Stretch / Future Expansion
 
 -   Additional math concepts as new strategies (percentages;
     fraction-decimal-percent conversions).
@@ -642,7 +687,7 @@ A new phase makes progression per-player without renumbering the roadmap:
    Tech Stack §5 (`HighScoreManager.gd`).
 2. **No renumbering.** Phases 0–21 are untouched and remain as shipped;
    Phase 22 slots into the reserved 21–24 range before playtesting
-   (Phase 25).
+   (Phase 30).
 
 
 ## Phase Change Note — Profile View & High Score Leaderboard (Phase 23)
@@ -670,4 +715,31 @@ Game Over medal celebrations without renumbering the roadmap:
    Spec §14; Tech Stack §5 (`HighScoreManager.gd`), §7.
 2. **No renumbering.** Phases 0–22 are untouched and remain as shipped;
    Phase 23 slots into the reserved 21–24 range before playtesting
-   (Phase 25).
+   (Phase 30).
+
+
+## Phase Change Note — Wave Transition & Scoring, and the Phase 25→30 Renumbering
+
+Two new phases add wave-transition timing/animation and per-level scoring
+adjustments, and playtesting moves to make room:
+
+1. **New Phase 24 — Wave Transition Animation & Timer Pause.** When a wave
+   is cleared the level timer pauses for a configurable
+   `gameplay/wave_complete_pause_seconds` (default 2.0, game-wide) with no
+   question shown; the next wave's enemies then arrive one row at a time
+   (0.5 s per row, 4 rows = 2 s for the standard formation) before the
+   first question appears. The timer is paused for the entire transition.
+   Normative home: Spec §15; Tech Stack §4/§5.
+2. **New Phase 25 — Points Bonus And Penalty.** Completing a level early
+   awards `floor(time_remaining / bonus_seconds_per_point)` bonus points
+   (default 1 per full 5 seconds; `gameplay/bonus_seconds_per_point`), and
+   each life lost during a level deducts `lives_lost_penalty_points`
+   (default 1; `gameplay/lives_lost_penalty_points`) from that level's
+   score at completion (clamped ≥ 0). Normative home: Spec §16; Tech
+   Stack §5 (`LevelManager`).
+3. **Renumbering.** The old **Phase 25 — Playtesting & Balancing** moves
+   to **Phase 30** (its phase doc is now
+   `specs/phases/Phase_30_Playtesting_And_Balancing.md`), and the old
+   Phase 26 Stretch section becomes **Phase 31**. Phases 0–23 are
+   untouched and remain as shipped; Phases 26–29 are reserved for further
+   improvements before playtesting.

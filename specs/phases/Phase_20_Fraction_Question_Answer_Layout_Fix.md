@@ -12,7 +12,7 @@ the plain-text integer question path exactly as before.
 rendering foundation).
 
 > Renumbering note: this phase was inserted between the completed Phase 19
-> and the former Phase 20 (Playtesting & Balancing, now **Phase 25**).
+> and the former Phase 20 (Playtesting & Balancing, now **Phase 30**).
 > Phases 0--19 are untouched and remain implemented as shipped.
 
 -----------------------------------------------------------------------

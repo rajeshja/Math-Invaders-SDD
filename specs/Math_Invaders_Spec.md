@@ -68,9 +68,14 @@ and waves are grouped into **levels**:
     from the wave count, adding a 5th wave raises the default budget to
     150 seconds unless overridden.
 -   At the end of a wave, a brief transition ("Wave Complete!") shows
-    before the next wave's fresh set of 10 enemies appears. At the end
-    of a level, a "Level Complete!" transition shows before the next
-    level begins.
+    before the next wave's fresh set of 10 enemies appears. The level
+    timer pauses for a configurable `wave_complete_pause_seconds` (default
+    2 s) with no question shown, then the next wave's enemies arrive **one
+    row at a time** (0.5 s per row; 4 rows = 2 s) before the first question
+    appears (Spec §15). At the end of a level, a "Level Complete!"
+    transition shows before the next level begins, and the completed
+    level's score is adjusted for early-finish bonus and lives-lost
+    penalty (Spec §16).
 
 This replaces the original "continuous descending waves" concept with a
 **structured, per-category mini-level format** where the full 10-enemy
@@ -171,19 +176,24 @@ control exactly which math skill is being practiced at any moment.
 7.  **Level time limit:** each level has a time limit (default:
     number of waves × 30 seconds; 120 seconds for Level 1) shown as a
     live countdown in the HUD. It runs only during play, continues
-    across wave transitions within the level, and is not consumed or
-    extended by answers. When it reaches zero the level is failed and
-    the game enters `GAME_OVER` exactly as for life depletion, with a
-    "Time's up!" reason shown.
+    across wave transitions within the level (except that it **pauses
+    for the entire wave-transition sequence**, Spec §15), and is not
+    consumed or extended by answers. When it reaches zero the level is
+    failed and the game enters `GAME_OVER` exactly as for life
+    depletion, with a "Time's up!" reason shown.
 8.  When all 10 enemies in the current wave are eliminated → "Wave
-    Complete" → a **fresh set of 10 enemies** spawns for the next wave
-    (next category).
+    Complete" → the level timer pauses for `wave_complete_pause_seconds`
+    (default 2 s) with no question shown, then a **fresh set of 10
+    enemies** spawns for the next wave (next category) and **arrives one
+    row at a time** (0.5 s per row) before the first question appears
+    (Spec §15).
 9.  When all waves in the level are cleared → "Level Complete" → the
-    player's lives reset to the configured starting-lives value, the
-    level timer restarts at the new level's configured limit, then
-    the next level begins with increased difficulty (and, at later
-    levels, additional categories), again starting with a full set of 10
-    enemies.
+    completed level's score is adjusted for the early-finish bonus and
+    the lives-lost penalty (Spec §16), the player's lives reset to the
+    configured starting-lives value, the level timer restarts at the new
+    level's configured limit, then the next level begins with increased
+    difficulty (and, at later levels, additional categories), again
+    starting with a full set of 10 enemies.
 10. Game over → submit the final score to the device-wide top-5
     leaderboard (Spec §14), update the high score if beaten, and show the
     result screen with a large rank medal when the score qualifies for the
@@ -330,12 +340,27 @@ Settings rather than hardcoded in gameplay scripts:
                                                                        level's default time
                                                                        limit; minimum `1`
 
-  `gameplay/level_time_limit_by_level` Dictionary              `{}` Optional per-level total
+`gameplay/level_time_limit_by_level` Dictionary              `{}` Optional per-level total
                                                                        time-limit overrides in
                                                                        seconds; a valid
                                                                        positive value replaces
                                                                        the computed limit for
                                                                        that level
+
+  `gameplay/wave_complete_pause_seconds` Float                     `2.0` Seconds the level timer
+                                                                       pauses after a wave is
+                                                                       cleared before the next
+                                                                       wave's enemies arrive;
+                                                                       minimum `0`
+
+  `gameplay/bonus_seconds_per_point` Float                       `5.0` Seconds of remaining
+                                                                       level time per
+                                                                       early-finish bonus
+                                                                       point; minimum `1`
+
+`gameplay/lives_lost_penalty_points` Integer                    `1` Points deducted per
+                                                                        life lost during a
+                                                                        level; minimum `0`
   -------------------------------------------------------------------------------------
 
 `starting_lives` is the mistake budget for the current level. Every
@@ -355,6 +380,16 @@ A level's effective time limit equals its valid per-level override from
 120 seconds. Reaching zero fails the level via Game Over ("Time's up!").
 Both timer settings are read only through the same single configuration-
 access path as the other gameplay settings.
+
+`wave_complete_pause_seconds` is the number of seconds the level timer
+pauses after a wave is cleared before the next wave's enemies arrive
+(Spec §15); it is game-wide, not per level. `bonus_seconds_per_point` and
+`lives_lost_penalty_points` drive the level-completion scoring
+adjustments (Spec §16): completing a level early awards
+`floor(time_remaining / bonus_seconds_per_point)` bonus points, and each
+life lost during a level deducts `lives_lost_penalty_points` from that
+level's score. All three are read only through the same single
+configuration-access path as the other gameplay settings.
 
 ------------------------------------------------------------------------
 
@@ -546,7 +581,7 @@ attempt rule.
 - `gameplay/level_time_limit_by_level` is a Dictionary of optional per-level total-limit overrides in seconds.
 - `GameConfig` resolves the effective value: a valid positive override for the current level, otherwise `wave_count × seconds_per_wave`. Gameplay code must not read the raw Project Settings directly.
 - With the four-wave default sequence, the default limit is `4 × 30 = 120` seconds.
-- The timer starts at level start, runs only while the game state is `PLAYING`, continues across wave transitions within the level, and freezes while paused.
+- The timer starts at level start, runs only while the game state is `PLAYING`, continues across wave transitions within the level, and freezes while paused. It also **freezes for the entire wave-transition sequence** (the `wave_complete_pause_seconds` pause plus the row-by-row arrival animation, Spec §15), resuming when the new wave's first question is shown.
 - Wrong answers never consume time; correct answers never add time.
 - When `time_remaining` reaches zero the level is failed: the game enters `GAME_OVER`, emits `game_over` exactly once with reason `TIME_EXPIRED`, disables answer input, and shows "Time's up!" on the Game Over screen alongside the final score.
 - Completing all of a level's waves before expiry completes the level; the next level restarts the timer at its own resolved limit.
@@ -761,3 +796,59 @@ active player. All reads/writes operate on the active profile only
   addition to any leaderboard announcement.
 - Sessions that neither qualify for the top 5 nor beat a personal best
   keep the existing "High Score: X - Name" text.
+
+## 15. Wave Transition Pause & Arrival Animation (Authoritative)
+
+Wave transitions have a deliberate rhythm: a configurable pause with the
+timer frozen, then a row-by-row enemy arrival reveal. This is timing/
+presentation only: formation layout, active-enemy ordering, and question
+flow are unchanged.
+
+- `gameplay/wave_complete_pause_seconds` (Float, default `2.0`, minimum
+  `0`) is the number of seconds the level timer pauses after a wave is
+  cleared before the next wave's enemies arrive. It is game-wide, read
+  only through `GameConfig`.
+- When a wave is cleared, the level timer pauses and no question is shown
+  for `wave_complete_pause_seconds`.
+- After the pause, the next wave's enemies spawn and animate into
+  formation **one row at a time**, top-to-bottom (4, then 3, then 2, then
+  1 for the standard formation). Each row takes `ROW_ARRIVAL_SECONDS`
+  (0.5 s); the standard 4-row formation takes 2 s total.
+- The first question of the new wave is not shown until every row has
+  arrived.
+- The level timer is paused for the **entire** wave transition (pause +
+  arrival) and resumes when the new wave's first question is shown.
+- The "Wave Complete!" banner still shows during the transition; the
+  arrival animation is presentational and enemies are not answerable until
+  all rows have arrived.
+- The row-by-row arrival animation also plays when a new wave's formation
+  spawns at session start and on Play Again (no completion pause in those
+  cases).
+
+## 16. Level Completion Bonus & Penalty (Authoritative)
+
+Each completed level's score is adjusted at level completion: an
+early-finish bonus rewards finishing with time to spare, and a
+lives-lost penalty charges for each life lost during the level. This is
+scoring only: questions, difficulty, lives, and timing are unchanged.
+
+- `gameplay/bonus_seconds_per_point` (Float, default `5.0`, minimum
+  `1.0`) is the number of seconds of remaining level time per bonus point.
+- `gameplay/lives_lost_penalty_points` (Integer, default `1`, minimum
+  `0`) is the number of points deducted per life lost during a level.
+  Both are game-wide and read only through `GameConfig`.
+- Completing a level with time remaining awards an early-finish bonus:
+  `floor(time_remaining / bonus_seconds_per_point)` points (default 1
+  point per full 5 seconds remaining).
+- Each life lost during a level deducts `lives_lost_penalty_points` from
+  that level's score.
+- Both adjustments are applied at level completion:
+  `level_score = max(0, earned + bonus - penalty)`, where `earned` =
+  correct answers × `points_per_question`.
+- The adjusted `level_score` is what is recorded as the level's personal
+  best and what is added to the running total (the running total never
+  goes below 0).
+- Lives lost in a level that is NOT completed (game over) are not
+  penalized, and the bonus does not apply to an incomplete level.
+- Personal bests, assumed full score, and high scores continue to operate
+  on totals (Phase 17 note) and need no schema changes.
