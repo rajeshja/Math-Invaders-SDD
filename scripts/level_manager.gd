@@ -33,6 +33,10 @@ var _lives_lost_this_level: int = 0
 ## Score snapshot at level start; the difference at level clear is what a
 ## personal best is recorded from (FR9.5/FR9.7).
 var _score_at_level_start: int = 0
+## Phase 25 FR25.4: the level's adjusted score (earned + bonus - penalty,
+## clamped at 0) computed at level completion and recorded as the personal
+## best (FR25.5).
+var _level_score: int = 0
 
 
 func _ready() -> void:
@@ -108,6 +112,7 @@ func on_all_waves_complete() -> void:
 	if _level_clear_in_progress or GameManager.is_game_over():
 		return
 	_level_clear_in_progress = true
+	_apply_level_scoring_adjustments()
 	_record_level_result()
 	if level_complete_banner != null and level_complete_banner.has_method("show_banner"):
 		level_complete_banner.show_banner()
@@ -128,12 +133,28 @@ func reset_and_start() -> void:
 
 ## -- Internal ---------------------------------------------------------------
 
-## Persists one completed level's outcome: personal best for the earned
-## score, then either extends the flawless streak or breaks it because a
-## life was lost during the level (FR9.3/FR9.5).
+## Phase 25 FR25.2/FR25.3/FR25.4: applies the level-completion scoring
+## adjustments. The early-finish bonus is 1 point per full
+## bonus_seconds_per_point remaining; each life lost deducts
+## lives_lost_penalty_points. The adjusted level score is clamped at 0 and
+## the net adjustment is applied to the running total (never below 0),
+## emitting score_changed (FR25.5).
+func _apply_level_scoring_adjustments() -> void:
+	var earned: int = GameManager.score - _score_at_level_start
+	var bonus: int = floori(GameManager.time_remaining / GameConfig.get_bonus_seconds_per_point())
+	var penalty: int = _lives_lost_this_level * GameConfig.get_lives_lost_penalty_points()
+	_level_score = maxi(0, earned + bonus - penalty)
+	var net: int = bonus - penalty
+	if net != 0:
+		GameManager.score = maxi(0, GameManager.score + net)
+		GameManager.score_changed.emit(GameManager.score)
+
+
+## Persists one completed level's outcome: personal best for the adjusted
+## level score, then either extends the flawless streak or breaks it because
+## a life was lost during the level (FR9.3/FR9.5/FR25.5).
 func _record_level_result() -> void:
-	var level_score: int = GameManager.score - _score_at_level_start
-	HighScoreManager.record_personal_best(current_level, level_score)
+	HighScoreManager.record_personal_best(current_level, _level_score)
 	if _lives_lost_this_level > 0:
 		HighScoreManager.reset_flawless_streak(current_level)
 	else:

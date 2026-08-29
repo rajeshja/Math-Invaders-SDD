@@ -249,3 +249,98 @@ func test_reset_and_start_resets_lives_like_a_fresh_session() -> void:
 	level_manager.reset_and_start()
 
 	assert_eq(GameManager.lives, GameConfig.get_starting_lives())
+
+
+## -- Phase 25: level-completion bonus & penalty --------------------------------
+
+func _complete_level_with(earned: int, lives_lost: int, time_remaining: float) -> void:
+	level_manager.start_level()
+	GameManager.time_remaining = time_remaining
+	for i in range(earned):
+		GameManager.add_score(1)
+	for i in range(lives_lost):
+		GameManager.take_damage(1)
+
+
+func test_bonus_equals_floor_of_time_remaining_over_seconds_per_point() -> void:
+	_complete_level_with(4, 0, 12.0)
+
+	level_manager.on_all_waves_complete()
+
+	assert_eq(HighScoreManager.get_personal_best(1), 6,
+			"FR25.2: 4 earned + floor(12/5)=2 bonus = 6")
+	assert_eq(GameManager.score, 6, "the bonus is added to the running total")
+
+
+func test_no_bonus_below_one_full_seconds_per_point() -> void:
+	_complete_level_with(4, 0, 4.0)
+
+	level_manager.on_all_waves_complete()
+
+	assert_eq(HighScoreManager.get_personal_best(1), 4,
+			"FR25.2: < 5 s remaining earns no bonus")
+
+
+func test_penalty_equals_lives_lost_times_penalty_points() -> void:
+	_complete_level_with(4, 2, 0.0)
+
+	level_manager.on_all_waves_complete()
+
+	assert_eq(HighScoreManager.get_personal_best(1), 2,
+			"FR25.3: 4 earned - 2 lives * 1 point = 2")
+	assert_eq(GameManager.score, 2, "the penalty is deducted from the running total")
+
+
+func test_level_score_clamps_at_zero() -> void:
+	_complete_level_with(1, 2, 0.0)
+
+	level_manager.on_all_waves_complete()
+
+	assert_eq(HighScoreManager.get_personal_best(1), 0,
+			"FR25.4: max(0, 1 - 2) = 0")
+	assert_eq(GameManager.score, 0, "FR25.5: the running total never goes below 0")
+
+
+func test_bonus_and_penalty_combine_at_level_completion() -> void:
+	_complete_level_with(4, 2, 12.0)
+
+	level_manager.on_all_waves_complete()
+
+	assert_eq(HighScoreManager.get_personal_best(1), 4,
+			"FR25.4: 4 earned + 2 bonus - 2 penalty = 4")
+	assert_eq(GameManager.score, 4)
+
+
+func test_adjusted_score_is_what_is_recorded_as_personal_best() -> void:
+	_complete_level_with(4, 0, 12.0)
+
+	level_manager.on_all_waves_complete()
+
+	assert_eq(HighScoreManager.get_personal_best(1), 6,
+			"FR25.5: the adjusted level score, not the raw delta, is recorded")
+
+
+func test_net_adjustment_emits_score_changed() -> void:
+	_complete_level_with(4, 0, 12.0)
+	watch_signals(GameManager)
+
+	level_manager.on_all_waves_complete()
+
+	assert_signal_emit_count(GameManager, "score_changed", 1,
+			"the net bonus/penalty adjustment announces the new total")
+
+
+func test_game_over_level_applies_neither_bonus_nor_penalty() -> void:
+	level_manager.start_level()
+	GameManager.time_remaining = 12.0
+	GameManager.add_score(4)
+	GameManager.take_damage(3)
+	assert_true(GameManager.is_game_over())
+	var score_before: int = GameManager.score
+
+	level_manager.on_all_waves_complete()
+
+	assert_eq(GameManager.score, score_before,
+			"FR25.6: an incomplete (game-over) level is never adjusted")
+	assert_eq(HighScoreManager.get_personal_best(1), 0,
+			"FR25.6: no personal best is recorded for the incomplete level")

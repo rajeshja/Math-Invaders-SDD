@@ -41,6 +41,8 @@ starting_lives=3
 enemies_per_wave=10
 tries_per_question=1
 wave_complete_pause_seconds=2.0
+bonus_seconds_per_point=5.0
+lives_lost_penalty_points=1
 
 [rendering]
 

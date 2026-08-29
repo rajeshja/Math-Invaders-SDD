@@ -171,6 +171,7 @@ func test_unlocking_proceeds_one_level_at_a_time() -> void:
 
 func test_personal_best_is_recorded_from_earned_level_score_on_clear() -> void:
 	level_manager.start_session(1)
+	GameManager.time_remaining = 0.0
 	GameManager.add_score(7)
 
 	level_manager.on_all_waves_complete()
