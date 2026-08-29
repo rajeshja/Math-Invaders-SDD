@@ -1,6 +1,7 @@
 ## Main Menu (Phase 9 FR9.6/FR9.10/FR9.11): name entry, level select
-## populated up to the player's unlocked level, and the persisted high
-## score with its holder's name.
+## populated up to the player's unlocked level, the device-wide top-5
+## leaderboard with rank medals (Phase 23 FR23.5), and a per-player Profile
+## View (Phase 23 FR23.6).
 ##
 ## Start hands off via GameManager.pending_start_level, which Main.gd
 ## consumes when the game scene loads - this scene never touches gameplay
@@ -24,12 +25,29 @@ const SLIDE_IN_OFFSET := 90.0
 const LOCKED_COLOR := Color(0.55, 0.57, 0.66, 1.0)
 const UNLOCKED_COLOR := Color(1, 1, 1, 1)
 
+## Phase 23 FR23.5: rank -> medal texture for the leaderboard rows.
+const MEDAL_TEXTURES := {
+	1: preload("res://assets/images/ui/medal-gold.png"),
+	2: preload("res://assets/images/ui/medal-silver.png"),
+	3: preload("res://assets/images/ui/medal-bronze.png"),
+	4: preload("res://assets/images/ui/medal-iron.png"),
+	5: preload("res://assets/images/ui/medal-wood.png"),
+}
+
 @onready var _name_edit: LineEdit = $Center/Rows/NameCard/NameRows/NameEdit
 @onready var _level_grid: GridContainer = $Center/Rows/LevelCard/LevelRows/LevelGrid
-@onready var _high_score_label: Label = $Center/Rows/HighScoreLabel
+@onready var _leaderboard_rows: VBoxContainer = $Center/Rows/LeaderboardCard/LeaderboardRows
 @onready var _top_scores_label: Label = $Center/Rows/TopScoresLabel
+@onready var _profile_button: Button = $Center/Rows/ProfileButton
 @onready var _start_button: Button = $Center/Rows/StartButton
 @onready var _center: CenterContainer = $Center
+@onready var _profile_panel: PanelContainer = $ProfilePanel
+@onready var _profile_name_label: Label = $ProfilePanel/ProfileRows/ProfileNameLabel
+@onready var _record_count_label: Label = $ProfilePanel/ProfileRows/RecordCountLabel
+@onready var _highest_level_label: Label = $ProfilePanel/ProfileRows/HighestLevelLabel
+@onready var _best_scores_label: Label = $ProfilePanel/ProfileRows/BestScoresLabel
+@onready var _per_level_bests_label: Label = $ProfilePanel/ProfileRows/PerLevelBestsLabel
+@onready var _close_profile_button: Button = $ProfilePanel/ProfileRows/CloseProfileButton
 
 
 func _ready() -> void:
@@ -40,9 +58,11 @@ func _ready() -> void:
 	# below reflects that player's unlocked levels (blank keeps last-used).
 	HighScoreManager.set_active_player_name(_name_edit.text)
 	_populate_level_grid()
-	_update_high_score_label()
+	_populate_leaderboard()
 	_update_top_scores_label()
 	_start_button.pressed.connect(_on_start_pressed)
+	_profile_button.pressed.connect(_on_profile_button_pressed)
+	_close_profile_button.pressed.connect(_on_close_profile_pressed)
 	_name_edit.text_submitted.connect(func(_text: String): _on_start_pressed())
 	_name_edit.text_changed.connect(_on_name_changed)
 	_play_unlock_fanfare_if_new()
@@ -55,6 +75,8 @@ func _on_name_changed(_text: String) -> void:
 	HighScoreManager.set_active_player_name(_name_edit.text)
 	_populate_level_grid()
 	_update_top_scores_label()
+	if _profile_panel.visible:
+		_update_profile_panel()
 
 
 ## FR9.8: locked levels render grayed out + disabled; unlocked ones are
@@ -89,13 +111,83 @@ func _on_level_button_hovered() -> void:
 	AudioManager.play_sfx("hover", -6.0)
 
 
-func _update_high_score_label() -> void:
-	var high_score: int = HighScoreManager.get_high_score()
-	var holder: String = HighScoreManager.get_player_name()
-	if holder.is_empty():
-		_high_score_label.text = "High Score: %d" % high_score
+## Phase 23 FR23.5: renders the device-wide top-5 leaderboard as one row
+## per entry: rank medal icon + player name + score, descending. Rows are
+## touch-safe (>= 110 design px, Phase 11).
+func _populate_leaderboard() -> void:
+	for child in _leaderboard_rows.get_children():
+		if child.name != "LeaderboardTitle":
+			child.free()
+	var entries: Array = HighScoreManager.get_leaderboard()
+	if entries.is_empty():
+		var empty := Label.new()
+		empty.text = "No scores yet"
+		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty.add_theme_font_size_override("font_size", 26)
+		_leaderboard_rows.add_child(empty)
+		return
+	for i in range(entries.size()):
+		var entry: Dictionary = entries[i]
+		var row := HBoxContainer.new()
+		row.custom_minimum_size = Vector2(0, 110)
+		row.add_theme_constant_override("separation", 12)
+		var medal := TextureRect.new()
+		medal.texture = MEDAL_TEXTURES.get(i + 1)
+		medal.custom_minimum_size = Vector2(44, 52)
+		medal.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		medal.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		row.add_child(medal)
+		var name_label := Label.new()
+		name_label.text = str(entry.get("name", ""))
+		name_label.add_theme_font_size_override("font_size", 28)
+		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		row.add_child(name_label)
+		var score_label := Label.new()
+		score_label.text = str(entry.get("score", 0))
+		score_label.add_theme_font_size_override("font_size", 28)
+		score_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		row.add_child(score_label)
+		_leaderboard_rows.add_child(row)
+
+
+## Phase 23 FR23.6: opens the Profile View for the active player.
+func _on_profile_button_pressed() -> void:
+	AudioManager.play_sfx("click")
+	_update_profile_panel()
+	_profile_panel.visible = true
+
+
+func _on_close_profile_pressed() -> void:
+	AudioManager.play_sfx("click")
+	_profile_panel.visible = false
+
+
+## Phase 23 FR23.6/FR23.7: fills the Profile View with the active player's
+## best 3 session scores, record count, highest level reached, and per-level
+## personal bests.
+func _update_profile_panel() -> void:
+	var name: String = HighScoreManager.get_active_player_name()
+	_profile_name_label.text = name if not name.is_empty() else HighScoreManager.DEFAULT_PLAYER_NAME
+	_record_count_label.text = "Records Set: %d" % HighScoreManager.get_record_count()
+	_highest_level_label.text = "Highest Level Reached: %d" % HighScoreManager.get_highest_level_reached()
+
+	var top: Array = HighScoreManager.get_top_scores()
+	if top.is_empty():
+		_best_scores_label.text = "Best Scores: -"
 	else:
-		_high_score_label.text = "High Score: %d  -  %s" % [high_score, holder]
+		var parts: Array[String] = []
+		for score: int in top:
+			parts.append(str(score))
+		_best_scores_label.text = "Best Scores: %s" % ", ".join(parts)
+
+	var bests: Array[String] = []
+	for level in range(1, LevelConfig.total_level_count() + 1):
+		var best: int = HighScoreManager.get_personal_best(level)
+		if best > 0:
+			bests.append("L%d: %d" % [level, best])
+	_per_level_bests_label.text = "Per-Level Bests: %s" % (
+			", ".join(bests) if not bests.is_empty() else "-")
 
 
 ## FR22.6: the active player's best 3 session scores, shown under the high

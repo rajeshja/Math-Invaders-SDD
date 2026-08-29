@@ -36,6 +36,11 @@ const UNLOCKED_LEVEL_KEY := "unlocked_level"
 const PERSONAL_BESTS_KEY := "personal_bests"
 const FLAWLESS_STREAKS_KEY := "flawless_streaks"
 const TOP_SCORES_KEY := "top_scores"
+## Phase 23 FR23.1: the device-wide top-5 leaderboard (name + score).
+const LEADERBOARD_KEY := "leaderboard"
+## Phase 23 FR23.7: per-profile fields for the Profile View.
+const RECORD_COUNT_KEY := "record_count"
+const HIGHEST_LEVEL_REACHED_KEY := "highest_level_reached"
 
 const DEFAULT_UNLOCKED_LEVEL := 1
 ## Flawless clears in a row required to master a level (FR9.3) and unlock
@@ -44,6 +49,8 @@ const MASTERY_REQUIRED_CLEARS := 3
 const DEFAULT_PLAYER_NAME := "Player"
 ## Best session scores kept per profile (FR22.6).
 const TOP_SCORES_COUNT := 3
+## Phase 23 FR23.1: the leaderboard is capped at this many entries.
+const LEADERBOARD_SIZE := 5
 
 var save_path: String = DEFAULT_SAVE_PATH
 var high_score: int = 0
@@ -59,6 +66,10 @@ var profiles: Dictionary = {}
 ## The profile all progression reads/writes target (FR22.2). Set from the
 ## name entered on the Main Menu; falls back to DEFAULT_PLAYER_NAME.
 var active_player_name: String = ""
+## Phase 23 FR23.1: the device-wide top-5 leaderboard, an ordered list of
+## { name, score } dictionaries descending by score, capped at
+## LEADERBOARD_SIZE. The top entry mirrors high_score/player_name.
+var leaderboard: Array = []
 
 
 func _ready() -> void:
@@ -76,6 +87,7 @@ func load_high_score() -> void:
 	last_player_name = ""
 	active_player_name = ""
 	profiles = {}
+	leaderboard = []
 	if not FileAccess.file_exists(save_path):
 		return
 
@@ -100,6 +112,11 @@ func load_high_score() -> void:
 	last_player_name = _player_name_from_value(data.get(LAST_PLAYER_NAME_KEY, player_name))
 	active_player_name = last_player_name
 	profiles = _profiles_from_value(data.get(PROFILES_KEY, {}))
+	leaderboard = _leaderboard_from_value(data.get(LEADERBOARD_KEY, []))
+	# NFR23.1: a legacy file without a `leaderboard` key reconstructs it from
+	# the single high_score/player_name pair so nothing is lost.
+	if not data.has(LEADERBOARD_KEY) and high_score > 0:
+		leaderboard = [{"name": player_name, "score": high_score}]
 	# FR22.5: a flat-schema file (no `profiles` key) wraps its progression
 	# under the persisted name so nothing is lost; the file is upgraded in
 	# place on the next write.
@@ -122,6 +139,12 @@ func get_high_score() -> int:
 ## The device-wide high-score holder's name (FR22.4).
 func get_player_name() -> String:
 	return player_name
+
+
+## The currently selected profile's name (FR22.2); falls back to the
+## default player when none is set.
+func get_active_player_name() -> String:
+	return _resolved_active_name()
 
 
 ## The last player who started a session (used to prefill the menu and
@@ -149,17 +172,93 @@ func get_top_scores() -> Array:
 	return _active_profile().get(TOP_SCORES_KEY, []).duplicate()
 
 
+## Phase 23 FR23.4: a copy of the device-wide top-5 leaderboard entries
+## ({ name, score }, descending), so callers cannot mutate the stored list.
+func get_leaderboard() -> Array:
+	var copy: Array = []
+	for entry in leaderboard:
+		copy.append({"name": entry.get("name", ""), "score": entry.get("score", 0)})
+	return copy
+
+
+## Phase 23 FR23.8: how many times the active player has set a new
+## device-wide high-score record (FR23.7).
+func get_record_count() -> int:
+	return _active_profile().get(RECORD_COUNT_KEY, 0)
+
+
+## Phase 23 FR23.8: the highest level the active player has reached.
+func get_highest_level_reached() -> int:
+	return maxi(1, _active_profile().get(HIGHEST_LEVEL_REACHED_KEY, 1))
+
+
+## Phase 23 FR23.7/FR23.8: records that the active player reached `level`,
+## keeping the maximum. Called whenever a level starts (LevelManager).
+func record_highest_level_reached(level: int) -> void:
+	if level < 1:
+		return
+	var profile := _ensure_active_profile()
+	var current := maxi(1, profile.get(HIGHEST_LEVEL_REACHED_KEY, 1))
+	if level > current:
+		profile[HIGHEST_LEVEL_REACHED_KEY] = level
+		_write_save_file()
+
+
+## Phase 23 FR23.2/FR23.3/FR23.10: the single game-over entry point. Inserts
+## the active player's final score into the device-wide leaderboard when it
+## qualifies (board under 5 entries, or strictly greater than the current
+## 5th), updates high_score/player_name when it becomes the new #1 (and
+## increments the active profile's record_count), records the session score
+## into the active profile's best 3, and returns
+## { rank, new_record, beat_personal_best, leaderboard }. Scores <= 0 are
+## never submitted. Ties at the boundary never displace an entry (NFR7.3).
+func submit_score(score: int) -> Dictionary:
+	var result := {
+		"rank": 0,
+		"new_record": false,
+		"beat_personal_best": false,
+		"leaderboard": [],
+	}
+	if score <= 0:
+		return result
+	var best := maxi(0, score)
+
+	if leaderboard.size() < LEADERBOARD_SIZE or best > _lowest_leaderboard_score():
+		leaderboard.append({"name": _resolved_active_name(), "score": best})
+		leaderboard.sort_custom(_compare_leaderboard_desc)
+		if leaderboard.size() > LEADERBOARD_SIZE:
+			leaderboard.resize(LEADERBOARD_SIZE)
+		result.rank = _rank_of(best)
+
+	if best > high_score:
+		high_score = best
+		player_name = _resolved_active_name()
+		result.new_record = true
+		_ensure_active_profile()[RECORD_COUNT_KEY] = get_record_count() + 1
+
+	var profile := _ensure_active_profile()
+	var top: Array = profile.get(TOP_SCORES_KEY, [])
+	var previous_best: int = top[0] if not top.is_empty() else 0
+	top.append(best)
+	top.sort()
+	top.reverse()
+	if top.size() > TOP_SCORES_COUNT:
+		top.resize(TOP_SCORES_COUNT)
+	profile[TOP_SCORES_KEY] = top
+	result.beat_personal_best = best > previous_best
+	result.leaderboard = get_leaderboard()
+	_write_save_file()
+	return result
+
+
 ## Records `score` only when it strictly exceeds the stored value, so a tie
 ## is never reported as a new record (NFR7.3). Returns whether a new record
-## was set; nothing is written to disk otherwise. On a new record the
-## holder `player_name` is tagged to the active player (FR22.4).
+## was set. On a new record the holder `player_name` is tagged to the active
+## player (FR22.4). Phase 23 FR23.2: delegates to submit_score() so the
+## leaderboard and profile bookkeeping stay in one place (the save file is
+## written whenever the score is submitted, not only on a new record).
 func save_if_higher(score: int) -> bool:
-	if score <= high_score:
-		return false
-	high_score = score
-	player_name = _resolved_active_name()
-	_write_save_file()
-	return true
+	return submit_score(score).get("new_record", false)
 
 
 ## Commits the entered display name (trimmed) as the active profile and
@@ -299,6 +398,8 @@ func _fresh_profile() -> Dictionary:
 		PERSONAL_BESTS_KEY: {},
 		FLAWLESS_STREAKS_KEY: {},
 		TOP_SCORES_KEY: [],
+		RECORD_COUNT_KEY: 0,
+		HIGHEST_LEVEL_REACHED_KEY: 1,
 	}
 
 
@@ -308,6 +409,7 @@ func _write_save_file() -> void:
 		PLAYER_NAME_KEY: player_name,
 		LAST_PLAYER_NAME_KEY: last_player_name,
 		PROFILES_KEY: profiles,
+		LEADERBOARD_KEY: leaderboard,
 	}
 	var file := FileAccess.open(save_path, FileAccess.WRITE)
 	if file == null:
@@ -395,5 +497,60 @@ func _profiles_from_value(value: Variant) -> Dictionary:
 			PERSONAL_BESTS_KEY: _level_keyed_int_dictionary(profile.get(PERSONAL_BESTS_KEY, {})),
 			FLAWLESS_STREAKS_KEY: _level_keyed_int_dictionary(profile.get(FLAWLESS_STREAKS_KEY, {})),
 			TOP_SCORES_KEY: _top_scores_from_value(profile.get(TOP_SCORES_KEY, [])),
+			RECORD_COUNT_KEY: _non_negative_int_from_value(profile.get(RECORD_COUNT_KEY, 0)),
+			HIGHEST_LEVEL_REACHED_KEY: _unlocked_level_from_value(
+					profile.get(HIGHEST_LEVEL_REACHED_KEY, 1)),
 		}
 	return result
+
+
+## Normalizes the persisted device-wide leaderboard: an ordered list of
+## { name, score } dictionaries, descending by score, capped at
+## LEADERBOARD_SIZE. Corrupt entries (non-dictionaries, non-numeric or
+## non-positive scores) are dropped, never crashed on (NFR23.1).
+func _leaderboard_from_value(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry: Variant in value:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var name: String = _player_name_from_value(entry.get("name", ""))
+		var raw_score: Variant = entry.get("score", 0)
+		if raw_score is bool or not (raw_score is int or raw_score is float):
+			continue
+		var parsed := int(raw_score)
+		if parsed <= 0:
+			continue
+		result.append({"name": name, "score": parsed})
+	result.sort_custom(_compare_leaderboard_desc)
+	if result.size() > LEADERBOARD_SIZE:
+		result.resize(LEADERBOARD_SIZE)
+	return result
+
+
+## Descending-by-score comparator for leaderboard entries.
+func _compare_leaderboard_desc(a: Dictionary, b: Dictionary) -> bool:
+	return a.get("score", 0) > b.get("score", 0)
+
+
+## The current 5th (lowest) leaderboard score; 0 when the board is empty.
+func _lowest_leaderboard_score() -> int:
+	if leaderboard.is_empty():
+		return 0
+	return leaderboard.back().get("score", 0)
+
+
+## 1-based rank of the first leaderboard entry matching `score`; 0 if absent.
+func _rank_of(score: int) -> int:
+	for i in range(leaderboard.size()):
+		if leaderboard[i].get("score", 0) == score:
+			return i + 1
+	return 0
+
+
+## Non-negative int from a persisted value; anything non-numeric becomes 0.
+func _non_negative_int_from_value(value: Variant) -> int:
+	if value is bool or not (value is int or value is float):
+		return 0
+	return maxi(0, int(value))

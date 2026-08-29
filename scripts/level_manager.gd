@@ -104,6 +104,9 @@ func start_level() -> void:
 	GameManager.start_level_timer(maxf(1.0, config.time_limit_seconds))
 	_lives_lost_this_level = 0
 	_score_at_level_start = GameManager.score
+	# Phase 23 FR23.7: every level boundary - session start, advancement,
+	# and Play Again - updates the active profile's highest level reached.
+	HighScoreManager.record_highest_level_reached(current_level)
 	level_changed.emit(current_level)
 	wave_manager.start_first_wave(difficulty)
 

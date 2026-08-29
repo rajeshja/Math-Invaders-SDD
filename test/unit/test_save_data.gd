@@ -158,8 +158,8 @@ func test_full_new_schema_round_trips_through_a_fresh_instance() -> void:
 	assert_eq(reloaded.get_personal_best(2), 44)
 	assert_eq(reloaded.get_flawless_streak(2), 2,
 		"int dictionary keys survive the JSON string-key round trip")
-	assert_eq(reloaded.get_top_scores(), [120, 80],
-		"top scores survive the round trip")
+	assert_eq(reloaded.get_top_scores(), [500, 120, 80],
+		"top scores survive the round trip (save_if_higher records via submit_score)")
 
 
 func test_two_players_profiles_persist_independently() -> void:
@@ -363,3 +363,53 @@ func test_real_save_file_is_untouched_by_this_suite() -> void:
 	assert_eq(manager.save_path, TEST_PATH)
 
 	assert_eq(FileAccess.file_exists(REAL_SAVE_PATH), existed_before)
+
+
+## -- Phase 23: profile fields & leaderboard persistence --------------------------
+
+func test_record_count_and_highest_level_persist_per_player() -> void:
+	manager.set_player_name("Asha")
+	manager.submit_score(500)
+	manager.record_highest_level_reached(4)
+	manager.set_player_name("Balu")
+	manager.record_highest_level_reached(2)
+
+	var reloaded := _fresh_reload()
+	reloaded.set_active_player_name("Asha")
+	assert_eq(reloaded.get_record_count(), 1, "Asha's record count survives reload")
+	assert_eq(reloaded.get_highest_level_reached(), 4, "Asha's highest level survives")
+	reloaded.set_active_player_name("Balu")
+	assert_eq(reloaded.get_record_count(), 0, "Balu's record count is separate")
+	assert_eq(reloaded.get_highest_level_reached(), 2)
+
+
+func test_leaderboard_persists_device_wide_and_shared_across_profiles() -> void:
+	manager.set_player_name("Asha")
+	manager.submit_score(500)
+	manager.set_player_name("Balu")
+	manager.submit_score(300)
+
+	var reloaded := _fresh_reload()
+	assert_eq(reloaded.get_leaderboard(), [
+		{"name": "Asha", "score": 500},
+		{"name": "Balu", "score": 300},
+	], "the device-wide leaderboard survives reload and is shared")
+
+
+func test_corrupt_new_profile_fields_fall_back_safely() -> void:
+	_write_raw_save_file(JSON.stringify({
+		"high_score": 10,
+		"profiles": {
+			"Good": {"record_count": 3, "highest_level_reached": 5},
+			"Bad": {"record_count": "oops", "highest_level_reached": -2},
+		},
+	}))
+
+	manager.load_high_score()
+	manager.set_active_player_name("Good")
+	assert_eq(manager.get_record_count(), 3)
+	assert_eq(manager.get_highest_level_reached(), 5)
+
+	manager.set_active_player_name("Bad")
+	assert_eq(manager.get_record_count(), 0, "non-numeric record_count falls back")
+	assert_eq(manager.get_highest_level_reached(), 1, "invalid highest level falls back")

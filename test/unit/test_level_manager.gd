@@ -344,3 +344,18 @@ func test_game_over_level_applies_neither_bonus_nor_penalty() -> void:
 			"FR25.6: an incomplete (game-over) level is never adjusted")
 	assert_eq(HighScoreManager.get_personal_best(1), 0,
 			"FR25.6: no personal best is recorded for the incomplete level")
+
+
+## -- Phase 23: highest level reached ---------------------------------------------
+
+func test_start_level_records_highest_level_reached() -> void:
+	level_manager.start_session(1)
+	assert_eq(HighScoreManager.get_highest_level_reached(), 1)
+
+	_advance_to_level(3)
+	assert_eq(HighScoreManager.get_highest_level_reached(), 3,
+			"FR23.7: advancing levels updates the active profile's highest reached")
+
+	level_manager.reset_and_start()
+	assert_eq(HighScoreManager.get_highest_level_reached(), 3,
+			"Play Again never lowers the recorded maximum")
