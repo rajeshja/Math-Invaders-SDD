@@ -105,3 +105,32 @@ func test_lower_replays_do_not_reduce_a_level_personal_best() -> void:
 
 	assert_eq(HighScoreManager.get_personal_best(1), 50,
 		"assumed scores must reflect the BEST run of each skipped level")
+
+
+## -- Phase 22: per-player assumed scores (FR22.3) -----------------------------
+
+func test_assumed_score_uses_the_active_players_bests_only() -> void:
+	HighScoreManager.set_active_player_name("A")
+	HighScoreManager.record_personal_best(1, 30)
+	HighScoreManager.record_personal_best(2, 40)
+
+	HighScoreManager.set_active_player_name("B")
+	level_manager.start_session(3)
+	assert_eq(GameManager.score, 0, "B's session ignores A's bests")
+
+	HighScoreManager.set_active_player_name("A")
+	level_manager.start_session(3)
+	assert_eq(GameManager.score, 70, "A's session sums A's bests")
+
+
+func test_player_with_no_bests_starts_at_zero_despite_anothers_bests() -> void:
+	HighScoreManager.set_active_player_name("A")
+	HighScoreManager.record_personal_best(1, 30)
+	HighScoreManager.record_personal_best(2, 40)
+
+	HighScoreManager.set_active_player_name("B")
+	level_manager.start_session(3)
+
+	assert_eq(GameManager.score, 0)
+	assert_eq(wave_stub.first_wave_score, 0,
+		"FR9.8: score initialized before the first question")

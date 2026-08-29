@@ -27,20 +27,34 @@ const UNLOCKED_COLOR := Color(1, 1, 1, 1)
 @onready var _name_edit: LineEdit = $Center/Rows/NameCard/NameRows/NameEdit
 @onready var _level_grid: GridContainer = $Center/Rows/LevelCard/LevelRows/LevelGrid
 @onready var _high_score_label: Label = $Center/Rows/HighScoreLabel
+@onready var _top_scores_label: Label = $Center/Rows/TopScoresLabel
 @onready var _start_button: Button = $Center/Rows/StartButton
 @onready var _center: CenterContainer = $Center
 
 
 func _ready() -> void:
-	_name_edit.text = HighScoreManager.get_player_name()
+	_name_edit.text = HighScoreManager.get_last_player_name()
 	_name_edit.placeholder_text = "Enter your name"
 	_name_edit.max_length = NAME_CHARACTER_LIMIT
+	# FR22.2: the name in the field selects the active profile, so the grid
+	# below reflects that player's unlocked levels (blank keeps last-used).
+	HighScoreManager.set_active_player_name(_name_edit.text)
 	_populate_level_grid()
 	_update_high_score_label()
+	_update_top_scores_label()
 	_start_button.pressed.connect(_on_start_pressed)
 	_name_edit.text_submitted.connect(func(_text: String): _on_start_pressed())
+	_name_edit.text_changed.connect(_on_name_changed)
 	_play_unlock_fanfare_if_new()
 	_animate_slide_in()
+
+
+## FR22.2: typing a name previews that player's unlocked levels before
+## START commits the profile. Previewing never creates a profile.
+func _on_name_changed(_text: String) -> void:
+	HighScoreManager.set_active_player_name(_name_edit.text)
+	_populate_level_grid()
+	_update_top_scores_label()
 
 
 ## FR9.8: locked levels render grayed out + disabled; unlocked ones are
@@ -82,6 +96,19 @@ func _update_high_score_label() -> void:
 		_high_score_label.text = "High Score: %d" % high_score
 	else:
 		_high_score_label.text = "High Score: %d  -  %s" % [high_score, holder]
+
+
+## FR22.6: the active player's best 3 session scores, shown under the high
+## score and refreshed as the name field previews different profiles.
+func _update_top_scores_label() -> void:
+	var top: Array = HighScoreManager.get_top_scores()
+	if top.is_empty():
+		_top_scores_label.text = "Best Scores: -"
+		return
+	var parts: Array[String] = []
+	for score: int in top:
+		parts.append(str(score))
+	_top_scores_label.text = "Best Scores: %s" % ", ".join(parts)
 
 
 ## START continues at the highest unlocked level; the level grid above is

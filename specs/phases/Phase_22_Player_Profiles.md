@@ -30,7 +30,10 @@ FR7.1--FR7.10.
     Menu (FR9.10) selects the active profile. A name with no existing
     profile starts fresh: `unlocked_level = 1`, empty `personal_bests`,
     and empty `flawless_streaks`. A blank name keeps the last-used
-    profile (unchanged from FR9.10's blank-name guard).
+    profile (unchanged from FR9.10's blank-name guard). The profile is
+    created only when the player starts playing (START); typing or
+    previewing a name in the menu must never create a profile, so
+    partial names never leak into the save file.
 -   FR22.3 --- **Isolation:** one player's unlocked levels, personal
     bests, and flawless streaks never affect another player's. Unlocking
     (FR9.4), the assumed full score (FR9.7), and streak bookkeeping
@@ -38,12 +41,20 @@ FR7.1--FR7.10.
 -   FR22.4 --- **Global high score unchanged:** `high_score` and its
     holder `player_name` remain a single device-wide leaderboard value
     (Phase 7/9 behavior preserved). Only progression data becomes
-    per-player.
+    per-player. The holder name is updated **only** when a new high
+    score is set (`save_if_higher`), tagged to the active player; entering
+    a different name on the Main Menu must never re-tag the existing high
+    score to that name.
 -   FR22.5 --- **Legacy migration:** existing flat-schema save files load
     gracefully by wrapping the stored `unlocked_level`, `personal_bests`,
     and `flawless_streaks` under the persisted `player_name` (default
     `"Player"`), preserving all progression. The file is upgraded in
     place on the next write.
+-   FR22.6 --- **Best scores per profile:** each profile stores its
+    player's best 3 session scores (`top_scores`, descending, capped at
+    3). A finished session's final score is recorded into the active
+    profile's top 3 when it qualifies. Top scores are per-player and
+    persist with the profile.
 
 ### Non-Functional Requirements
 
@@ -70,18 +81,32 @@ FR7.1--FR7.10.
 
 1.  **`HighScoreManager.gd`:** add a `profiles: Dictionary` (name →
     profile) and an `active_player_name: String`; add a private
-    `_active_profile() -> Dictionary` helper that lazily creates a fresh
-    profile for the active name. Refactor `get_unlocked_level()`,
-    `get_personal_best()`, `get_flawless_streak()`,
+    `_active_profile() -> Dictionary` helper that returns a fresh profile
+    for the active name **without storing it** (reads never create
+    profiles), plus a private `_ensure_active_profile() -> Dictionary`
+    that stores a fresh profile on first write. Refactor
+    `get_unlocked_level()`, `get_personal_best()`, `get_flawless_streak()`,
     `record_personal_best()`, `record_flawless_clear()`,
     `reset_flawless_streak()`, and `get_assumed_score_for_level()` to
     read/write the active profile instead of the flat top-level fields.
-    Update `load_high_score()` and `_write_save_file()` for the new
-    schema, including the FR22.5 legacy migration path.
+    Add `last_player_name` (the last player who started a session, used to
+    restore the active profile on launch and to prefill the menu) and
+    `top_scores` per profile (FR22.6). `save_if_higher()` tags the holder
+    `player_name` to the active player only when a new record is set
+    (FR22.4); `set_player_name()` selects the active profile and persists
+    `last_player_name` but never touches the holder. Update
+    `load_high_score()` and `_write_save_file()` for the new schema,
+    including the FR22.5 legacy migration path.
 2.  **`MainMenu.gd`:** when the player's name is set (FR9.10), set
     `HighScoreManager.active_player_name` before the level grid is
     populated, so the grid reflects that player's unlocked levels.
-3.  **GUT tests** alongside step 1 (see Testing Plan).
+    Prefill the name field with the last-used player name, and show the
+    active player's best 3 scores. Typing a name only previews the grid;
+    the profile is committed (created) when START is pressed.
+3.  **`Main.gd`:** on Game Over, record the session's final score into the
+    active profile's top 3 alongside the existing `save_if_higher()` call
+    (FR22.6).
+4.  **GUT tests** alongside step 1 (see Testing Plan).
 
 ------------------------------------------------------------------------
 
@@ -93,7 +118,9 @@ FR7.1--FR7.10.
 round-trips through a fresh instance; two players' profiles persist
 independently; a legacy flat-schema file migrates its progression into
 the stored name's profile without losing the high score; corrupt or
-malformed profile entries are dropped, not crashed on.
+malformed profile entries are dropped, not crashed on; previewing partial
+names never creates profiles while START commits one; and each profile's
+best 3 scores are recorded, capped, and persisted per player.
 
 **`test_mastery.gd` (updated)** --- mastering a level under player A
 unlocks only A's next level; player B still starts at Level 1 with no
@@ -102,6 +129,10 @@ streak progress; streaks are tracked per player, not shared.
 **`test_assumed_score.gd` (updated)** --- the assumed full score uses the
 active player's personal bests only; a player with no bests for skipped
 levels starts at zero regardless of another player's bests.
+
+**`test_high_score_manager.gd` (updated)** --- entering a new player name
+never re-tags the existing high score to that name; the holder is only
+updated when a new record is set, tagged to the active player (FR22.4).
 
 **Regression** --- full prior suite passes unmodified (NFR22.2).
 
@@ -128,12 +159,25 @@ levels starts at zero regardless of another player's bests.
                           save file                stored name; file upgraded on
                                                   next write
 
-  6                       Run full GUT suite       Updated tests + full prior
+  6                       Type "Mohan" in the      No profiles are created while
+                          name field (partial      typing; only "Mohan" exists
+                          keystrokes) then START   after starting play
+
+  7                       "A" sets the high        Entering "B" afterwards keeps
+                          score, then "B"          the high score tagged to "A";
+                          enters their name        only beating it re-tags to "B"
+
+  8                       Play 4 sessions as       The profile keeps only the best
+                          "A"                      three scores, descending
+
+  9                       Run full GUT suite       Updated tests + full prior
                                                   suite pass, 0 failures
   -------------------------------------------------------------------------------
 
 **Definition of Done:** each player's unlocked levels, personal bests,
 and flawless streak progress are isolated per name; a new name starts
-fresh; legacy flat save files migrate without data loss; the global high
-score and holder remain a single leaderboard value; and the full GUT
-suite is green.
+fresh; typing a name never creates profiles until play starts; the global
+high score and holder remain a single leaderboard value tagged to the
+player who achieved it; each profile persists its best 3 scores; legacy
+flat save files migrate without data loss; and the full GUT suite is
+green.

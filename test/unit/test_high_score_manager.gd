@@ -119,6 +119,26 @@ func test_dictionary_missing_key_or_wrong_type_falls_back_to_zero() -> void:
 	assert_eq(manager.get_high_score(), 0)
 
 
+## FR22.4: the holder name is tagged to the player who set the record and
+## is never re-tagged just because a different name is entered.
+func test_entering_a_new_name_never_retags_the_high_score() -> void:
+	manager.set_player_name("Asha")
+	manager.save_if_higher(500)
+	assert_eq(manager.get_player_name(), "Asha")
+
+	manager.set_player_name("Balu")
+	assert_eq(manager.get_player_name(), "Asha",
+		"entering a new name must not re-tag the high score to the new player")
+	assert_eq(manager.get_high_score(), 500)
+
+	assert_false(manager.save_if_higher(300))
+	assert_eq(manager.get_player_name(), "Asha", "a lower score keeps the holder")
+
+	assert_true(manager.save_if_higher(600))
+	assert_eq(manager.get_player_name(), "Balu",
+		"beating the record tags the new holder")
+
+
 ## Cross-cutting regression guard (Phase 7 Testing Plan): the suite above
 ## must leave the real save file exactly as it was found - untouched by any
 ## test double or fixture, confirming FR7.10 at the test level.

@@ -241,7 +241,9 @@ func _on_game_over() -> void:
 	AudioManager.play_sfx("game_over")
 	# FR7.5: the same listener that swaps in the Game Over screen records the
 	# final score with HighScoreManager; GameManager stays decoupled from it.
+	# FR22.6: the final score also lands in the active profile's best 3.
 	var new_record: bool = HighScoreManager.save_if_higher(GameManager.score)
+	HighScoreManager.record_session_score(GameManager.score)
 	_game_over_overlay.show_game_over(
 		GameManager.score,
 		_game_over_reason_text(),

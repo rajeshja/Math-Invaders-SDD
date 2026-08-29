@@ -1,4 +1,5 @@
-## Mastery & sequential unlocking tests (Phase 9 Testing Plan).
+## Mastery & sequential unlocking tests (Phase 9 Testing Plan; Phase 22:
+## per-player isolation of unlocks and streaks).
 ##
 ## Simulates flawless level clears through a real LevelManager + real
 ## (redirected) HighScoreManager: three flawless clears in a row must
@@ -57,6 +58,14 @@ func _delete_test_file() -> void:
 		DirAccess.remove_absolute(TEST_PATH)
 
 
+## The active profile in these tests is the default "Player" (no name is
+## entered), so its unlocked level can be seeded directly for scenarios
+## that start mid-progression. set_player_name() commits the profile.
+func _set_active_unlocked_level(level: int) -> void:
+	HighScoreManager.set_player_name("Player")
+	HighScoreManager.profiles[HighScoreManager.DEFAULT_PLAYER_NAME][HighScoreManager.UNLOCKED_LEVEL_KEY] = level
+
+
 func test_unlocked_level_defaults_to_one() -> void:
 	assert_eq(HighScoreManager.get_unlocked_level(), 1)
 
@@ -103,7 +112,7 @@ func test_damage_during_a_level_breaks_the_streak_chain() -> void:
 
 
 func test_streaks_are_tracked_per_level_independently() -> void:
-	HighScoreManager.unlocked_level = 5
+	_set_active_unlocked_level(5)
 	level_manager.start_session(4)
 	GameManager.take_damage(1)
 	level_manager.on_all_waves_complete()
@@ -119,7 +128,7 @@ func test_streaks_are_tracked_per_level_independently() -> void:
 
 func test_unlocking_is_capped_by_the_defined_level_pool() -> void:
 	var last_level: int = LevelConfig.total_level_count()
-	HighScoreManager.unlocked_level = last_level
+	_set_active_unlocked_level(last_level)
 	level_manager.session_start_level = last_level
 
 	for i in range(3):
@@ -167,3 +176,37 @@ func test_personal_best_is_recorded_from_earned_level_score_on_clear() -> void:
 	level_manager.on_all_waves_complete()
 
 	assert_eq(HighScoreManager.get_personal_best(1), 7)
+
+
+## -- Phase 22: per-player isolation (FR22.1/FR22.3) ---------------------------
+
+func test_mastery_under_player_a_unlocks_only_a() -> void:
+	HighScoreManager.set_active_player_name("A")
+	for i in range(3):
+		level_manager.start_session(1)
+		level_manager.on_all_waves_complete()
+	assert_eq(HighScoreManager.get_unlocked_level(), 2, "A masters level 1")
+
+	HighScoreManager.set_active_player_name("B")
+	assert_eq(HighScoreManager.get_unlocked_level(), 1, "B still starts at level 1")
+	assert_eq(HighScoreManager.get_flawless_streak(1), 0, "B has no streak progress")
+	assert_eq(HighScoreManager.get_personal_best(1), 0, "B has no personal bests")
+
+	HighScoreManager.set_active_player_name("A")
+	assert_eq(HighScoreManager.get_unlocked_level(), 2, "A's unlock is intact")
+	assert_eq(HighScoreManager.get_flawless_streak(1), 3, "A's streak is intact")
+
+
+func test_streaks_are_tracked_per_player_not_shared() -> void:
+	HighScoreManager.set_active_player_name("A")
+	HighScoreManager.record_flawless_clear(1, 5)
+	HighScoreManager.record_flawless_clear(1, 5)
+	assert_eq(HighScoreManager.get_flawless_streak(1), 2)
+
+	HighScoreManager.set_active_player_name("B")
+	assert_eq(HighScoreManager.get_flawless_streak(1), 0, "B's streak is independent")
+	HighScoreManager.record_flawless_clear(1, 5)
+	assert_eq(HighScoreManager.get_flawless_streak(1), 1)
+
+	HighScoreManager.set_active_player_name("A")
+	assert_eq(HighScoreManager.get_flawless_streak(1), 2, "A's streak untouched by B")

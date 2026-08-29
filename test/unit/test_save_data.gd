@@ -1,5 +1,7 @@
 ## Profile persistence tests (Phase 9 Testing Plan: the new JSON schema
-## saves and loads correctly without destroying legacy Phase 7 save data).
+## saves and loads correctly without destroying legacy Phase 7 save data;
+## Phase 22: per-player profiles persist independently and legacy flat
+## files migrate into the stored name's profile).
 ##
 ## Every test redirects save_path into a throwaway directory so the real
 ## user://highscore.json is never read or written (NFR7.1).
@@ -84,7 +86,7 @@ func test_non_dictionary_json_content_falls_back_to_defaults_gracefully() -> voi
 	assert_eq(manager.get_unlocked_level(), 1)
 
 
-## -- Legacy migration (Phase 7 schema) -----------------------------------------
+## -- Legacy migration (Phase 7/9 flat schema) ---------------------------------
 
 func test_legacy_phase7_schema_migrates_without_losing_the_high_score() -> void:
 	_write_raw_save_file(JSON.stringify({"high_score": 123}))
@@ -93,8 +95,8 @@ func test_legacy_phase7_schema_migrates_without_losing_the_high_score() -> void:
 
 	assert_eq(manager.get_high_score(), 123, "legacy value survives")
 	assert_eq(manager.get_unlocked_level(), 1)
-	assert_true(manager.personal_bests.is_empty())
-	assert_true(manager.flawless_streaks.is_empty())
+	assert_eq(manager.get_personal_best(1), 0)
+	assert_eq(manager.get_flawless_streak(1), 0)
 
 
 func test_legacy_schema_is_upgraded_in_place_on_next_write() -> void:
@@ -108,26 +110,77 @@ func test_legacy_schema_is_upgraded_in_place_on_next_write() -> void:
 	assert_eq(reloaded.get_personal_best(2), 40)
 
 
+func test_legacy_flat_schema_migrates_into_the_stored_names_profile() -> void:
+	_write_raw_save_file(JSON.stringify({
+		"high_score": 123,
+		"player_name": "Raju",
+		"unlocked_level": 3,
+		"personal_bests": {"1": 30, "2": 44},
+		"flawless_streaks": {"2": 2},
+	}))
+
+	manager.load_high_score()
+
+	assert_eq(manager.get_high_score(), 123, "high score survives migration")
+	assert_eq(manager.get_player_name(), "Raju")
+	assert_eq(manager.get_unlocked_level(), 3, "progression wrapped under Raju")
+	assert_eq(manager.get_personal_best(1), 30)
+	assert_eq(manager.get_personal_best(2), 44)
+	assert_eq(manager.get_flawless_streak(2), 2)
+
+	manager.set_active_player_name("SomeoneElse")
+	assert_eq(manager.get_unlocked_level(), 1,
+		"a different name never sees Raju's progression")
+	assert_eq(manager.get_personal_best(1), 0)
+
+
 ## -- New schema round-trip -------------------------------------------------------
 
 func test_full_new_schema_round_trips_through_a_fresh_instance() -> void:
-	manager.save_if_higher(500)
 	manager.set_player_name("Raju")
-	manager.unlocked_level = 3
+	manager.save_if_higher(500)
 	manager.record_personal_best(1, 30)
 	manager.record_personal_best(2, 44)
-	manager.flawless_streaks[2] = 2
+	manager.record_flawless_clear(2, 5)
+	manager.record_flawless_clear(2, 5)
+	manager.record_session_score(120)
+	manager.record_session_score(80)
+	manager.profiles["Raju"][HighScoreManagerScript.UNLOCKED_LEVEL_KEY] = 3
 	manager._write_save_file()
 
 	var reloaded := _fresh_reload()
 
 	assert_eq(reloaded.get_high_score(), 500)
 	assert_eq(reloaded.get_player_name(), "Raju")
+	assert_eq(reloaded.get_last_player_name(), "Raju")
 	assert_eq(reloaded.get_unlocked_level(), 3)
 	assert_eq(reloaded.get_personal_best(1), 30)
 	assert_eq(reloaded.get_personal_best(2), 44)
 	assert_eq(reloaded.get_flawless_streak(2), 2,
 		"int dictionary keys survive the JSON string-key round trip")
+	assert_eq(reloaded.get_top_scores(), [120, 80],
+		"top scores survive the round trip")
+
+
+func test_two_players_profiles_persist_independently() -> void:
+	manager.set_player_name("Asha")
+	manager.record_personal_best(1, 30)
+	for i in range(3):
+		manager.record_flawless_clear(1, 5)
+	assert_eq(manager.get_unlocked_level(), 2, "Asha masters level 1")
+
+	manager.set_player_name("Balu")
+	assert_eq(manager.get_unlocked_level(), 1, "Balu starts fresh")
+	assert_eq(manager.get_personal_best(1), 0)
+	assert_eq(manager.get_flawless_streak(1), 0)
+
+	var reloaded := _fresh_reload()
+	reloaded.set_active_player_name("Asha")
+	assert_eq(reloaded.get_unlocked_level(), 2, "Asha's unlock survives reload")
+	assert_eq(reloaded.get_personal_best(1), 30)
+	assert_eq(reloaded.get_flawless_streak(1), 3)
+	reloaded.set_active_player_name("Balu")
+	assert_eq(reloaded.get_unlocked_level(), 1, "Balu still fresh after reload")
 
 
 func test_string_typed_level_keys_are_normalized_on_load() -> void:
@@ -152,8 +205,32 @@ func test_corrupt_dictionary_entries_are_dropped_not_crashed_on() -> void:
 
 	manager.load_high_score()
 
-	assert_true(manager.personal_bests.is_empty(),
+	assert_eq(manager.get_personal_best(1), 0,
 		"non-numeric and invalid entries are dropped")
+
+
+func test_corrupt_profile_entries_are_dropped_not_crashed_on() -> void:
+	_write_raw_save_file(JSON.stringify({
+		"high_score": 10,
+		"profiles": {
+			"Good": {"unlocked_level": 2, "personal_bests": {"1": 25}},
+			"Bad": "not a dictionary",
+			"Corrupt": {"unlocked_level": "oops", "personal_bests": {"1": "nope", "two": 5, "3": -4}},
+		},
+	}))
+
+	manager.load_high_score()
+
+	assert_true(manager.profiles.has("Good"))
+	assert_false(manager.profiles.has("Bad"), "non-dictionary profile dropped")
+
+	manager.set_active_player_name("Good")
+	assert_eq(manager.get_unlocked_level(), 2)
+	assert_eq(manager.get_personal_best(1), 25)
+
+	manager.set_active_player_name("Corrupt")
+	assert_eq(manager.get_unlocked_level(), 1, "corrupt unlocked_level falls back to 1")
+	assert_eq(manager.get_personal_best(1), 0, "corrupt bests dropped")
 
 
 ## -- Player name (FR9.10/FR9.11) --------------------------------------------------
@@ -161,15 +238,85 @@ func test_corrupt_dictionary_entries_are_dropped_not_crashed_on() -> void:
 func test_set_player_name_persists_and_trims() -> void:
 	manager.set_player_name("  Asha  ")
 
-	assert_eq(manager.get_player_name(), "Asha")
-	assert_eq(_fresh_reload().get_player_name(), "Asha")
+	assert_eq(manager.get_last_player_name(), "Asha")
+	assert_eq(_fresh_reload().get_last_player_name(), "Asha")
 
 
 func test_blank_name_does_not_wipe_stored_name() -> void:
 	manager.set_player_name("Asha")
 	manager.set_player_name("   ")
 
-	assert_eq(manager.get_player_name(), "Asha")
+	assert_eq(manager.get_last_player_name(), "Asha")
+
+
+func test_previewing_names_does_not_create_profiles() -> void:
+	manager.set_active_player_name("M")
+	manager.get_unlocked_level()
+	manager.set_active_player_name("Mo")
+	manager.get_unlocked_level()
+	manager.set_active_player_name("Moh")
+	manager.get_unlocked_level()
+
+	assert_true(manager.profiles.is_empty(),
+		"previewing partial names must not create profiles")
+
+	manager.set_player_name("Mohan")
+	assert_true(manager.profiles.has("Mohan"),
+		"starting play creates the committed profile")
+	assert_false(manager.profiles.has("M"))
+	assert_false(manager.profiles.has("Mo"))
+	assert_false(manager.profiles.has("Moh"))
+
+
+## -- Best scores per profile (FR22.6) ---------------------------------------------
+
+func test_top_three_scores_are_recorded_and_capped() -> void:
+	manager.set_player_name("Asha")
+	manager.record_session_score(100)
+	manager.record_session_score(300)
+	manager.record_session_score(200)
+	manager.record_session_score(400)
+
+	assert_eq(manager.get_top_scores(), [400, 300, 200],
+		"only the best three, sorted descending")
+
+	var reloaded := _fresh_reload()
+	assert_eq(reloaded.get_top_scores(), [400, 300, 200],
+		"top scores persist across reload")
+
+
+func test_top_scores_are_per_player() -> void:
+	manager.set_player_name("Asha")
+	manager.record_session_score(100)
+	manager.set_player_name("Balu")
+	manager.record_session_score(50)
+
+	assert_eq(manager.get_top_scores(), [50])
+	manager.set_active_player_name("Asha")
+	assert_eq(manager.get_top_scores(), [100])
+
+
+func test_zero_scores_are_not_recorded_as_best_scores() -> void:
+	manager.set_player_name("Asha")
+	manager.record_session_score(0)
+	manager.record_session_score(-5)
+
+	assert_true(manager.get_top_scores().is_empty())
+
+
+func test_corrupt_top_scores_are_dropped_not_crashed_on() -> void:
+	_write_raw_save_file(JSON.stringify({
+		"high_score": 10,
+		"profiles": {
+			"Good": {"top_scores": [50, "oops", -3, 20, 100, 70]},
+		},
+	}))
+
+	manager.load_high_score()
+	manager.set_active_player_name("Good")
+
+	assert_eq(manager.get_top_scores(), [100, 70, 50],
+		"non-numeric and negative entries dropped, capped at 3")
 
 
 ## -- Personal bests (FR9.5/FR9.7) --------------------------------------------------
