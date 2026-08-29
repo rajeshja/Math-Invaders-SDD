@@ -38,6 +38,7 @@ The specs, tech stack details, plan and phase details are captured in these fold
 - [Phase 19: Player Ship Image](./specs/phases/Phase_19_Player_Ship_Image.md) - Pending
 - [Phase 20: Fraction Question And Answer Layout Fix](./specs/phases/Phase_20_Fraction_Question_Answer_Layout_Fix.md) - Pending
 - [Phase 21: Inspector Image Selection](./specs/phases/Phase_21_Inspector_Image_Selection.md) - Pending
+- [Phase 22: Player Profiles](./specs/phases/Phase_22_Player_Profiles.md) - Pending
 - [Phase 25: Playtesting And Balancing](./specs/phases/Phase_25_Playtesting_And_Balancing.md) - Incomplete
 
 ## Status

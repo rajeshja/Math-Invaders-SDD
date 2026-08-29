@@ -145,7 +145,12 @@ func record_flawless_clear(level: int, unlock_cap: int = -1) -> bool:
 	var newly_unlocked := false
 	if streak >= MASTERY_REQUIRED_CLEARS:
 		var candidate := normalized_level + 1
-		if candidate > get_unlocked_level() and (unlock_cap < 0 or candidate <= unlock_cap):
+		# Sequential unlocking (FR9.4): the mastered level must itself be
+		# unlocked before its successor can be, so a stray clear on a locked
+		# level can never skip ahead of the frontier.
+		if normalized_level <= get_unlocked_level() \
+				and candidate > get_unlocked_level() \
+				and (unlock_cap < 0 or candidate <= unlock_cap):
 			unlocked_level = candidate
 			newly_unlocked = true
 	_write_save_file()

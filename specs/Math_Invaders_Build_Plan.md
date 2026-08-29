@@ -409,6 +409,24 @@ playable milestone.
     a dropdown --- no path typing, full GUT suite green. See
     `specs/phases/Phase_21_Inspector_Image_Selection.md`.
 
+### Phase 22 --- Per-Player Profiles
+
+-   Make progression per-player: `HighScoreManager` currently stores one
+    flat profile (`unlocked_level`, `personal_bests`,
+    `flawless_streaks`) in `user://highscore.json`, so all players on a
+    shared device share the same unlocked levels and streak progress.
+-   Key that progression data by the player name entered on the Main
+    Menu (FR9.10): each player gets their own `unlocked_level`,
+    `personal_bests`, and `flawless_streaks`; a new name starts fresh
+    (Level 1 unlocked, no bests or streaks).
+-   Keep the device-wide high score and its holder's name as a single
+    leaderboard value; migrate legacy flat save files into the stored
+    name's profile without data loss.
+-   **Milestone:** each player's unlocked levels, personal bests, and
+    flawless streak progress are isolated per name, legacy saves
+    migrate, and the full GUT suite is green. See
+    `specs/phases/Phase_22_Player_Profiles.md`.
+
 ### Phase 25 --- Playtesting & Balancing
 
 -   Playtest with target age group; adjust question difficulty pacing
@@ -568,3 +586,23 @@ playtesting:
    Phase 21 Stretch section becomes **Phase 26**. Phases 0–19 are
    untouched and remain implemented as shipped. Phases 21–24 are reserved
    for further improvements and changes before playtesting.
+
+
+## Phase Change Note — Per-Player Profiles (Phase 22)
+
+A new phase makes progression per-player without renumbering the roadmap:
+
+1. **New Phase 22 — Per-Player Profiles.** `HighScoreManager` currently
+   persists a single flat profile (`unlocked_level`, `personal_bests`,
+   `flawless_streaks`) in `user://highscore.json`, so every player on a
+   shared device shares the same unlocked levels and streak progress.
+   Phase 22 keys that progression data by the player name entered on the
+   Main Menu (FR9.10): each player gets their own unlocked levels,
+   personal bests, and flawless streak history, and a new name starts
+   fresh. The device-wide high score and its holder's name remain a
+   single leaderboard value. Legacy flat save files migrate into the
+   stored name's profile without data loss. Normative home: Spec §11;
+   Tech Stack §5 (`HighScoreManager.gd`).
+2. **No renumbering.** Phases 0–21 are untouched and remain as shipped;
+   Phase 22 slots into the reserved 21–24 range before playtesting
+   (Phase 25).

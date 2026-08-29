@@ -555,6 +555,13 @@ the launch, telegraph, or arrival of any bullet.
 - **Player Level Select:** The Main Menu includes a UI to let players choose any unlocked level to start playing from.
 - **Assumed Full Score:** Skipping a level by starting at a later unlocked level initializes the player's score with the sum of their "personal best" scores for the skipped levels.
 - **Player Name Setup:** Before starting the game, players are prompted to enter their name on the Splash Screen or Main Menu. This name is persisted and displayed on the High Score screen.
+- **Per-Player Profiles (Phase 22):** Unlocked levels, personal bests,
+  and flawless streak progress are stored per player name, so each
+  player on a shared device has their own progression. The name entered
+  on the Main Menu selects the active profile; a new name starts fresh
+  (Level 1 unlocked, no personal bests or streaks). The device-wide high
+  score and its holder's name remain a single leaderboard value. See
+  `specs/phases/Phase_22_Player_Profiles.md`.
 - **Splash Screen:** A startup splash screen featuring the Game Title and Developer Logo fades directly into the Main Menu.
 - **Mistake Review:** At the Game Over screen, a "Review Mistakes" button opens a scrollable panel displaying all wrong answers tracked during that session (Question, Selected Answer, Correct Answer).
 - **Developer Level Select:** An exported setting (`debug_start_level`) allows developers to force-start the game at any level, bypassing unlocking requirements for testing purposes.
