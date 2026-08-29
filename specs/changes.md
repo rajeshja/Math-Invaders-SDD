@@ -489,3 +489,56 @@ Two presentational fixes (no gameplay state/logic changes; NFR9.1 applies):
    - Normative home: Spec §2 "HUD" and §6; Tech Stack §2/§7.
    - Code: `scenes/hud.tscn` (`LivesDisplay` at bottom-left) and
      `scripts/hud.gd` (`_apply_safe_area`).
+
+
+## Profile View & High Score Leaderboard Revision (Phase 23)
+
+A new requirements batch adds a top-5 leaderboard, a per-player Profile
+View, and Game Over medal celebrations. No renumbering: Phase 23 slots
+into the reserved 21--24 range before playtesting (Phase 25). Phases 0--22
+are untouched and remain as shipped.
+
+### 1. Device-wide top-5 leaderboard
+
+- The single device-wide high score becomes the top entry of a **top-5
+  leaderboard** of `{ name, score }` entries (descending, capped at 5),
+  persisted by `HighScoreManager`. `high_score`/`player_name` remain the
+  top entry (FR7.3/FR22.4 preserved).
+- `submit_score(score) -> Dictionary` is the single game-over entry point,
+  returning `{ rank, new_record, beat_personal_best, leaderboard }`.
+  `save_if_higher()` delegates to it and returns `new_record`.
+- Qualification: fewer than 5 entries, or strictly greater than the
+  current 5th; ties at the boundary do not displace; scores ≤ 0 are never
+  submitted.
+- The Main Menu renders the leaderboard as a table: rank medal icon +
+  player name + score. Medals: `medal-gold/silver/bronze/iron/wood.png`
+  under `assets/images/ui/` (164×196).
+
+### 2. Per-player Profile View
+
+- Each profile gains `record_count` (times the player set a new
+  device-wide record; increments only on a strictly-greater #1) and
+  `highest_level_reached` (updated monotonically at every level start).
+- A Profile View on the Main Menu shows the active player's best 3
+  session scores, record count, highest level reached, and per-level
+  bests (`personal_bests`).
+
+### 3. Game Over celebration
+
+- Top-5 finishes announce with a **large rank medal**: gold + "New High
+  Score!" for rank 1; the rank medal + "Top 5!" for ranks 2--5.
+- Beating the player's own best session score adds a **"Personal Best!"**
+  congratulation.
+- Otherwise the existing "High Score: X - Name" fallback text remains.
+
+### Checklist
+
+- [ ] `HighScoreManager`: `leaderboard`, `submit_score()`,
+      `get_leaderboard()`, per-profile `record_count`/
+      `highest_level_reached`, schema migration.
+- [ ] `LevelManager.start_level()` records `highest_level_reached`.
+- [ ] `Main._on_game_over()` uses `submit_score()`.
+- [ ] `GameOverOverlay`: large rank medal + "Personal Best!".
+- [ ] `MainMenu`: leaderboard table + Profile View.
+- [ ] Extend `test_high_score_manager.gd` / `test_save_data.gd`; full GUT
+      suite green.

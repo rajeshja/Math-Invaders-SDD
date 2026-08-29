@@ -230,7 +230,12 @@ supports non-arithmetic content.
     whichever cause (lives at zero or time at zero) triggers it first. There is no health pool in the current gameplay
     model.
 -   `HighScoreManager.gd` --- reads/writes persisted high score
-    (JSON/`ConfigFile` in `user://`).
+    (JSON/`ConfigFile` in `user://`). *Phase 23:* the single device-wide
+    high score becomes the top entry of a **top-5 leaderboard** of
+    `{ name, score }` entries; `submit_score(score)` is the single
+    game-over entry point (returns `rank`, `new_record`,
+    `beat_personal_best`, `leaderboard`), and each profile gains
+    `record_count` and `highest_level_reached` for the Profile View.
 
 ## Key Scene Scripts
 
@@ -333,6 +338,11 @@ configured value. The persisted high score is unaffected.
     file in `user://`, so they survive app restarts without requiring a
     backend.
 -   `HighScoreManager.gd` (or `SaveManager.gd`) tracks these metrics and handles safe JSON schema migrations.
+-   *Phase 23:* the save schema additionally stores the device-wide
+    **top-5 leaderboard** (`{ name, score }` entries) and, per profile,
+    `record_count` and `highest_level_reached`. Legacy files without the
+    new keys load gracefully (leaderboard reconstructed from
+    `high_score`/`player_name`; new fields defaulted).
 -   No cloud sync or backend is required for the initial build; this can
     be layered in later without restructuring the above architecture.
 -   **Mistake Review Tracking:** During a session, incorrect answers are recorded in-memory (storing the question, selected answer, and correct answer) and surfaced via the `GameOverScreen` UI. This temporary data is not persisted to disk.
@@ -379,7 +389,12 @@ the project.
         │   ├── heart_icon.png
         │   ├── life_icon.png
         │   ├── wave_complete_banner.png
-        │   └── level_complete_banner.png
+        │   ├── level_complete_banner.png
+        │   ├── medal-gold.png          # leaderboard rank 1 (Phase 23)
+        │   ├── medal-silver.png        # leaderboard rank 2 (Phase 23)
+        │   ├── medal-bronze.png        # leaderboard rank 3 (Phase 23)
+        │   ├── medal-iron.png          # leaderboard rank 4 (Phase 23)
+        │   └── medal-wood.png          # leaderboard rank 5 (Phase 23)
         └── effects/
             └── enemy_explosion_spritesheet.png
 

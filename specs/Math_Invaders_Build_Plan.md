@@ -427,6 +427,43 @@ playable milestone.
     migrate, and the full GUT suite is green. See
     `specs/phases/Phase_22_Player_Profiles.md`.
 
+### Phase 23 --- Profile View & High Score Leaderboard
+
+-   Turn the single device-wide high score into a **top-5 leaderboard**
+    of `{ name, score }` entries (descending, capped at 5) persisted by
+    `HighScoreManager`; `high_score`/`player_name` remain the top entry.
+    A finished session's score qualifies when the board has fewer than 5
+    entries or is strictly greater than the current 5th; ties at the
+    boundary do not displace, and scores ≤ 0 are never submitted.
+-   Add `submit_score(score) -> Dictionary` as the single game-over entry
+    point (returns `rank`, `new_record`, `beat_personal_best`,
+    `leaderboard`); refactor `save_if_higher()` to delegate to it.
+-   Main Menu: replace the "High Score: X - Name" label with a
+    leaderboard table --- one row per entry with the rank medal icon
+    (`medal-gold/silver/bronze/iron/wood.png` under `assets/images/ui/`),
+    player name, and score.
+-   Per-player profile additions: `record_count` (times the player set a
+    new device-wide record; increments only on a strictly-greater #1) and
+    `highest_level_reached` (updated monotonically at every level start).
+-   Add a **Profile View** on the Main Menu showing the active player's
+    best 3 session scores, record count, highest level reached, and
+    per-level bests (`personal_bests`).
+-   Game Over screen: announce top-5 finishes with a **large rank medal**
+    (gold + "New High Score!" for rank 1; the rank medal + "Top 5!" for
+    ranks 2--5) and add a **"Personal Best!"** congratulation when the
+    player beats their own best session score; keep the existing
+    "High Score: X - Name" fallback otherwise.
+-   **Testing:** extend `test_high_score_manager.gd` (leaderboard
+    insertion/qualification/ties, `submit_score` result, record-count
+    increments, highest-level monotonicity, legacy migration) and
+    `test_save_data.gd` (new fields persist per player; leaderboard is
+    device-wide); full prior suite stays green.
+-   **Milestone:** the high score is a medal-styled top-5 leaderboard,
+    each player has a Profile View with their bests/record count/highest
+    level, and the Game Over screen celebrates top-5 and personal-best
+    finishes --- with the full GUT suite green. See
+    `specs/phases/Phase_23_Profile_View_And_High_Score_Leaderboard.md`.
+
 ### Phase 25 --- Playtesting & Balancing
 
 -   Playtest with target age group; adjust question difficulty pacing
@@ -605,4 +642,32 @@ A new phase makes progression per-player without renumbering the roadmap:
    Tech Stack §5 (`HighScoreManager.gd`).
 2. **No renumbering.** Phases 0–21 are untouched and remain as shipped;
    Phase 22 slots into the reserved 21–24 range before playtesting
+   (Phase 25).
+
+
+## Phase Change Note — Profile View & High Score Leaderboard (Phase 23)
+
+A new phase adds a top-5 leaderboard, a per-player Profile View, and
+Game Over medal celebrations without renumbering the roadmap:
+
+1. **New Phase 23 — Profile View & High Score Leaderboard.** The single
+   device-wide high score becomes the top entry of a **top-5
+   leaderboard** of `{ name, score }` entries persisted by
+   `HighScoreManager`; a finished session's score qualifies when the board
+   has fewer than 5 entries or is strictly greater than the current 5th
+   (ties at the boundary do not displace; scores ≤ 0 are never
+   submitted). The Main Menu renders the leaderboard as a table with rank
+   medal icons (`medal-gold/silver/bronze/iron/wood.png` under
+   `assets/images/ui/`). Each player's profile gains `record_count` (times
+   they set a new device-wide record, incremented only on a strictly-
+   greater #1) and `highest_level_reached` (updated monotonically at
+   every level start). A Profile View on the Main Menu shows the active
+   player's best 3 session scores, record count, highest level reached,
+   and per-level bests. The Game Over screen announces top-5 finishes with
+   a large rank medal (gold + "New High Score!" for rank 1; the rank medal
+   + "Top 5!" for ranks 2–5) and adds a "Personal Best!" congratulation
+   when the player beats their own best session score. Normative home:
+   Spec §14; Tech Stack §5 (`HighScoreManager.gd`), §7.
+2. **No renumbering.** Phases 0–22 are untouched and remain as shipped;
+   Phase 23 slots into the reserved 21–24 range before playtesting
    (Phase 25).

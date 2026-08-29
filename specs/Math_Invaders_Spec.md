@@ -184,8 +184,11 @@ control exactly which math skill is being practiced at any moment.
     the next level begins with increased difficulty (and, at later
     levels, additional categories), again starting with a full set of 10
     enemies.
-10. Game over → compare score to stored high score, update if beaten,
-    show result screen with "Play Again."
+10. Game over → submit the final score to the device-wide top-5
+    leaderboard (Spec §14), update the high score if beaten, and show the
+    result screen with a large rank medal when the score qualifies for the
+    top 5, a "Personal Best!" congratulation when the player beats their
+    own best session score, and a "Play Again" button.
 
 ------------------------------------------------------------------------
 
@@ -475,11 +478,29 @@ blurring when the game scales to different screen sizes.
   Level Complete      `level_complete_banner.png`         600×200            Yes             Shown briefly between
   banner                                                                                     levels
 
-  Game Over           `game_over_bg.png`                  720×1280           Optional        Can reuse
+Game Over           `game_over_bg.png`                  720×1280           Optional        Can reuse
   background/frame                                                                           `background_space.png`
-                                                                                             with an overlay panel
-                                                                                             instead, if a dedicated
-                                                                                             image isn't supplied
+                                                                                              with an overlay panel
+                                                                                              instead, if a dedicated
+                                                                                              image isn't supplied
+
+  Leaderboard medal   `medal-gold.png`                    164×196            Yes             Rank 1 in the top-5
+  --- gold                                                                                    leaderboard (Spec §14);
+                                                                                              shown large on the Game
+                                                                                              Over screen for a new
+                                                                                              record
+
+  Leaderboard medal   `medal-silver.png`                   164×196            Yes             Rank 2
+  --- silver
+
+  Leaderboard medal   `medal-bronze.png`                   164×196            Yes             Rank 3
+  --- bronze
+
+  Leaderboard medal   `medal-iron.png`                     164×196            Yes             Rank 4
+  --- iron
+
+Leaderboard medal   `medal-wood.png`                     164×196            Yes             Rank 5
+  --- wood
   -------------------------------------------------------------------------------------------------------------------
 
 If a listed asset isn't available up front, a same-dimension placeholder
@@ -575,6 +596,11 @@ the launch, telegraph, or arrival of any bullet.
   See Section 13.
 - **Player Ship Per Level (Phase 19):** Each level may select the player
   ship image used while playing it. See Section 13.
+- **Profile View & High Score Leaderboard (Phase 23):** The device-wide
+  high score becomes a top-5 leaderboard with player names and rank medal
+  icons; each player's profile gains a record count and highest-level-
+  reached; the Game Over screen celebrates top-5 finishes with a large
+  medal and personal-best beats with a congratulation. See Section 14.
 
 ## 12. Question Categories & Answer Model (Authoritative)
 
@@ -675,3 +701,63 @@ difficulty, lives, or timing.
   ship).
 - Only the ship's texture changes; size, muzzle position, feedback
   animations, and all gameplay behavior stay fixed.
+
+## 14. Profile View & High Score Leaderboard (Authoritative)
+
+The single device-wide high score (Phase 7/9/22) becomes the top entry of
+a **top-5 leaderboard**, and each player's profile (Phase 22) gains a
+record count and a highest-level-reached value. The Game Over screen
+celebrates top-5 finishes and personal-best beats. All of this is
+presentation/persistence only: no gameplay, question, difficulty, lives,
+or timing behavior changes.
+
+### Device-wide top-5 leaderboard
+
+- The leaderboard is an ordered list of `{ name, score }` entries,
+  descending by score, capped at 5. `high_score` and `player_name` remain
+  the top entry, so the Phase 7/9/22 single-value behavior is preserved.
+- A finished session's final score is submitted with the active player's
+  name. It qualifies when the board has fewer than 5 entries, or when it
+  is strictly greater than the current 5th (lowest) entry. Ties at the
+  boundary do not displace an existing entry (consistent with the
+  strictly-greater rule of §4 step 10 / NFR7.3), and scores ≤ 0 are never
+  submitted.
+- The leaderboard is displayed on the Main Menu as a table: one row per
+  entry, each row showing the rank medal icon, the player's name, and the
+  score. Medals by rank: 1 `medal-gold.png`, 2 `medal-silver.png`, 3
+  `medal-bronze.png`, 4 `medal-iron.png`, 5 `medal-wood.png` (all under
+  `assets/images/ui/`, 164×196, see §8).
+
+### Profile View
+
+Each player's profile additionally tracks:
+
+- **Best scores** --- the player's best 3 session scores (existing
+  `top_scores`).
+- **Record count** --- how many times the player has set a new
+  device-wide high score. Incremented only when a submitted score becomes
+  the new #1 (strictly greater than the previous high score); a tie never
+  increments it.
+- **Highest level reached** --- the highest level number the player has
+  started, updated monotonically at every level start (session start,
+  level advance, and Play Again).
+- **Best score per level** --- the existing `personal_bests` (level →
+  best score earned in that level).
+
+A **Profile View**, accessible from the Main Menu, shows all four for the
+active player. All reads/writes operate on the active profile only
+(Phase 22 isolation).
+
+### Game Over celebration
+
+- When the final score qualifies for the top 5, the Game Over screen
+  announces it with a **large rank medal**:
+  - rank 1: gold medal + "New High Score!" (replacing the current
+    text-only callout);
+  - ranks 2--5: the corresponding medal + a "Top 5!" / "Rank #N!"
+    announcement.
+- When the final score beats the player's own previous best session
+  score, the screen adds a **"Personal Best!"** congratulation, in
+  addition to any leaderboard announcement.
+- Sessions that neither qualify for the top 5 nor beat a personal best
+  keep the existing "High Score: X - Name" text.
