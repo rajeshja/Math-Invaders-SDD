@@ -137,6 +137,29 @@ func test_record_flawless_clear_reports_only_the_unlocking_call() -> void:
 		"the third consecutive clear performs the unlock")
 
 
+func test_mastering_a_locked_level_does_not_skip_ahead() -> void:
+	# unlocked_level defaults to 1; a stray flawless clear on level 2 must
+	# not unlock level 3 while level 2 itself is still locked (FR9.4).
+	for i in range(3):
+		HighScoreManager.record_flawless_clear(2, 5)
+
+	assert_eq(HighScoreManager.get_flawless_streak(2), 3)
+	assert_eq(HighScoreManager.get_unlocked_level(), 1,
+		"level 2 must be unlocked before level 3 can be")
+
+
+func test_unlocking_proceeds_one_level_at_a_time() -> void:
+	# Master level 1 -> unlock 2; master level 2 -> unlock 3. The frontier
+	# advances exactly one level per mastered level (FR9.4).
+	for i in range(3):
+		HighScoreManager.record_flawless_clear(1, 5)
+	assert_eq(HighScoreManager.get_unlocked_level(), 2)
+
+	for i in range(3):
+		HighScoreManager.record_flawless_clear(2, 5)
+	assert_eq(HighScoreManager.get_unlocked_level(), 3)
+
+
 func test_personal_best_is_recorded_from_earned_level_score_on_clear() -> void:
 	level_manager.start_session(1)
 	GameManager.add_score(7)
