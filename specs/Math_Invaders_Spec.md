@@ -609,6 +609,14 @@ the launch, telegraph, or arrival of any bullet.
 - **Custom Resources:** A `LevelConfig.gd` custom resource centralizes definitions for each level (categories, waves, time limits, attempts, difficulty scaling), replacing hard-coded logic in `LevelManager.gd`.
 - **Mastery and Sequential Unlocking:** Clearing a level with 0 lives lost, 3 times in a row, unlocks the next level. Unlocking must happen sequentially (Level 2 cannot unlock unless Level 1 is unlocked).
 - **Player Level Select:** The Main Menu includes a UI to let players choose any unlocked level to start playing from.
+- **Main Menu Fit (post-Phase 26):** The Main Menu must fit entirely on a
+  720×1280 portrait screen. The name field, per-level buttons, View Profile
+  button, and START button are compact (≈25% smaller than the Phase 11
+  touch-target sizes): name field 82 design px tall, level buttons 126×82,
+  View Profile and START 270×82, with matching font sizes. This keeps the
+  whole menu (title, name card, level grid, leaderboard, and buttons) on
+  screen at once. The reduced heights trade off the Phase 11 110-design-px
+  touch-target rule for these menu controls so the menu fits on screen.
 - **Assumed Full Score:** Skipping a level by starting at a later unlocked level initializes the player's score with the sum of their "personal best" scores for the skipped levels.
 - **Player Name Setup:** Before starting the game, players are prompted to enter their name on the Splash Screen or Main Menu. This name is persisted and displayed on the High Score screen.
 - **Per-Player Profiles (Phase 22):** Unlocked levels, personal bests,

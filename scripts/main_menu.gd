@@ -88,8 +88,8 @@ func _populate_level_grid() -> void:
 	var total: int = LevelConfig.total_level_count()
 	for level in range(1, total + 1):
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(168, 110)
-		button.add_theme_font_size_override("font_size", 28)
+		button.custom_minimum_size = Vector2(126, 82)
+		button.add_theme_font_size_override("font_size", 21)
 		if level <= unlocked:
 			button.text = "Level %d" % level
 			button.modulate = UNLOCKED_COLOR

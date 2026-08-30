@@ -621,3 +621,34 @@ Two presentational fixes (no gameplay state/logic changes; NFR9.1 applies):
 - [x] `Main`: hide the question panel on wave clear / session start / Play
       Again; reveal it in `_on_question_ready`.
 - [x] Full GUT suite green (363 tests).
+
+
+## Main Menu Compact Layout (post-Phase 26)
+
+The Main Menu was still too tall to fit on a 720×1280 portrait screen
+(title + name card + level grid + leaderboard + buttons exceeded the
+viewport). The interactive controls are now ~25% smaller, with matching
+font sizes:
+
+- Name field (`NameEdit`): height 110 → **82** design px, font 34 → **26**.
+- Level buttons: 168×110 → **126×82**, font 28 → **21** (level grid min
+  height 232 → **176**).
+- View Profile button: 360×110 → **270×82**, font 32 → **24**.
+- START button: 360×110 → **270×82**, font 44 → **33**.
+
+This is a presentational change only (NFR9.1): no gameplay, question,
+difficulty, lives, or timing behavior changes. Note: the reduced heights
+drop below the Phase 11 110-design-px touch-target rule for these menu
+controls; the menu now fits on screen at the cost of a smaller touch
+target on the worst-case 720×1600 @ 400 ppi panel (~33 dp vs the 44 dp
+guideline).
+- Normative home: Spec §11.
+- Code: `scenes/main_menu.tscn`, `scripts/main_menu.gd`
+  (`_populate_level_grid`).
+
+### Checklist
+
+- [x] `main_menu.tscn`: NameEdit 82 px / font 26, LevelGrid min height 176,
+      ProfileButton 270×82 / font 24, StartButton 270×82 / font 33.
+- [x] `main_menu.gd`: level buttons 126×82 / font 21.
+- [x] Full GUT suite green.
