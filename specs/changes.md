@@ -652,3 +652,60 @@ guideline).
       ProfileButton 270×82 / font 24, StartButton 270×82 / font 33.
 - [x] `main_menu.gd`: level buttons 126×82 / font 21.
 - [x] Full GUT suite green.
+
+
+## Question Panel Ship-Controls Background & Single-Row Answers (post-Phase 26)
+
+The question panel now uses `assets/images/ui/ship-controls-4.jpg`
+(1536×640) as its background instead of `question_panel_bg.png` (720×360),
+and its layout is reworked to match the artwork. The panel is now
+**720×300** (the image's 2.4:1 aspect ratio scaled to the 720-wide
+viewport), so the game area above gains 60 design px. All layout is
+defined in `scenes/question_panel.tscn` (no code-built containers):
+
+- **Background:** `ship-controls-4.jpg` scaled to fill the panel
+  (`STRETCH_SCALE`; aspect ratios match, so no distortion).
+- **Overlay:** a near-opaque dark layer (`Color(0.02, 0.03, 0.08, 0.9)`,
+  ~10% transparency) covers the artwork so the question text and answer
+  buttons stay readable.
+- **Question area:** the top **45%** of the panel (135 design px) holds
+  the question label and the stacked-fraction host.
+- **Answer row:** the bottom **55%** (165 design px) holds the four
+  answer buttons in a **single near-square row** (was a 2×2 grid). The
+  row is inset 0.75% on each outer edge (5.4 px) with 0.5% gaps between
+  the buttons (3.6 px each) — 3% total margins, 97% divided equally
+  among the four buttons (~175×165 each).
+
+This is a presentational change only (NFR9.1): no gameplay, question,
+difficulty, lives, or timing behavior changes. The stacked-fraction
+rendering, wrong-answer flash, and safe-area handling are unchanged; the
+fraction stack host and its centering HBox are now scene nodes referenced
+by `question_panel.gd` instead of being built in code.
+
+**Background stays visible during transitions.** Where Phase 24/26 hid
+the whole question panel for the wave transition, the panel now only
+hides its **content** (overlay, question area, and answer row) via
+`QuestionPanel.set_content_visible()`. The `ship-controls-4.jpg`
+background image remains on screen the whole time, so the player sees
+the ship imagery while no question is shown — reinforcing the
+"flying the ship" feel. `Main.gd` calls `set_content_visible(false)` at
+session start, on wave clear, and on Play Again, and
+`set_content_visible(true)` when the new wave's first question is ready.
+- Normative home: Spec §3, §8, §15.
+- Code: `scenes/question_panel.tscn`, `scripts/question_panel.gd`
+  (`PANEL_HEIGHT`, `set_content_visible`, `@onready` node paths),
+  `scripts/main.gd`.
+
+### Checklist
+
+- [x] `question_panel.tscn`: 720×300 panel, `ship-controls-4.jpg`
+      background, 0.9-alpha overlay, 45% question area, single-row answer
+      buttons with 0.75% outer / 0.5% gap margins.
+- [x] `question_panel.gd`: `PANEL_HEIGHT` 360 → 300; scene-defined stack
+      host; `_build_question_stack_host()` removed; `set_content_visible()`
+      keeps the background image visible while hiding overlay/question/
+      buttons.
+- [x] `main.gd`: `_question_panel.visible` toggles replaced with
+      `set_content_visible()` at session start, wave clear, question ready,
+      and Play Again.
+- [x] Full GUT suite green (363 tests).

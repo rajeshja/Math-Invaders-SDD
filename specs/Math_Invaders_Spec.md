@@ -123,9 +123,16 @@ control exactly which math skill is being practiced at any moment.
     wrong answer does not move or remove any enemy.
 -   **Question panel:** Anchored to the bottom of the screen, always
     visible, holding the question text and 4 tappable answer buttons. The
-    question area is sized to fit stacked-fraction questions and is
-    separated from the answer grid so the two never overlap (Phase 20);
-    the panel keeps its fixed height and safe-area insets.
+    panel is 720×300 (matching the 1536×640 `ship-controls-4.jpg`
+    background's 2.4:1 aspect ratio) and is overlaid with a near-opaque
+    dark layer (~10% transparency) so text stays readable over the busy
+    artwork. The question area occupies the top 45% of the panel and is
+    sized to fit stacked-fraction questions; the four answer buttons sit
+    in a single near-square row in the bottom 55%, dividing the width into
+    4 equal sections with 0.75% outer margins and 0.5% gaps (3% total
+    margins, 97% for the buttons). The question area and answer row never
+    overlap (Phase 20); the panel keeps its fixed height and safe-area
+    insets.
 -   **HUD (top of screen):**
     -   Score
     -   **Level** (new)
@@ -479,16 +486,17 @@ blurring when the game scales to different screen sizes.
   destruction effect                                      @ 128×128)                         destroyed on a correct
                                                                                              answer
 
-  Question panel      `question_panel_bg.png`             720×360            Optional        Bottom-anchored panel
+Question panel      `ship-controls-4.jpg`               1536×640           Optional        Bottom-anchored panel
   background                                                                                 frame behind the
-                                                                                             question text and answer
-                                                                                             buttons
+                                                                                              question text and answer
+                                                                                              buttons; scaled to the
+                                                                                              720×300 panel
 
-  Answer button ---   `answer_button_normal.png`          320×100            Yes             Sized to fit 4 buttons
-  normal state                                                                               in a grid within the
-                                                                                             question panel; large
-                                                                                             enough for a child's tap
-                                                                                             (44px+ touch target)
+Answer button ---   `answer_button_normal.png`          320×100            Yes             Sized to fit 4 buttons
+  normal state                                                                               in a single row within
+                                                                                              the question panel; large
+                                                                                              enough for a child's tap
+                                                                                              (44px+ touch target)
 
   Answer button ---   `answer_button_pressed.png`         320×100            Yes             Shown briefly on tap,
   pressed/selected                                                                           before correct/incorrect
@@ -821,10 +829,12 @@ flow are unchanged.
   cleared before the next wave's enemies arrive. It is game-wide, read
   only through `GameConfig`.
 - When a wave is cleared, the level timer pauses and no question is shown
-  for `wave_complete_pause_seconds`. The question panel is hidden for the
-  **entire** transition (pause + arrival) and is revealed again only when
-  the new wave's first question is shown, so the previous wave's last
-  question never stays on screen during the transition.
+  for `wave_complete_pause_seconds`. The question panel's **content** is
+  hidden for the **entire** transition (pause + arrival) and is revealed
+  again only when the new wave's first question is shown, so the previous
+  wave's last question never stays on screen during the transition. The
+  ship-controls background image stays visible throughout, so the player
+  sees the ship imagery while no question is on screen.
 - After the pause, the next wave's enemies spawn and animate into
   formation **one row at a time**, top-to-bottom (4, then 3, then 2, then
   1 for the standard formation). Each row takes `ROW_ARRIVAL_SECONDS`

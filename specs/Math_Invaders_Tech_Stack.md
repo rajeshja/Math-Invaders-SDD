@@ -281,7 +281,12 @@ supports non-arithmetic content.
     the question stack host spans the panel width
     (`SIZE_EXPAND_FILL` + `ALIGNMENT_CENTER`) --- and the question area
     is enlarged so it no longer overlaps the answer grid, with the 360px
-    panel height and safe-area insets unchanged.
+    panel height and safe-area insets unchanged. *Post-Phase 26:* the
+    panel is 720×300 (matching the `ship-controls-4.jpg` background's
+    2.4:1 aspect ratio) with a near-opaque overlay, a 45% question area,
+    and the four answer buttons in a single near-square row; the layout
+    is defined in `question_panel.tscn` (the fraction stack host is a
+    scene node, not code-built).
 
 -   `hud.gd` --- updates score, level, wave-progress, lives, and
     time-remaining displays in response to `GameManager`/`WaveManager`
@@ -404,6 +409,7 @@ the project.
         │   ├── enemy_ship_ratio_proportion.png
         │   └── enemy_ship_hcf_lcm.png
         ├── ui/
+        │   ├── ship-controls-4.jpg      # question panel background (post-Phase 26)
         │   ├── question_panel_bg.png
         │   ├── answer_button_normal.png
         │   ├── answer_button_pressed.png
@@ -432,9 +438,10 @@ the project.
     --- only the texture swaps. *Phase 18:* when the level configures a
     per-wave image set, spawn slot `k` uses `set[k % set.size()]`
     instead of the category sprite (Spec §13's ordering rule).
--   `question_panel.tscn` uses `question_panel_bg.png` as a
-    `NinePatchRect` (or plain `TextureRect`) background, with
-    `AnswerButtons` using
+-   `question_panel.tscn` uses `ship-controls-4.jpg` as a
+    `TextureRect` background (scaled to the 720×300 panel, with a
+    near-opaque overlay), with the four answer buttons in a single
+    `HBoxContainer` row using
     `answer_button_normal.png`/`answer_button_pressed.png` as the
     `Button` node's theme textures.
 -   `hud.tscn` uses `life_icon.png` in an `HBoxContainer` that repeats

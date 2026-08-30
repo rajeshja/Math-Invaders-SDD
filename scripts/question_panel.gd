@@ -26,39 +26,53 @@ signal answer_selected(value, button)
 const WRONG_FLASH_SECONDS := 0.18
 
 ## Phase 11 FR10.4: base design height of the panel (matches the
-## offset_top = -360 anchor layout in question_panel.tscn).
-const PANEL_HEIGHT := 360.0
+## offset_top = -300 anchor layout in question_panel.tscn). The panel is
+## 720x300 to match the 1536x640 ship-controls-4.jpg background's 2.4:1
+## aspect ratio.
+const PANEL_HEIGHT := 300.0
 
-## Stacked-fraction sizing (FR13.5): must fit inside the existing 320x110
-## button footprint and the 60px question row at 720x1280.
+## Stacked-fraction sizing (FR13.5): must fit inside the ~175x165 answer
+## button footprint and the 135px question area at 720x1280.
 const BAR_COLOR := Color(0.875, 0.875, 0.875, 1.0)
 const STACK_FONT_LARGE := 34
 const STACK_FONT_SMALL := 26
 const QUESTION_STACK_FONT := 20
 const QUESTION_WHOLE_FONT := 18
 
-@onready var _question_label: Label = $Panel/QuestionLabel
+@onready var _question_label: Label = $Panel/QuestionArea/QuestionLabel
 @onready var _panel: Control = $Panel
 @onready var _answer_buttons: Array = [
-	$Panel/AnswerButtons/Button1,
-	$Panel/AnswerButtons/Button2,
-	$Panel/AnswerButtons/Button3,
-	$Panel/AnswerButtons/Button4,
+	$Panel/AnswerRow/Button1,
+	$Panel/AnswerRow/Button2,
+	$Panel/AnswerRow/Button3,
+	$Panel/AnswerRow/Button4,
 ]
 
-## Code-built host for stacked question rendering; shares the
+## Scene-defined host for stacked question rendering; shares the
 ## QuestionLabel's rect and only shows for fraction questions. It is a
 ## plain Control (not a Container) so it spans the panel width via its
 ## anchors; a centered HBoxContainer inside it lays out the segments.
-var _question_stack_host: Control = null
-var _question_stack_hbox: HBoxContainer = null
+@onready var _question_stack_host: Control = $Panel/QuestionArea/QuestionStackHost
+@onready var _question_stack_hbox: HBoxContainer = $Panel/QuestionArea/QuestionStackHost/QuestionStackHBox
+@onready var _overlay: ColorRect = $Panel/Overlay
+@onready var _question_area: Control = $Panel/QuestionArea
+@onready var _answer_row: HBoxContainer = $Panel/AnswerRow
 
 
 func _ready() -> void:
 	for button in _answer_buttons:
 		button.pressed.connect(_on_answer_button_pressed.bind(button))
-	_build_question_stack_host()
 	_apply_safe_area()
+
+
+## Post-Phase 26: toggles the interactive content (near-opaque overlay,
+## question area, and answer buttons) while keeping the ship-controls
+## background image visible. Used during wave transitions so the player
+## sees the ship imagery with no question on screen.
+func set_content_visible(visible: bool) -> void:
+	_overlay.visible = visible
+	_question_area.visible = visible
+	_answer_row.visible = visible
 
 
 ## Phase 11 FR10.4: on mobile devices, lift the whole panel above the
@@ -172,31 +186,6 @@ func _on_answer_button_pressed(button: Button) -> void:
 
 
 ## -- Stacked fraction rendering (Phase 13 FR13.3-FR13.5) -------------------
-
-func _build_question_stack_host() -> void:
-	_question_stack_host = Control.new()
-	_question_stack_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_question_stack_host.visible = false
-	_panel.add_child(_question_stack_host)
-	# Mirror the QuestionLabel's rect (anchors_preset top-wide, y 8..88).
-	# A plain Control (not a Container) honors these anchors and spans the
-	# full panel width, so the inner HBoxContainer can be centered.
-	_question_stack_host.anchor_left = 0.0
-	_question_stack_host.anchor_right = 1.0
-	_question_stack_host.anchor_top = 0.0
-	_question_stack_host.anchor_bottom = 0.0
-	_question_stack_host.offset_left = 0.0
-	_question_stack_host.offset_right = 0.0
-	_question_stack_host.offset_top = 8.0
-	_question_stack_host.offset_bottom = 88.0
-
-	_question_stack_hbox = HBoxContainer.new()
-	_question_stack_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	_question_stack_hbox.add_theme_constant_override("separation", 8)
-	_question_stack_hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_question_stack_host.add_child(_question_stack_hbox)
-	_question_stack_hbox.set_anchors_preset(Control.PRESET_CENTER)
-
 
 func _render_question_segments(segments: Array) -> void:
 	for child in _question_stack_hbox.get_children():

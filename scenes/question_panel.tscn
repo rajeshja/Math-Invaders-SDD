@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://question_panel_scene_001"]
 
 [ext_resource type="Script" path="res://scripts/question_panel.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/images/ui/question_panel_bg.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/images/ui/ship-controls-4.jpg" id="2"]
 [ext_resource type="Texture2D" path="res://assets/images/ui/answer_button_normal.png" id="3"]
 [ext_resource type="Texture2D" path="res://assets/images/ui/answer_button_pressed.png" id="4"]
 
@@ -19,7 +19,7 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -360.0
+offset_top = -300.0
 offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 0
@@ -31,37 +31,81 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 texture = ExtResource("2")
 expand_mode = 1
-stretch_mode = 1
+stretch_mode = 0
 
-[node name="QuestionLabel" type="Label" parent="Panel"]
+[node name="Overlay" type="ColorRect" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.02, 0.03, 0.08, 0.9)
+
+[node name="QuestionArea" type="Control" parent="Panel"]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 8.0
-offset_bottom = 88.0
+anchor_bottom = 0.45
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="QuestionLabel" type="Label" parent="Panel/QuestionArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 vertical_alignment = 1
+autowrap_mode = 2
 text = "What is 7 + 5?"
 
-[node name="AnswerButtons" type="GridContainer" parent="Panel"]
+[node name="QuestionStackHost" type="Control" parent="Panel/QuestionArea"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="QuestionStackHBox" type="HBoxContainer" parent="Panel/QuestionArea/QuestionStackHost"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -330.0
-offset_top = -85.0
-offset_right = 330.0
-offset_bottom = 155.0
-columns = 2
-theme_override_constants/h_separation = 20
-theme_override_constants/v_separation = 20
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+mouse_filter = 2
 
-[node name="Button1" type="Button" parent="Panel/AnswerButtons"]
-custom_minimum_size = Vector2(320, 110)
+[node name="AnswerRow" type="HBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.0
+anchor_top = 0.45
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.4
+offset_top = 0.0
+offset_right = -5.4
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 3.6
+
+[node name="Button1" type="Button" parent="Panel/AnswerRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_styles/normal = SubResource("StyleBoxTexture_normal")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_pressed")
 theme_override_styles/hover = SubResource("StyleBoxTexture_normal")
@@ -69,9 +113,10 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_normal")
 theme_override_font_sizes/font_size = 36
 text = "11"
 
-[node name="Button2" type="Button" parent="Panel/AnswerButtons"]
-custom_minimum_size = Vector2(320, 110)
+[node name="Button2" type="Button" parent="Panel/AnswerRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_styles/normal = SubResource("StyleBoxTexture_normal")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_pressed")
 theme_override_styles/hover = SubResource("StyleBoxTexture_normal")
@@ -79,9 +124,10 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_normal")
 theme_override_font_sizes/font_size = 36
 text = "12"
 
-[node name="Button3" type="Button" parent="Panel/AnswerButtons"]
-custom_minimum_size = Vector2(320, 110)
+[node name="Button3" type="Button" parent="Panel/AnswerRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_styles/normal = SubResource("StyleBoxTexture_normal")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_pressed")
 theme_override_styles/hover = SubResource("StyleBoxTexture_normal")
@@ -89,9 +135,10 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_normal")
 theme_override_font_sizes/font_size = 36
 text = "13"
 
-[node name="Button4" type="Button" parent="Panel/AnswerButtons"]
-custom_minimum_size = Vector2(320, 110)
+[node name="Button4" type="Button" parent="Panel/AnswerRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_styles/normal = SubResource("StyleBoxTexture_normal")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_pressed")
 theme_override_styles/hover = SubResource("StyleBoxTexture_normal")

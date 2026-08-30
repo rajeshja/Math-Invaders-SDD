@@ -72,10 +72,11 @@ func _ready() -> void:
 	_game_over_overlay.play_again_pressed.connect(restart_session)
 	_game_over_overlay.return_to_menu_pressed.connect(_return_to_main_menu)
 
-	# Phase 24/26: the question panel stays hidden until the session's first
-	# question is ready (after the opening arrival animation), so the default
-	# placeholder text is never shown during the flight-in.
-	_question_panel.visible = false
+	# Phase 24/26: the question panel's content stays hidden until the
+	# session's first question is ready (after the opening arrival
+	# animation), so the default placeholder text is never shown during the
+	# flight-in. The ship-controls background image stays visible.
+	_question_panel.set_content_visible(false)
 	_level_manager.start_session(effective_start_level())
 	# FR9.6: looping gameplay music starts with the session and stops on
 	# Game Over (see _on_game_over).
@@ -108,9 +109,9 @@ func _on_question_ready(question: Dictionary) -> void:
 	_current_question = question
 	_attempt_tracker.reset_question()
 	_accepting_input = true
-	# Phase 24/26: the panel was hidden for the wave transition; reveal it
-	# together with the new wave's first question.
-	_question_panel.visible = true
+	# Phase 24/26: the panel's content was hidden for the wave transition;
+	# reveal it together with the new wave's first question.
+	_question_panel.set_content_visible(true)
 	_question_panel.set_question(question)
 
 
@@ -128,9 +129,10 @@ func _on_level_changed(level: int) -> void:
 func _on_wave_cleared(_category: String) -> void:
 	AudioManager.play_sfx("wave_complete")
 	_wave_banner.show_banner()
-	# Phase 24/26: hide the question panel for the whole transition (pause +
-	# arrival) so the previous wave's last question is not left on screen.
-	_question_panel.visible = false
+	# Phase 24/26: hide the question panel's content for the whole
+	# transition (pause + arrival) so the previous wave's last question is
+	# not left on screen; the ship-controls background image stays visible.
+	_question_panel.set_content_visible(false)
 
 
 ## FR9.3: screen shake + red flash on damage. Layered on top of the
@@ -283,10 +285,11 @@ func restart_session() -> void:
 	_current_question = {}
 	_attempt_tracker.reset_question()
 	_mistake_tracker.clear()
-	# Phase 24/26: hide the question panel until the fresh session's first
-	# question arrives, so the previous session's last question is not
-	# visible during the opening arrival animation.
-	_question_panel.visible = false
+	# Phase 24/26: hide the question panel's content until the fresh
+	# session's first question arrives, so the previous session's last
+	# question is not visible during the opening arrival animation; the
+	# ship-controls background image stays visible.
+	_question_panel.set_content_visible(false)
 	GameManager.reset_session(_assumed_starting_score())
 	_level_manager.reset_and_start()
 	# FR9.6: a fresh session restarts the looping gameplay music (no-op if
