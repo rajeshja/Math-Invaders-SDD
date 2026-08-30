@@ -589,3 +589,35 @@ for further improvements before playtesting.
       level-completion adjustment; tests.
 - [ ] Phase 30: playtest the expanded game (including Phases 24--25
       timing/scoring); full GUT suite green.
+
+
+## Leaderboard Fit & Question-Panel Hiding Fixes (post-Phase 26)
+
+Two presentational fixes (no gameplay state/logic changes; NFR9.1 applies):
+
+1. **Compact leaderboard (Phase 23 FR23.5a).** The Main Menu leaderboard
+   was too tall to fit all five best scores on screen. Each row is now
+   60 design px tall (was 110), the rank medal renders at 22×26 (50% of
+   the original 44×52), and the row separation is 6 px (50% of the
+   original 12 px), halving the gap between the player name and the
+   score. The table stays centered via the existing `CenterContainer`.
+   - Normative home: Spec §14; Phase 23 FR23.5a / NFR23.4.
+   - Code: `scripts/main_menu.gd` (`_populate_leaderboard`).
+
+2. **Question panel hidden during wave transitions (Phase 24 FR24.2a).**
+   When a wave completes, the previous wave's last question stayed on
+   screen until the next wave's arrival animation finished. The question
+   panel is now hidden for the entire transition (pause + arrival) and
+   revealed only when the new wave's first question is shown. The same
+   hiding applies at session start and on Play Again, so no stale or
+   placeholder question is ever visible during a flight-in.
+   - Normative home: Spec §15; Phase 24 FR24.2a; Phase 26 FR26.4.
+   - Code: `scripts/main.gd` (`_ready`, `_on_wave_cleared`,
+     `_on_question_ready`, `restart_session`).
+
+### Checklist
+
+- [x] `MainMenu._populate_leaderboard`: 60 px rows, 22×26 medals, 6 px separation.
+- [x] `Main`: hide the question panel on wave clear / session start / Play
+      Again; reveal it in `_on_question_ready`.
+- [x] Full GUT suite green (363 tests).

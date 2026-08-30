@@ -113,7 +113,9 @@ func _on_level_button_hovered() -> void:
 
 ## Phase 23 FR23.5: renders the device-wide top-5 leaderboard as one row
 ## per entry: rank medal icon + player name + score, descending. Rows are
-## touch-safe (>= 110 design px, Phase 11).
+## compact (60 design px) so all five entries fit on screen: the medal
+## renders at 22x26 (50% of the original 44x52) and the row separation is
+## 6 px (50% of the original 12 px), keeping the name-score gap tight.
 func _populate_leaderboard() -> void:
 	for child in _leaderboard_rows.get_children():
 		if child.name != "LeaderboardTitle":
@@ -129,11 +131,11 @@ func _populate_leaderboard() -> void:
 	for i in range(entries.size()):
 		var entry: Dictionary = entries[i]
 		var row := HBoxContainer.new()
-		row.custom_minimum_size = Vector2(0, 110)
-		row.add_theme_constant_override("separation", 12)
+		row.custom_minimum_size = Vector2(0, 60)
+		row.add_theme_constant_override("separation", 6)
 		var medal := TextureRect.new()
 		medal.texture = MEDAL_TEXTURES.get(i + 1)
-		medal.custom_minimum_size = Vector2(44, 52)
+		medal.custom_minimum_size = Vector2(22, 26)
 		medal.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 		medal.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		row.add_child(medal)

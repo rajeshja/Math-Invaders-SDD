@@ -761,7 +761,11 @@ or timing behavior changes.
   entry, each row showing the rank medal icon, the player's name, and the
   score. Medals by rank: 1 `medal-gold.png`, 2 `medal-silver.png`, 3
   `medal-bronze.png`, 4 `medal-iron.png`, 5 `medal-wood.png` (all under
-  `assets/images/ui/`, 164×196, see §8).
+  `assets/images/ui/`, 164×196, see §8). The table is compact enough that
+  all five entries fit on screen and stay centered: rows are 60 design px
+  tall, the medal renders at 22×26 (50% of the source 44×52), and the row
+  separation is 6 px (50% of the original 12 px), halving the gap between
+  the player name and the score.
 
 ### Profile View
 
@@ -809,7 +813,10 @@ flow are unchanged.
   cleared before the next wave's enemies arrive. It is game-wide, read
   only through `GameConfig`.
 - When a wave is cleared, the level timer pauses and no question is shown
-  for `wave_complete_pause_seconds`.
+  for `wave_complete_pause_seconds`. The question panel is hidden for the
+  **entire** transition (pause + arrival) and is revealed again only when
+  the new wave's first question is shown, so the previous wave's last
+  question never stays on screen during the transition.
 - After the pause, the next wave's enemies spawn and animate into
   formation **one row at a time**, top-to-bottom (4, then 3, then 2, then
   1 for the standard formation). Each row takes `ROW_ARRIVAL_SECONDS`

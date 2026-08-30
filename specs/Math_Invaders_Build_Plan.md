@@ -441,7 +441,8 @@ playable milestone.
 -   Main Menu: replace the "High Score: X - Name" label with a
     leaderboard table --- one row per entry with the rank medal icon
     (`medal-gold/silver/bronze/iron/wood.png` under `assets/images/ui/`),
-    player name, and score.
+    player name, and score. Rows are compact (60 design px, medal 22×26,
+    separation 6 px) so all five entries fit on screen and stay centered.
 -   Per-player profile additions: `record_count` (times the player set a
     new device-wide record; increments only on a strictly-greater #1) and
     `highest_level_reached` (updated monotonically at every level start).
@@ -468,7 +469,10 @@ playable milestone.
 
 -   When a wave is cleared, the level timer **pauses** for a configurable
     `gameplay/wave_complete_pause_seconds` (default `2.0`, game-wide) and
-    no question is shown during the pause.
+    no question is shown during the pause. The question panel is hidden
+    for the entire transition (pause + arrival) and revealed only with the
+    new wave's first question, so the previous wave's last question never
+    stays on screen.
 -   After the pause, the next wave's enemies **arrive one row at a time**:
     each formation row animates into place over `ROW_ARRIVAL_SECONDS`
     (0.5 s per row; 4 rows = 2 s for the standard formation). The first

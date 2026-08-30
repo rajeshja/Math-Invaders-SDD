@@ -42,6 +42,11 @@ FR22.1--FR22.6.
     medal icon + player name + score. Medals: rank 1 `medal-gold.png`, 2
     `medal-silver.png`, 3 `medal-bronze.png`, 4 `medal-iron.png`, 5
     `medal-wood.png` (all under `assets/images/ui/`, 164×196).
+-   FR23.5a --- The leaderboard table is compact enough that all five
+    entries fit on screen and the table stays centered: each row is 60
+    design px tall, the rank medal renders at 22×26 (50% of the original
+    44×52), and the row separation is 6 px (50% of the original 12 px),
+    halving the gap between the player name and the score.
 
 **Profile View**
 
@@ -88,7 +93,10 @@ FR22.1--FR22.6.
     the scene tree, using GUT's temp-file helpers (NFR7.1/NFR22.3
     pattern).
 -   NFR23.4 --- The leaderboard table and Profile View are touch-safe
-    (interactive rows ≥ 110 design px, per Phase 11) and safe-area aware.
+    (interactive controls ≥ 110 design px, per Phase 11) and safe-area
+    aware. The leaderboard rows themselves are non-interactive display
+    rows and are deliberately compact (60 design px, FR23.5a) so all five
+    entries fit on screen.
 
 ### Out of Scope
 
@@ -182,7 +190,9 @@ full prior suite pass unmodified (NFR23.2).
 
   5                       Open the Main Menu      Leaderboard table shows up to
                           with 5+ records         5 rows: medal icon + name +
-                                                  score, descending
+                                                  score, descending; all five
+                                                  rows fit on screen and the
+                                                  table is centered
 
   6                       Open the Profile View   Shows best 3 scores, record
                                                   count, highest level reached,

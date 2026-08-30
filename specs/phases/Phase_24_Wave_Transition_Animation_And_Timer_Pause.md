@@ -24,6 +24,10 @@ Spec §2 (wave/level structure), Spec §10 (level time limit), Tech Stack §4
     `0`), read only through `GameConfig.get_wave_complete_pause_seconds()`.
 -   FR24.2 --- When a wave is cleared, the level timer pauses and no
     question is shown for `wave_complete_pause_seconds`.
+-   FR24.2a --- The question panel is hidden for the **entire** wave
+    transition (pause + arrival) and is revealed again only when the new
+    wave's first question is shown. The previous wave's last question
+    must never stay on screen during the transition.
 -   FR24.3 --- After the pause, the next wave's enemies spawn and animate
     into formation **one row at a time**. Each row takes
     `WaveManager.ROW_ARRIVAL_SECONDS` (0.5 s); the standard 4-row
@@ -109,7 +113,10 @@ formation and for custom `enemies_per_wave`.
   ----------------------- ----------------------- -----------------------------
   1                       Clear a wave mid-level  "Wave Complete!" banner
                                                   shows; timer freezes; no
-                                                  question for 2 s
+                                                  question for 2 s; the
+                                                  previous question panel is
+                                                  hidden for the whole
+                                                  transition
 
   2                       After the pause         Next wave's enemies arrive
                                                   row by row (top row first),

@@ -28,7 +28,9 @@ Spec §2 (wave/level structure), Tech Stack §4 (`WaveManager`), Phase 24
     at `ROW_ARRIVAL_SECONDS` intervals. This reverses the Phase 24
     top-to-bottom reveal order.
 -   FR26.4 --- The first question of the wave is not shown until every
-    enemy has reached its formation position (all flights complete).
+    enemy has reached its formation position (all flights complete). The
+    question panel stays hidden for the whole arrival (Phase 24 FR24.2a),
+    so no stale question is visible while the formation flies in.
 -   FR26.5 --- The level timer remains frozen for the entire arrival and
     resumes with the first question (unchanged from Phase 24 FR24.5).
 -   FR26.6 --- The flight path and timing are deterministic and
